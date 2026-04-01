@@ -14,6 +14,9 @@ STOP_LOOKUP_CANDIDATES = (
     "stops_{year}.txt",
     "stops.csv",
     "stops.txt",
+    # Fallback for sample/dev environments where dedicated stops files are absent.
+    "gtfs_schedules_{year}.csv",
+    "gtfs_schedules.csv",
 )
 
 
@@ -33,12 +36,17 @@ def load_stop_lookup(stops_path: Optional[Path]) -> Dict[str, str]:
         return {}
 
     stops_df = pd.read_csv(stops_path, low_memory=False)
-    if "stop_id" not in stops_df.columns or "stop_name" not in stops_df.columns:
+    if "stop_id" not in stops_df.columns:
         return {}
+
+    if "stop_name" not in stops_df.columns:
+        # Some recap CSVs only include stop_id; use stop_id as a conservative canonical label.
+        stops_df["stop_name"] = stops_df["stop_id"]
 
     lookup_df = stops_df[["stop_id", "stop_name"]].dropna(subset=["stop_id", "stop_name"])
     lookup_df["stop_id"] = lookup_df["stop_id"].astype(str).str.strip()
     lookup_df["stop_name"] = lookup_df["stop_name"].astype(str).str.strip()
+    lookup_df = lookup_df.drop_duplicates(subset=["stop_id"], keep="first")
     return dict(zip(lookup_df["stop_id"], lookup_df["stop_name"]))
 
 
@@ -64,7 +72,9 @@ def load_stops_dataframe(stops_path: Optional[Path]) -> pd.DataFrame:
 
     out = stops_df[["stop_id", "stop_name", "stop_lat", "stop_lon"]].copy()
     out["stop_id"] = out["stop_id"].astype(str).str.strip()
+    out["stop_name"] = out["stop_name"].where(out["stop_name"].notna(), out["stop_id"])
     out["stop_name"] = out["stop_name"].astype(str).str.strip()
     out["stop_lat"] = pd.to_numeric(out["stop_lat"], errors="coerce")
     out["stop_lon"] = pd.to_numeric(out["stop_lon"], errors="coerce")
+    out = out.drop_duplicates(subset=["stop_id"], keep="first")
     return out

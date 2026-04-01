@@ -80,3 +80,39 @@ def test_clean_events_transforms_and_flags_expected_fields(tmp_path: Path) -> No
     assert metrics["null_event_time_after"] == 0
     assert metrics["null_rate_before"] == 0.25
     assert metrics["null_rate_after"] == 0.0
+
+
+def test_clean_events_uses_gtfs_schedule_as_stop_lookup_fallback(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+
+    year = 2025
+    events_path = raw_dir / f"rapid_transit_events_{year}.csv"
+    events_path.write_text(
+        "service_date,route_id,stop_id,trip_id,event_type,event_time_sec\n"
+        "2025-01-01,Red,stop_001,t1,ARR,3600\n"
+        "2025-01-01,Orange,stop_002,t2,DEP,4200\n",
+        encoding="utf-8",
+    )
+
+    # No stops.txt/gtfs_stops file provided.
+    (raw_dir / f"gtfs_schedules_{year}.csv").write_text(
+        "service_date,route_id,trip_id,stop_id,arrival_time,departure_time,stop_sequence\n"
+        "2025-01-01,Red,t1,stop_001,01:00:00,01:01:00,1\n"
+        "2025-01-01,Orange,t2,stop_002,01:10:00,01:11:00,2\n",
+        encoding="utf-8",
+    )
+
+    output_parquet = processed_dir / f"clean_rapid_transit_events_{year}.parquet"
+    metrics = clean_events_dataset(
+        source_csv=events_path,
+        destination_parquet=output_parquet,
+        raw_dir=raw_dir,
+        year=year,
+    )
+
+    assert metrics["stops_lookup_path"] is not None
+    assert str(metrics["stops_lookup_path"]).endswith(f"gtfs_schedules_{year}.csv")
+    assert metrics["stop_lookup_found_rows"] == 2

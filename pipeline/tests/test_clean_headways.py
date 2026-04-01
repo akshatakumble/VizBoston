@@ -84,3 +84,40 @@ def test_clean_headways_applies_validation_flags_and_time_periods(tmp_path: Path
     assert metrics["rows_dropped_invalid_trunk"] == 2
     assert metrics["branch_headway_null_rows"] == 3
     assert metrics["outlier_rows"] == 1
+
+
+def test_clean_headways_infers_event_time_from_gtfs_when_missing(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+
+    year = 2025
+    headways_path = raw_dir / f"rapid_transit_headways_{year}.csv"
+    headways_path.write_text(
+        "service_date,route_id,stop_id,trip_id,prev_trip_id,headway_trunk_sec,headway_branch_sec,benchmark_headway_sec\n"
+        "2025-01-01,Red,s1,t1,p0,300,280,240\n"
+        "2025-01-01,Orange,s2,t2,p1,420,,360\n",
+        encoding="utf-8",
+    )
+
+    (raw_dir / f"gtfs_schedules_{year}.csv").write_text(
+        "service_date,route_id,trip_id,stop_id,arrival_time,departure_time,stop_sequence\n"
+        "2025-01-01,Red,t1,s1,07:00:00,07:01:00,1\n"
+        "2025-01-01,Orange,t2,s2,12:00:00,12:01:00,1\n",
+        encoding="utf-8",
+    )
+
+    output_parquet = processed_dir / f"clean_rapid_transit_headways_{year}.parquet"
+    metrics = clean_headways_dataset(
+        source_csv=headways_path,
+        destination_parquet=output_parquet,
+        raw_dir=raw_dir,
+        year=year,
+    )
+    cleaned = pd.read_parquet(output_parquet)
+
+    assert metrics["inferred_event_time_rows"] == 2
+    assert metrics["unknown_time_period_rows"] == 0
+    assert cleaned.loc[cleaned["trip_id"] == "t1", "time_period"].iloc[0] == "AM Peak"
+    assert cleaned.loc[cleaned["trip_id"] == "t2", "time_period"].iloc[0] == "Midday"

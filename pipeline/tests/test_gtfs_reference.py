@@ -119,3 +119,30 @@ def test_gtfs_reference_and_station_geography_outputs(tmp_path: Path) -> None:
     feature_types = {f.get("properties", {}).get("feature_type") for f in geo.get("features", [])}
     assert "station_point" in feature_types
     assert "line_path" in feature_types
+
+
+def test_gtfs_reference_synthesizes_geography_when_stop_coords_missing(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+    raw_dir.mkdir(parents=True)
+    processed_dir.mkdir(parents=True)
+
+    year = 2025
+    _write(
+        raw_dir / f"gtfs_schedules_{year}.csv",
+        "service_date,route_id,trip_id,stop_id,arrival_time,departure_time,stop_sequence,direction_id\n"
+        "2025-01-01,Red,t1,stop_001,08:00:00,08:01:00,1,0\n"
+        "2025-01-01,Red,t1,stop_002,08:05:00,08:06:00,2,0\n"
+        "2025-01-01,Red,t2,stop_001,08:10:00,08:11:00,1,0\n"
+        "2025-01-01,Red,t2,stop_002,08:15:00,08:16:00,2,0\n",
+    )
+
+    metrics = build_gtfs_schedule_reference_and_geography(
+        raw_dir=raw_dir,
+        processed_dir=processed_dir,
+        year=year,
+    )
+
+    assert metrics["station_point_features"] > 0
+    assert metrics["line_features"] > 0
+    assert metrics["synthetic_coordinate_rows"] > 0

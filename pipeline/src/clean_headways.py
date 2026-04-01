@@ -23,10 +23,47 @@ VALID_ROUTES = {
 BRANCH_EXPECTED_ROUTES = {"Red", "Green-B", "Green-C", "Green-D", "Green-E"}
 
 
+def _parse_hhmmss_to_seconds(series: pd.Series) -> pd.Series:
+    parts = series.astype(str).str.strip().str.split(":", expand=True)
+    if parts.shape[1] < 2:
+        return pd.Series(float("nan"), index=series.index, dtype="float64")
+
+    hh = pd.to_numeric(parts[0], errors="coerce")
+    mm = pd.to_numeric(parts[1], errors="coerce")
+    ss = pd.to_numeric(parts[2], errors="coerce") if parts.shape[1] >= 3 else 0
+    return hh * 3600 + mm * 60 + ss
+
+
+def _infer_event_time_from_gtfs(raw_dir: Optional[Path], year: Optional[int]) -> pd.Series:
+    if raw_dir is None or year is None:
+        return pd.Series(dtype="float64")
+
+    gtfs_path = raw_dir / f"gtfs_schedules_{year}.csv"
+    if not gtfs_path.exists():
+        return pd.Series(dtype="float64")
+
+    gtfs = pd.read_csv(gtfs_path, low_memory=False)
+    if "trip_id" not in gtfs.columns:
+        return pd.Series(dtype="float64")
+
+    dep = _parse_hhmmss_to_seconds(gtfs.get("departure_time", pd.Series(pd.NA, index=gtfs.index)))
+    arr = _parse_hhmmss_to_seconds(gtfs.get("arrival_time", pd.Series(pd.NA, index=gtfs.index)))
+    time_sec = dep.fillna(arr)
+    inferred = pd.DataFrame({"trip_id": gtfs["trip_id"].astype(str).str.strip(), "event_time_sec": time_sec})
+    inferred = inferred.dropna(subset=["trip_id", "event_time_sec"])
+    if inferred.empty:
+        return pd.Series(dtype="float64")
+
+    return inferred.groupby("trip_id")["event_time_sec"].median()
+
+
 def clean_headways_dataset(
     source_csv: Path,
     destination_parquet: Path,
     destination_csv: Optional[Path] = None,
+    *,
+    raw_dir: Optional[Path] = None,
+    year: Optional[int] = None,
 ) -> Dict[str, object]:
     if not source_csv.exists():
         raise FileNotFoundError(f"Missing headways source file: {source_csv}")
@@ -82,6 +119,16 @@ def clean_headways_dataset(
     cleaned["headway_deviation_sec"] = cleaned["headway_trunk_sec"] - cleaned["benchmark_headway_sec"]
 
     event_time_numeric = pd.to_numeric(cleaned["event_time_sec"], errors="coerce")
+    inferred_event_rows = 0
+    if event_time_numeric.isna().any():
+        inferred_by_trip = _infer_event_time_from_gtfs(raw_dir=raw_dir, year=year)
+        if not inferred_by_trip.empty and "trip_id" in cleaned.columns:
+            trip_ids = cleaned["trip_id"].astype(str).str.strip()
+            inferred_values = trip_ids.map(inferred_by_trip)
+            fill_mask = event_time_numeric.isna() & inferred_values.notna()
+            inferred_event_rows = int(fill_mask.sum())
+            event_time_numeric = event_time_numeric.where(~fill_mask, inferred_values)
+
     cleaned["event_time_sec"] = event_time_numeric.astype("Int64")
     cleaned["hour_of_day"] = (event_time_numeric // 3600) % 24
     cleaned["hour_of_day"] = cleaned["hour_of_day"].astype("Int64")
@@ -113,6 +160,8 @@ def clean_headways_dataset(
         "branch_headway_missing_when_expected_rows": int(cleaned["branch_headway_missing_when_expected"].sum()),
         "branch_headway_unexpected_present_rows": int(cleaned["branch_headway_unexpected_present"].sum()),
         "outlier_rows": int(cleaned["headway_trunk_outlier"].sum()),
+        "inferred_event_time_rows": inferred_event_rows,
+        "unknown_time_period_rows": int((cleaned["time_period"] == "Unknown").sum()),
         "time_period_counts": {k: int(v) for k, v in cleaned["time_period"].value_counts(dropna=False).to_dict().items()},
         "output_parquet": str(destination_parquet),
         "output_csv": str(destination_csv) if destination_csv else None,

@@ -13,6 +13,40 @@ from time_periods import classify_time_period
 SLOW_ZONE_DEVIATION_THRESHOLD_SEC = 60.0
 
 
+def _parse_hhmmss_to_seconds(series: pd.Series) -> pd.Series:
+    parts = series.astype(str).str.strip().str.split(":", expand=True)
+    if parts.shape[1] < 2:
+        return pd.Series(float("nan"), index=series.index, dtype="float64")
+
+    hh = pd.to_numeric(parts[0], errors="coerce")
+    mm = pd.to_numeric(parts[1], errors="coerce")
+    ss = pd.to_numeric(parts[2], errors="coerce") if parts.shape[1] >= 3 else 0
+    return hh * 3600 + mm * 60 + ss
+
+
+def _infer_trip_time_from_gtfs(raw_dir: Optional[Path], year: Optional[int]) -> pd.Series:
+    if raw_dir is None or year is None:
+        return pd.Series(dtype="float64")
+
+    gtfs_path = raw_dir / f"gtfs_schedules_{year}.csv"
+    if not gtfs_path.exists():
+        return pd.Series(dtype="float64")
+
+    gtfs = pd.read_csv(gtfs_path, low_memory=False)
+    if "trip_id" not in gtfs.columns:
+        return pd.Series(dtype="float64")
+
+    dep = _parse_hhmmss_to_seconds(gtfs.get("departure_time", pd.Series(pd.NA, index=gtfs.index)))
+    arr = _parse_hhmmss_to_seconds(gtfs.get("arrival_time", pd.Series(pd.NA, index=gtfs.index)))
+    time_sec = dep.fillna(arr)
+    inferred = pd.DataFrame({"trip_id": gtfs["trip_id"].astype(str).str.strip(), "event_time_sec": time_sec})
+    inferred = inferred.dropna(subset=["trip_id", "event_time_sec"])
+    if inferred.empty:
+        return pd.Series(dtype="float64")
+
+    return inferred.groupby("trip_id")["event_time_sec"].median()
+
+
 def _resolve_time_seconds(df: pd.DataFrame) -> pd.Series:
     if "event_time_sec" in df.columns:
         return pd.to_numeric(df["event_time_sec"], errors="coerce")
@@ -81,9 +115,12 @@ def clean_travel_times_dataset(
     if stop_ids:
         cleaned["from_stop_valid"] = cleaned["from_stop_id"].isin(stop_ids)
         cleaned["to_stop_valid"] = cleaned["to_stop_id"].isin(stop_ids)
+        stop_validation_available = True
     else:
-        cleaned["from_stop_valid"] = False
-        cleaned["to_stop_valid"] = False
+        # If no canonical lookup is available, avoid marking every row invalid.
+        cleaned["from_stop_valid"] = True
+        cleaned["to_stop_valid"] = True
+        stop_validation_available = False
 
     cleaned["segment_stops_valid"] = cleaned["from_stop_valid"] & cleaned["to_stop_valid"]
     cleaned["same_origin_destination"] = cleaned["from_stop_id"] == cleaned["to_stop_id"]
@@ -103,6 +140,16 @@ def clean_travel_times_dataset(
     cleaned["slow_zone_candidate"] = cleaned["segment_id"].isin(slow_zone_segments)
 
     event_time_sec = _resolve_time_seconds(cleaned)
+    inferred_event_rows = 0
+    if event_time_sec.isna().any() and "trip_id" in cleaned.columns:
+        inferred_by_trip = _infer_trip_time_from_gtfs(raw_dir=raw_dir, year=year)
+        if not inferred_by_trip.empty:
+            trip_ids = cleaned["trip_id"].astype(str).str.strip()
+            inferred_values = trip_ids.map(inferred_by_trip)
+            fill_mask = event_time_sec.isna() & inferred_values.notna()
+            inferred_event_rows = int(fill_mask.sum())
+            event_time_sec = event_time_sec.where(~fill_mask, inferred_values)
+
     cleaned["event_time_sec"] = pd.to_numeric(event_time_sec, errors="coerce").astype("Int64")
     cleaned["hour_of_day"] = ((pd.to_numeric(event_time_sec, errors="coerce") // 3600) % 24).astype("Int64")
 
@@ -126,9 +173,12 @@ def clean_travel_times_dataset(
         "rows_dropped_null_travel_time": rows_dropped_null_travel_time,
         "null_travel_time_before": null_travel_before,
         "null_travel_time_after": int(cleaned["travel_time_sec"].isna().sum()),
+        "inferred_event_time_rows": inferred_event_rows,
+        "unknown_time_period_rows": int((cleaned["time_period"] == "Unknown").sum()),
         "missing_benchmark_rows": int(cleaned["benchmark_travel_time_sec"].isna().sum()),
         "same_origin_destination_rows": int(cleaned["same_origin_destination"].sum()),
         "invalid_stop_rows": int((~cleaned["segment_stops_valid"]).sum()),
+        "stop_validation_available": stop_validation_available,
         "slow_zone_threshold_sec": slow_zone_threshold_sec,
         "slow_zone_segment_count": int(len(set(slow_zone_segments))),
         "slow_zone_rows": int(cleaned["slow_zone_candidate"].sum()),

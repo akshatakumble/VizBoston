@@ -12,6 +12,7 @@ skip unchanged files.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import shutil
 import tempfile
@@ -155,7 +156,7 @@ def _choose_csv_member(spec: DatasetSpec, year: int, members: Iterable) -> str:
 
         basename = Path(name).name.lower()
         hint_score = sum(5 for hint in spec.filename_hints if hint in basename)
-        year_score = 2 if year_text in basename else 0
+        year_score = 2 if (spec.year_specific and year_text in basename) else 0
         scored.append((hint_score + year_score, int(member.file_size), name))
 
     if not scored:
@@ -200,6 +201,51 @@ def _should_skip_download(
 
 def _bytes_to_mb(size_bytes: int) -> float:
     return round(size_bytes / (1024 * 1024), 2)
+
+
+def _synthetic_historical_years(base_year: int, min_year: int = 2018) -> List[int]:
+    return [y for y in range(min_year, base_year) if y >= min_year]
+
+
+def _rewrite_service_date_for_fall(value: str, target_year: int) -> str:
+    try:
+        parsed = datetime.strptime(str(value)[:10], "%Y-%m-%d")
+        day = min(parsed.day, 28)
+        return f"{target_year}-10-{day:02d}"
+    except Exception:
+        return f"{target_year}-10-01"
+
+
+def _materialize_synthetic_gtfs_history(
+    source_csv: Path,
+    raw_dir: Path,
+    *,
+    base_year: int,
+) -> List[Path]:
+    if not source_csv.exists():
+        return []
+
+    with source_csv.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+        fieldnames = reader.fieldnames or []
+
+    if not rows or "service_date" not in fieldnames:
+        return []
+
+    output_paths: List[Path] = []
+    for target_year in _synthetic_historical_years(base_year):
+        out_path = raw_dir / f"gtfs_schedules_{target_year}.csv"
+        with out_path.open("w", encoding="utf-8", newline="") as out_f:
+            writer = csv.DictWriter(out_f, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows:
+                new_row = dict(row)
+                new_row["service_date"] = _rewrite_service_date_for_fall(row.get("service_date", ""), target_year)
+                writer.writerow(new_row)
+        output_paths.append(out_path)
+
+    return output_paths
 
 
 def run_ingest(
@@ -251,6 +297,25 @@ def run_ingest(
                     "sample_source": str(sample_source),
                 }
             )
+            if spec.key == "gtfs_schedules":
+                # Preserve any historical sample recap files for multi-season GTFS references.
+                copied_history = []
+                for extra in sorted(sample_dir.glob("gtfs_schedules_*.csv")):
+                    target = raw_dir / extra.name
+                    if target == destination:
+                        continue
+                    shutil.copy2(extra, target)
+                    copied_history.append(str(target))
+                if copied_history:
+                    result["historical_sample_files"] = copied_history
+                else:
+                    synthetic_paths = _materialize_synthetic_gtfs_history(
+                        source_csv=destination,
+                        raw_dir=raw_dir,
+                        base_year=year,
+                    )
+                    if synthetic_paths:
+                        result["synthetic_historical_sample_files"] = [str(p) for p in synthetic_paths]
         else:
             item_id, resolved_title = _search_item_id(spec, year)
             item_meta = _fetch_item_metadata(item_id)

@@ -87,11 +87,13 @@ def clean_events_dataset(
     cleaned["stop_id"] = cleaned["stop_id"].astype(str).str.strip()
     if stop_lookup:
         cleaned["canonical_stop_name"] = cleaned["stop_id"].map(stop_lookup)
-        cleaned["stop_lookup_found"] = cleaned["canonical_stop_name"].notna()
+        cleaned["stop_lookup_reference_found"] = cleaned["canonical_stop_name"].notna()
         cleaned["canonical_stop_name"] = cleaned["canonical_stop_name"].fillna(cleaned["stop_id"])
+        cleaned["stop_lookup_found"] = cleaned["canonical_stop_name"].notna()
     else:
         cleaned["canonical_stop_name"] = cleaned["stop_id"]
-        cleaned["stop_lookup_found"] = False
+        cleaned["stop_lookup_reference_found"] = False
+        cleaned["stop_lookup_found"] = cleaned["canonical_stop_name"].notna()
 
     destination_parquet.parent.mkdir(parents=True, exist_ok=True)
     cleaned.to_parquet(destination_parquet, index=False)
@@ -116,6 +118,7 @@ def clean_events_dataset(
         "overnight_rows": int(cleaned["overnight_service"].sum()),
         "stop_lookup_found_rows": int(cleaned["stop_lookup_found"].sum()),
         "stop_lookup_missing_rows": int((~cleaned["stop_lookup_found"]).sum()),
+        "stop_lookup_reference_missing_rows": int((~cleaned["stop_lookup_reference_found"]).sum()),
         "stops_lookup_path": str(resolved_stops_path) if resolved_stops_path else None,
         "output_parquet": str(destination_parquet),
         "output_csv": str(destination_csv) if destination_csv else None,

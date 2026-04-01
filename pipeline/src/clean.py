@@ -81,6 +81,8 @@ def run_clean(year: int, raw_dir: Path, processed_dir: Path) -> Path:
                     source_csv=raw_path,
                     destination_parquet=clean_parquet_path,
                     destination_csv=clean_path,
+                    raw_dir=raw_dir,
+                    year=year,
                 )
                 status = "cleaned"
                 rows = int(metrics["rows_after_drop"])

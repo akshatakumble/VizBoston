@@ -40,6 +40,8 @@ def test_ingest_uses_samples_by_default(tmp_path: Path) -> None:
     assert manifest_path.exists()
     for dataset in DATASETS:
         assert (raw_dir / f"{dataset}_{year}.csv").exists()
+    # GTFS sample mode materializes synthetic historical recap files when none are provided.
+    assert (raw_dir / "gtfs_schedules_2024.csv").exists()
 
 
 def test_ingest_skips_unchanged_download_when_manifest_matches(tmp_path: Path, monkeypatch) -> None:

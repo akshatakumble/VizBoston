@@ -19,10 +19,11 @@ DEFAULT_RAW_DIR = REPO_ROOT / "data" / "raw"
 DEFAULT_SAMPLE_DIR = REPO_ROOT / "data" / "samples"
 
 
-def _filter_chunk(chunk: pd.DataFrame, month: int, routes: set[str]) -> pd.DataFrame:
+def _filter_chunk(dataset: str, chunk: pd.DataFrame, month: int, routes: set[str]) -> pd.DataFrame:
     mask = pd.Series(True, index=chunk.index)
 
-    if "service_date" in chunk.columns:
+    # Keep broader seasonal coverage for GTFS recap samples.
+    if dataset != "gtfs_schedules" and "service_date" in chunk.columns:
         service_dates = pd.to_datetime(chunk["service_date"], errors="coerce")
         mask &= service_dates.dt.month == month
 
@@ -55,7 +56,7 @@ def _sample_single_dataset(
     selected_count = 0
 
     for chunk in pd.read_csv(source, chunksize=chunksize, low_memory=False):
-        filtered = _filter_chunk(chunk, month=month, routes=routes)
+        filtered = _filter_chunk(dataset=dataset, chunk=chunk, month=month, routes=routes)
         if filtered.empty:
             continue
 

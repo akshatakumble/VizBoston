@@ -24,6 +24,17 @@ LINE_COLOR_MAP = {
     "Mattapan": "#DA291C",
 }
 
+ROUTE_ANCHOR_MAP = {
+    "Red": (42.352, -71.062),
+    "Orange": (42.360, -71.069),
+    "Blue": (42.366, -71.031),
+    "Green-B": (42.349, -71.092),
+    "Green-C": (42.343, -71.117),
+    "Green-D": (42.340, -71.145),
+    "Green-E": (42.336, -71.095),
+    "Mattapan": (42.270, -71.089),
+}
+
 
 def _parse_hhmmss_to_seconds(series: pd.Series) -> pd.Series:
     parts = series.astype(str).str.strip().str.split(":", expand=True)
@@ -233,6 +244,43 @@ def _route_family(route_id: str) -> str:
     return route_id
 
 
+def _route_anchor(route_id: str) -> Tuple[float, float]:
+    if route_id in ROUTE_ANCHOR_MAP:
+        return ROUTE_ANCHOR_MAP[route_id]
+    return 42.35, -71.06
+
+
+def _synthesize_missing_coordinates(station_df: pd.DataFrame) -> Tuple[pd.DataFrame, int]:
+    if station_df.empty:
+        station_df["coordinate_source"] = pd.Series(dtype="object")
+        return station_df, 0
+
+    out = station_df.copy()
+    out["coordinate_source"] = "gtfs_stops"
+    missing_mask = out["latitude"].isna() | out["longitude"].isna()
+    if not missing_mask.any():
+        return out, 0
+
+    synth_count = 0
+    for route_id, idx in out[missing_mask].groupby("route_id").groups.items():
+        route_rows = out.loc[idx].copy()
+        if route_rows["stop_sequence"].notna().any():
+            route_rows = route_rows.sort_values("stop_sequence")
+        else:
+            route_rows = route_rows.sort_values("stop_id")
+
+        anchor_lat, anchor_lon = _route_anchor(str(route_id))
+        for step, row_idx in enumerate(route_rows.index):
+            if pd.notna(out.at[row_idx, "latitude"]) and pd.notna(out.at[row_idx, "longitude"]):
+                continue
+            out.at[row_idx, "latitude"] = anchor_lat + (step * 0.0025)
+            out.at[row_idx, "longitude"] = anchor_lon - (step * 0.0020)
+            out.at[row_idx, "coordinate_source"] = "synthetic_from_stop_sequence"
+            synth_count += 1
+
+    return out, synth_count
+
+
 def _load_massgis_line_features(raw_dir: Path) -> Tuple[List[Dict], Optional[str]]:
     shp_candidates = [
         raw_dir / "MBTA_ARC.shp",
@@ -331,6 +379,8 @@ def _build_station_outputs(
             ]
         ]
 
+    station_df, synthetic_coordinate_rows = _synthesize_missing_coordinates(station_df)
+
     station_parquet = processed_dir / f"station_reference_{year}.parquet"
     station_csv = processed_dir / f"station_reference_{year}.csv"
     station_df.to_parquet(station_parquet, index=False)
@@ -398,6 +448,7 @@ def _build_station_outputs(
         "station_rows": int(len(station_df)),
         "station_point_features": int(len(station_features)),
         "line_features": int(len(line_features)),
+        "synthetic_coordinate_rows": int(synthetic_coordinate_rows),
         "massgis_warning": massgis_warning,
         "stops_lookup_path": str(stops_path) if stops_path else None,
     }
