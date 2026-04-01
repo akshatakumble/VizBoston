@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import json
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -116,3 +117,24 @@ def test_clean_transform_export_flow_uses_sample_ingest(tmp_path: Path) -> None:
     assert clean_report.exists()
     assert summary_path.exists()
     assert destination.exists()
+
+    report_payload = json.loads(clean_report.read_text(encoding="utf-8"))
+    events_report = report_payload["datasets"]["rapid_transit_events"]
+    assert events_report["status"] == "cleaned"
+    assert "metrics" in events_report
+    assert Path(events_report["clean_parquet_file"]).exists()
+
+    headways_report = report_payload["datasets"]["rapid_transit_headways"]
+    assert headways_report["status"] == "cleaned"
+    assert "metrics" in headways_report
+    assert Path(headways_report["clean_parquet_file"]).exists()
+
+    travel_report = report_payload["datasets"]["rapid_transit_travel_times"]
+    assert travel_report["status"] == "cleaned"
+    assert "metrics" in travel_report
+    assert Path(travel_report["clean_parquet_file"]).exists()
+
+    gtfs_report = report_payload["datasets"]["gtfs_schedules"]
+    assert gtfs_report["status"] == "cleaned"
+    assert "metrics" in gtfs_report
+    assert Path(gtfs_report["clean_parquet_file"]).exists()

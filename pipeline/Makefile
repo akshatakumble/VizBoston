@@ -9,6 +9,7 @@ RAW_DIR ?= ../data/raw
 PROCESSED_DIR ?= ../data/processed
 SAMPLE_DIR ?= ../data/samples
 WEB_DATA_DIR ?= ../web/src/data
+LOG_DIR ?= logs
 NOTEBOOK_DIR ?= notebooks
 REPORT_PATH ?= ../docs/data_quality_report.md
 SAMPLE_MONTH ?= 1
@@ -30,7 +31,7 @@ test:
 	$(PY) -m pytest -q tests
 
 ingest:
-	$(PY) src/ingest.py --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) $(SAMPLE_FLAG)
+	$(PY) src/orchestrate.py --step ingest --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR) --log-dir $(LOG_DIR) $(SAMPLE_FLAG)
 
 samples:
 	$(PY) src/create_samples.py --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --month $(SAMPLE_MONTH) --routes $(SAMPLE_ROUTES) --target-rows $(TARGET_SAMPLE_ROWS) --max-size-mb $(MAX_SAMPLE_SIZE_MB)
@@ -39,12 +40,13 @@ eda:
 	$(PY) src/eda.py --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --notebook-dir $(NOTEBOOK_DIR) --report-path $(REPORT_PATH) --source $(EDA_SOURCE)
 
 clean:
-	$(PY) src/clean.py --year $(YEAR) --raw-dir $(RAW_DIR) --processed-dir $(PROCESSED_DIR)
+	$(PY) src/orchestrate.py --step clean --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR) --log-dir $(LOG_DIR) $(SAMPLE_FLAG)
 
 transform:
-	$(PY) src/transform.py --year $(YEAR) --processed-dir $(PROCESSED_DIR)
+	$(PY) src/orchestrate.py --step transform --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR) --log-dir $(LOG_DIR) $(SAMPLE_FLAG)
 
 export:
-	$(PY) src/export.py --year $(YEAR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR)
+	$(PY) src/orchestrate.py --step export --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR) --log-dir $(LOG_DIR) $(SAMPLE_FLAG)
 
-all: ingest clean transform export
+all:
+	$(PY) src/orchestrate.py --step all --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR) --log-dir $(LOG_DIR) $(SAMPLE_FLAG)

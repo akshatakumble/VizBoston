@@ -65,6 +65,14 @@ make export
 make all
 ```
 
+Pipeline orchestration notes:
+- `make all` executes `ingest -> clean -> transform -> export` with validation checks between steps.
+- Validation failures stop execution immediately with a clear error message.
+- Structured step logs are appended to `pipeline/logs/pipeline_steps.jsonl` and include:
+  - `row_counts`
+  - `null_rates`
+  - `processing_time_sec`
+
 `make ingest` uses sample CSVs by default (`USE_SAMPLE=1`). To download full MBTA
 datasets from ArcGIS Hub:
 
