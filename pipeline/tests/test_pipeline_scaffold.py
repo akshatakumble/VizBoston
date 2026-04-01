@@ -12,6 +12,7 @@ import export  # noqa: E402
 import ingest  # noqa: E402
 import transform  # noqa: E402
 from common import DATASETS, write_json  # noqa: E402
+from metric_aggregations import METRIC_FILENAMES  # noqa: E402
 
 
 def _write_minimal_samples(sample_dir: Path, year: int) -> None:
@@ -119,6 +120,30 @@ def test_clean_transform_export_flow_uses_sample_ingest(tmp_path: Path) -> None:
     assert clean_report.exists()
     assert summary_path.exists()
     assert destination.exists()
+
+    summary_payload = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert "metric_artifacts" in summary_payload
+    for key in METRIC_FILENAMES:
+        assert key in summary_payload["metric_artifacts"]
+        metric_path = Path(summary_payload["metric_artifacts"][key]["path"])
+        assert metric_path.exists()
+        assert (web_data_dir / metric_path.name).exists()
+        assert (web_data_dir / f"{metric_path.name}.gz").exists()
+
+    manifest_path = web_data_dir / f"data_manifest_{year}.json"
+    assert manifest_path.exists()
+    assert (web_data_dir / f"data_manifest_{year}.json.gz").exists()
+    manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert "files" in manifest_payload
+    assert isinstance(manifest_payload["files"], list)
+    assert manifest_payload["files"]
+    assert "performance_budget" in manifest_payload
+    assert manifest_payload["performance_budget"]["target_met"] is True
+
+    topojson_path = web_data_dir / f"mbta_transit_geography_{year}.topojson"
+    assert topojson_path.exists()
+    assert (web_data_dir / f"mbta_transit_geography_{year}.topojson.gz").exists()
+    assert (web_data_dir / "downloads").exists()
 
     report_payload = json.loads(clean_report.read_text(encoding="utf-8"))
     events_report = report_payload["datasets"]["rapid_transit_events"]

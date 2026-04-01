@@ -11,6 +11,7 @@ from pathlib import Path
 import pandas as pd
 
 from common import DATASETS, row_count, write_json
+from metric_aggregations import compute_metric_aggregations
 
 
 def _dataset_row_count(dataset: str, year: int, processed_dir: Path) -> int:
@@ -29,10 +30,12 @@ def _dataset_row_count(dataset: str, year: int, processed_dir: Path) -> int:
 
 
 def run_transform(year: int, processed_dir: Path) -> Path:
-    summary = {"year": year, "row_counts": {}}
+    summary = {"year": year, "row_counts": {}, "metric_artifacts": {}}
 
     for dataset in DATASETS:
         summary["row_counts"][dataset] = _dataset_row_count(dataset, year, processed_dir)
+
+    summary["metric_artifacts"] = compute_metric_aggregations(year=year, processed_dir=processed_dir)
 
     out_path = processed_dir / f"summary_{year}.json"
     write_json(out_path, summary)

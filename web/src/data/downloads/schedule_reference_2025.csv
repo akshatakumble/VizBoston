@@ -1,0 +1,761 @@
+season,route_id,stop_id,direction_id,time_period,scheduled_headway_sec,headway_samples,scheduled_travel_time_sec,travel_time_samples,stop_name
+Fall 2018,Orange,stop_002,1,AM Peak,1800.0,28,,,stop_002
+Fall 2018,Orange,stop_002,1,Evening,1800.0,28,,,stop_002
+Fall 2018,Orange,stop_002,1,Midday,10800.0,56,,,stop_002
+Fall 2018,Orange,stop_002,1,PM Peak,19800.0,28,,,stop_002
+Fall 2018,Orange,stop_004,1,AM Peak,1800.0,28,,,stop_004
+Fall 2018,Orange,stop_004,1,Evening,10800.0,56,,,stop_004
+Fall 2018,Orange,stop_004,1,Midday,10800.0,56,,,stop_004
+Fall 2018,Orange,stop_006,1,Evening,10800.0,56,,,stop_006
+Fall 2018,Orange,stop_006,1,Midday,1800.0,28,,,stop_006
+Fall 2018,Orange,stop_006,1,PM Peak,10800.0,56,,,stop_006
+Fall 2018,Orange,stop_008,1,AM Peak,1800.0,28,,,stop_008
+Fall 2018,Orange,stop_008,1,Evening,1800.0,28,,,stop_008
+Fall 2018,Orange,stop_008,1,Midday,10800.0,56,,,stop_008
+Fall 2018,Orange,stop_008,1,PM Peak,19800.0,28,,,stop_008
+Fall 2018,Orange,stop_010,1,AM Peak,1800.0,28,,,stop_010
+Fall 2018,Orange,stop_010,1,Evening,10800.0,56,,,stop_010
+Fall 2018,Orange,stop_010,1,Midday,10800.0,56,,,stop_010
+Fall 2018,Orange,stop_012,1,Evening,10800.0,56,,,stop_012
+Fall 2018,Orange,stop_012,1,Midday,1800.0,28,,,stop_012
+Fall 2018,Orange,stop_012,1,PM Peak,10800.0,56,,,stop_012
+Fall 2018,Orange,stop_014,1,AM Peak,1800.0,28,,,stop_014
+Fall 2018,Orange,stop_014,1,Evening,1800.0,28,,,stop_014
+Fall 2018,Orange,stop_014,1,Midday,10800.0,56,,,stop_014
+Fall 2018,Orange,stop_014,1,PM Peak,19800.0,28,,,stop_014
+Fall 2018,Orange,stop_016,1,AM Peak,1800.0,28,,,stop_016
+Fall 2018,Orange,stop_016,1,Evening,10800.0,56,,,stop_016
+Fall 2018,Orange,stop_016,1,Midday,10800.0,56,,,stop_016
+Fall 2018,Orange,stop_018,1,Evening,10800.0,56,,,stop_018
+Fall 2018,Orange,stop_018,1,Midday,1800.0,28,,,stop_018
+Fall 2018,Orange,stop_018,1,PM Peak,10800.0,56,,,stop_018
+Fall 2018,Orange,stop_020,1,AM Peak,1800.0,28,,,stop_020
+Fall 2018,Orange,stop_020,1,Evening,1800.0,28,,,stop_020
+Fall 2018,Orange,stop_020,1,Midday,10800.0,56,,,stop_020
+Fall 2018,Orange,stop_020,1,PM Peak,19800.0,28,,,stop_020
+Fall 2018,Orange,stop_022,1,AM Peak,1800.0,28,,,stop_022
+Fall 2018,Orange,stop_022,1,Evening,10800.0,56,,,stop_022
+Fall 2018,Orange,stop_022,1,Midday,10800.0,56,,,stop_022
+Fall 2018,Orange,stop_024,1,Evening,10800.0,56,,,stop_024
+Fall 2018,Orange,stop_024,1,Midday,1800.0,28,,,stop_024
+Fall 2018,Orange,stop_024,1,PM Peak,10800.0,56,,,stop_024
+Fall 2018,Orange,stop_026,1,AM Peak,1800.0,28,,,stop_026
+Fall 2018,Orange,stop_026,1,Evening,1800.0,28,,,stop_026
+Fall 2018,Orange,stop_026,1,Midday,10800.0,56,,,stop_026
+Fall 2018,Orange,stop_026,1,PM Peak,19800.0,28,,,stop_026
+Fall 2018,Orange,stop_028,1,AM Peak,1800.0,28,,,stop_028
+Fall 2018,Orange,stop_028,1,Evening,10800.0,56,,,stop_028
+Fall 2018,Orange,stop_028,1,Midday,10800.0,56,,,stop_028
+Fall 2018,Orange,stop_030,1,Evening,10800.0,56,,,stop_030
+Fall 2018,Orange,stop_030,1,Midday,1800.0,28,,,stop_030
+Fall 2018,Orange,stop_030,1,PM Peak,10800.0,56,,,stop_030
+Fall 2018,Red,stop_001,0,Midday,10800.0,56,,,stop_001
+Fall 2018,Red,stop_001,0,Other,1800.0,28,,,stop_001
+Fall 2018,Red,stop_001,0,PM Peak,10800.0,56,,,stop_001
+Fall 2018,Red,stop_003,0,AM Peak,1800.0,28,,,stop_003
+Fall 2018,Red,stop_003,0,Evening,10800.0,56,,,stop_003
+Fall 2018,Red,stop_003,0,Midday,10800.0,56,,,stop_003
+Fall 2018,Red,stop_005,0,Evening,10800.0,56,,,stop_005
+Fall 2018,Red,stop_005,0,Midday,10800.0,56,,,stop_005
+Fall 2018,Red,stop_005,0,PM Peak,1800.0,28,,,stop_005
+Fall 2018,Red,stop_007,0,Midday,10800.0,56,,,stop_007
+Fall 2018,Red,stop_007,0,Other,1800.0,28,,,stop_007
+Fall 2018,Red,stop_007,0,PM Peak,10800.0,56,,,stop_007
+Fall 2018,Red,stop_009,0,AM Peak,1800.0,28,,,stop_009
+Fall 2018,Red,stop_009,0,Evening,10800.0,56,,,stop_009
+Fall 2018,Red,stop_009,0,Midday,10800.0,56,,,stop_009
+Fall 2018,Red,stop_011,0,Evening,10800.0,56,,,stop_011
+Fall 2018,Red,stop_011,0,Midday,10800.0,56,,,stop_011
+Fall 2018,Red,stop_011,0,PM Peak,1800.0,28,,,stop_011
+Fall 2018,Red,stop_013,0,Midday,10800.0,56,,,stop_013
+Fall 2018,Red,stop_013,0,Other,1800.0,28,,,stop_013
+Fall 2018,Red,stop_013,0,PM Peak,10800.0,56,,,stop_013
+Fall 2018,Red,stop_015,0,AM Peak,1800.0,28,,,stop_015
+Fall 2018,Red,stop_015,0,Evening,10800.0,56,,,stop_015
+Fall 2018,Red,stop_015,0,Midday,10800.0,56,,,stop_015
+Fall 2018,Red,stop_017,0,Evening,10800.0,56,,,stop_017
+Fall 2018,Red,stop_017,0,Midday,10800.0,56,,,stop_017
+Fall 2018,Red,stop_017,0,PM Peak,1800.0,28,,,stop_017
+Fall 2018,Red,stop_019,0,Midday,10800.0,56,,,stop_019
+Fall 2018,Red,stop_019,0,Other,1800.0,28,,,stop_019
+Fall 2018,Red,stop_019,0,PM Peak,10800.0,56,,,stop_019
+Fall 2018,Red,stop_021,0,AM Peak,1800.0,28,,,stop_021
+Fall 2018,Red,stop_021,0,Evening,10800.0,56,,,stop_021
+Fall 2018,Red,stop_021,0,Midday,10800.0,56,,,stop_021
+Fall 2018,Red,stop_023,0,Evening,10800.0,56,,,stop_023
+Fall 2018,Red,stop_023,0,Midday,10800.0,56,,,stop_023
+Fall 2018,Red,stop_023,0,PM Peak,1800.0,28,,,stop_023
+Fall 2018,Red,stop_025,0,Midday,10800.0,56,,,stop_025
+Fall 2018,Red,stop_025,0,Other,1800.0,28,,,stop_025
+Fall 2018,Red,stop_025,0,PM Peak,10800.0,56,,,stop_025
+Fall 2018,Red,stop_027,0,AM Peak,1800.0,28,,,stop_027
+Fall 2018,Red,stop_027,0,Evening,10800.0,56,,,stop_027
+Fall 2018,Red,stop_027,0,Midday,10800.0,56,,,stop_027
+Fall 2018,Red,stop_029,0,Evening,10800.0,56,,,stop_029
+Fall 2018,Red,stop_029,0,Midday,10800.0,56,,,stop_029
+Fall 2018,Red,stop_029,0,PM Peak,1800.0,28,,,stop_029
+Fall 2019,Orange,stop_002,1,AM Peak,1800.0,28,,,stop_002
+Fall 2019,Orange,stop_002,1,Evening,1800.0,28,,,stop_002
+Fall 2019,Orange,stop_002,1,Midday,10800.0,56,,,stop_002
+Fall 2019,Orange,stop_002,1,PM Peak,19800.0,28,,,stop_002
+Fall 2019,Orange,stop_004,1,AM Peak,1800.0,28,,,stop_004
+Fall 2019,Orange,stop_004,1,Evening,10800.0,56,,,stop_004
+Fall 2019,Orange,stop_004,1,Midday,10800.0,56,,,stop_004
+Fall 2019,Orange,stop_006,1,Evening,10800.0,56,,,stop_006
+Fall 2019,Orange,stop_006,1,Midday,1800.0,28,,,stop_006
+Fall 2019,Orange,stop_006,1,PM Peak,10800.0,56,,,stop_006
+Fall 2019,Orange,stop_008,1,AM Peak,1800.0,28,,,stop_008
+Fall 2019,Orange,stop_008,1,Evening,1800.0,28,,,stop_008
+Fall 2019,Orange,stop_008,1,Midday,10800.0,56,,,stop_008
+Fall 2019,Orange,stop_008,1,PM Peak,19800.0,28,,,stop_008
+Fall 2019,Orange,stop_010,1,AM Peak,1800.0,28,,,stop_010
+Fall 2019,Orange,stop_010,1,Evening,10800.0,56,,,stop_010
+Fall 2019,Orange,stop_010,1,Midday,10800.0,56,,,stop_010
+Fall 2019,Orange,stop_012,1,Evening,10800.0,56,,,stop_012
+Fall 2019,Orange,stop_012,1,Midday,1800.0,28,,,stop_012
+Fall 2019,Orange,stop_012,1,PM Peak,10800.0,56,,,stop_012
+Fall 2019,Orange,stop_014,1,AM Peak,1800.0,28,,,stop_014
+Fall 2019,Orange,stop_014,1,Evening,1800.0,28,,,stop_014
+Fall 2019,Orange,stop_014,1,Midday,10800.0,56,,,stop_014
+Fall 2019,Orange,stop_014,1,PM Peak,19800.0,28,,,stop_014
+Fall 2019,Orange,stop_016,1,AM Peak,1800.0,28,,,stop_016
+Fall 2019,Orange,stop_016,1,Evening,10800.0,56,,,stop_016
+Fall 2019,Orange,stop_016,1,Midday,10800.0,56,,,stop_016
+Fall 2019,Orange,stop_018,1,Evening,10800.0,56,,,stop_018
+Fall 2019,Orange,stop_018,1,Midday,1800.0,28,,,stop_018
+Fall 2019,Orange,stop_018,1,PM Peak,10800.0,56,,,stop_018
+Fall 2019,Orange,stop_020,1,AM Peak,1800.0,28,,,stop_020
+Fall 2019,Orange,stop_020,1,Evening,1800.0,28,,,stop_020
+Fall 2019,Orange,stop_020,1,Midday,10800.0,56,,,stop_020
+Fall 2019,Orange,stop_020,1,PM Peak,19800.0,28,,,stop_020
+Fall 2019,Orange,stop_022,1,AM Peak,1800.0,28,,,stop_022
+Fall 2019,Orange,stop_022,1,Evening,10800.0,56,,,stop_022
+Fall 2019,Orange,stop_022,1,Midday,10800.0,56,,,stop_022
+Fall 2019,Orange,stop_024,1,Evening,10800.0,56,,,stop_024
+Fall 2019,Orange,stop_024,1,Midday,1800.0,28,,,stop_024
+Fall 2019,Orange,stop_024,1,PM Peak,10800.0,56,,,stop_024
+Fall 2019,Orange,stop_026,1,AM Peak,1800.0,28,,,stop_026
+Fall 2019,Orange,stop_026,1,Evening,1800.0,28,,,stop_026
+Fall 2019,Orange,stop_026,1,Midday,10800.0,56,,,stop_026
+Fall 2019,Orange,stop_026,1,PM Peak,19800.0,28,,,stop_026
+Fall 2019,Orange,stop_028,1,AM Peak,1800.0,28,,,stop_028
+Fall 2019,Orange,stop_028,1,Evening,10800.0,56,,,stop_028
+Fall 2019,Orange,stop_028,1,Midday,10800.0,56,,,stop_028
+Fall 2019,Orange,stop_030,1,Evening,10800.0,56,,,stop_030
+Fall 2019,Orange,stop_030,1,Midday,1800.0,28,,,stop_030
+Fall 2019,Orange,stop_030,1,PM Peak,10800.0,56,,,stop_030
+Fall 2019,Red,stop_001,0,Midday,10800.0,56,,,stop_001
+Fall 2019,Red,stop_001,0,Other,1800.0,28,,,stop_001
+Fall 2019,Red,stop_001,0,PM Peak,10800.0,56,,,stop_001
+Fall 2019,Red,stop_003,0,AM Peak,1800.0,28,,,stop_003
+Fall 2019,Red,stop_003,0,Evening,10800.0,56,,,stop_003
+Fall 2019,Red,stop_003,0,Midday,10800.0,56,,,stop_003
+Fall 2019,Red,stop_005,0,Evening,10800.0,56,,,stop_005
+Fall 2019,Red,stop_005,0,Midday,10800.0,56,,,stop_005
+Fall 2019,Red,stop_005,0,PM Peak,1800.0,28,,,stop_005
+Fall 2019,Red,stop_007,0,Midday,10800.0,56,,,stop_007
+Fall 2019,Red,stop_007,0,Other,1800.0,28,,,stop_007
+Fall 2019,Red,stop_007,0,PM Peak,10800.0,56,,,stop_007
+Fall 2019,Red,stop_009,0,AM Peak,1800.0,28,,,stop_009
+Fall 2019,Red,stop_009,0,Evening,10800.0,56,,,stop_009
+Fall 2019,Red,stop_009,0,Midday,10800.0,56,,,stop_009
+Fall 2019,Red,stop_011,0,Evening,10800.0,56,,,stop_011
+Fall 2019,Red,stop_011,0,Midday,10800.0,56,,,stop_011
+Fall 2019,Red,stop_011,0,PM Peak,1800.0,28,,,stop_011
+Fall 2019,Red,stop_013,0,Midday,10800.0,56,,,stop_013
+Fall 2019,Red,stop_013,0,Other,1800.0,28,,,stop_013
+Fall 2019,Red,stop_013,0,PM Peak,10800.0,56,,,stop_013
+Fall 2019,Red,stop_015,0,AM Peak,1800.0,28,,,stop_015
+Fall 2019,Red,stop_015,0,Evening,10800.0,56,,,stop_015
+Fall 2019,Red,stop_015,0,Midday,10800.0,56,,,stop_015
+Fall 2019,Red,stop_017,0,Evening,10800.0,56,,,stop_017
+Fall 2019,Red,stop_017,0,Midday,10800.0,56,,,stop_017
+Fall 2019,Red,stop_017,0,PM Peak,1800.0,28,,,stop_017
+Fall 2019,Red,stop_019,0,Midday,10800.0,56,,,stop_019
+Fall 2019,Red,stop_019,0,Other,1800.0,28,,,stop_019
+Fall 2019,Red,stop_019,0,PM Peak,10800.0,56,,,stop_019
+Fall 2019,Red,stop_021,0,AM Peak,1800.0,28,,,stop_021
+Fall 2019,Red,stop_021,0,Evening,10800.0,56,,,stop_021
+Fall 2019,Red,stop_021,0,Midday,10800.0,56,,,stop_021
+Fall 2019,Red,stop_023,0,Evening,10800.0,56,,,stop_023
+Fall 2019,Red,stop_023,0,Midday,10800.0,56,,,stop_023
+Fall 2019,Red,stop_023,0,PM Peak,1800.0,28,,,stop_023
+Fall 2019,Red,stop_025,0,Midday,10800.0,56,,,stop_025
+Fall 2019,Red,stop_025,0,Other,1800.0,28,,,stop_025
+Fall 2019,Red,stop_025,0,PM Peak,10800.0,56,,,stop_025
+Fall 2019,Red,stop_027,0,AM Peak,1800.0,28,,,stop_027
+Fall 2019,Red,stop_027,0,Evening,10800.0,56,,,stop_027
+Fall 2019,Red,stop_027,0,Midday,10800.0,56,,,stop_027
+Fall 2019,Red,stop_029,0,Evening,10800.0,56,,,stop_029
+Fall 2019,Red,stop_029,0,Midday,10800.0,56,,,stop_029
+Fall 2019,Red,stop_029,0,PM Peak,1800.0,28,,,stop_029
+Fall 2020,Orange,stop_002,1,AM Peak,1800.0,28,,,stop_002
+Fall 2020,Orange,stop_002,1,Evening,1800.0,28,,,stop_002
+Fall 2020,Orange,stop_002,1,Midday,10800.0,56,,,stop_002
+Fall 2020,Orange,stop_002,1,PM Peak,19800.0,28,,,stop_002
+Fall 2020,Orange,stop_004,1,AM Peak,1800.0,28,,,stop_004
+Fall 2020,Orange,stop_004,1,Evening,10800.0,56,,,stop_004
+Fall 2020,Orange,stop_004,1,Midday,10800.0,56,,,stop_004
+Fall 2020,Orange,stop_006,1,Evening,10800.0,56,,,stop_006
+Fall 2020,Orange,stop_006,1,Midday,1800.0,28,,,stop_006
+Fall 2020,Orange,stop_006,1,PM Peak,10800.0,56,,,stop_006
+Fall 2020,Orange,stop_008,1,AM Peak,1800.0,28,,,stop_008
+Fall 2020,Orange,stop_008,1,Evening,1800.0,28,,,stop_008
+Fall 2020,Orange,stop_008,1,Midday,10800.0,56,,,stop_008
+Fall 2020,Orange,stop_008,1,PM Peak,19800.0,28,,,stop_008
+Fall 2020,Orange,stop_010,1,AM Peak,1800.0,28,,,stop_010
+Fall 2020,Orange,stop_010,1,Evening,10800.0,56,,,stop_010
+Fall 2020,Orange,stop_010,1,Midday,10800.0,56,,,stop_010
+Fall 2020,Orange,stop_012,1,Evening,10800.0,56,,,stop_012
+Fall 2020,Orange,stop_012,1,Midday,1800.0,28,,,stop_012
+Fall 2020,Orange,stop_012,1,PM Peak,10800.0,56,,,stop_012
+Fall 2020,Orange,stop_014,1,AM Peak,1800.0,28,,,stop_014
+Fall 2020,Orange,stop_014,1,Evening,1800.0,28,,,stop_014
+Fall 2020,Orange,stop_014,1,Midday,10800.0,56,,,stop_014
+Fall 2020,Orange,stop_014,1,PM Peak,19800.0,28,,,stop_014
+Fall 2020,Orange,stop_016,1,AM Peak,1800.0,28,,,stop_016
+Fall 2020,Orange,stop_016,1,Evening,10800.0,56,,,stop_016
+Fall 2020,Orange,stop_016,1,Midday,10800.0,56,,,stop_016
+Fall 2020,Orange,stop_018,1,Evening,10800.0,56,,,stop_018
+Fall 2020,Orange,stop_018,1,Midday,1800.0,28,,,stop_018
+Fall 2020,Orange,stop_018,1,PM Peak,10800.0,56,,,stop_018
+Fall 2020,Orange,stop_020,1,AM Peak,1800.0,28,,,stop_020
+Fall 2020,Orange,stop_020,1,Evening,1800.0,28,,,stop_020
+Fall 2020,Orange,stop_020,1,Midday,10800.0,56,,,stop_020
+Fall 2020,Orange,stop_020,1,PM Peak,19800.0,28,,,stop_020
+Fall 2020,Orange,stop_022,1,AM Peak,1800.0,28,,,stop_022
+Fall 2020,Orange,stop_022,1,Evening,10800.0,56,,,stop_022
+Fall 2020,Orange,stop_022,1,Midday,10800.0,56,,,stop_022
+Fall 2020,Orange,stop_024,1,Evening,10800.0,56,,,stop_024
+Fall 2020,Orange,stop_024,1,Midday,1800.0,28,,,stop_024
+Fall 2020,Orange,stop_024,1,PM Peak,10800.0,56,,,stop_024
+Fall 2020,Orange,stop_026,1,AM Peak,1800.0,28,,,stop_026
+Fall 2020,Orange,stop_026,1,Evening,1800.0,28,,,stop_026
+Fall 2020,Orange,stop_026,1,Midday,10800.0,56,,,stop_026
+Fall 2020,Orange,stop_026,1,PM Peak,19800.0,28,,,stop_026
+Fall 2020,Orange,stop_028,1,AM Peak,1800.0,28,,,stop_028
+Fall 2020,Orange,stop_028,1,Evening,10800.0,56,,,stop_028
+Fall 2020,Orange,stop_028,1,Midday,10800.0,56,,,stop_028
+Fall 2020,Orange,stop_030,1,Evening,10800.0,56,,,stop_030
+Fall 2020,Orange,stop_030,1,Midday,1800.0,28,,,stop_030
+Fall 2020,Orange,stop_030,1,PM Peak,10800.0,56,,,stop_030
+Fall 2020,Red,stop_001,0,Midday,10800.0,56,,,stop_001
+Fall 2020,Red,stop_001,0,Other,1800.0,28,,,stop_001
+Fall 2020,Red,stop_001,0,PM Peak,10800.0,56,,,stop_001
+Fall 2020,Red,stop_003,0,AM Peak,1800.0,28,,,stop_003
+Fall 2020,Red,stop_003,0,Evening,10800.0,56,,,stop_003
+Fall 2020,Red,stop_003,0,Midday,10800.0,56,,,stop_003
+Fall 2020,Red,stop_005,0,Evening,10800.0,56,,,stop_005
+Fall 2020,Red,stop_005,0,Midday,10800.0,56,,,stop_005
+Fall 2020,Red,stop_005,0,PM Peak,1800.0,28,,,stop_005
+Fall 2020,Red,stop_007,0,Midday,10800.0,56,,,stop_007
+Fall 2020,Red,stop_007,0,Other,1800.0,28,,,stop_007
+Fall 2020,Red,stop_007,0,PM Peak,10800.0,56,,,stop_007
+Fall 2020,Red,stop_009,0,AM Peak,1800.0,28,,,stop_009
+Fall 2020,Red,stop_009,0,Evening,10800.0,56,,,stop_009
+Fall 2020,Red,stop_009,0,Midday,10800.0,56,,,stop_009
+Fall 2020,Red,stop_011,0,Evening,10800.0,56,,,stop_011
+Fall 2020,Red,stop_011,0,Midday,10800.0,56,,,stop_011
+Fall 2020,Red,stop_011,0,PM Peak,1800.0,28,,,stop_011
+Fall 2020,Red,stop_013,0,Midday,10800.0,56,,,stop_013
+Fall 2020,Red,stop_013,0,Other,1800.0,28,,,stop_013
+Fall 2020,Red,stop_013,0,PM Peak,10800.0,56,,,stop_013
+Fall 2020,Red,stop_015,0,AM Peak,1800.0,28,,,stop_015
+Fall 2020,Red,stop_015,0,Evening,10800.0,56,,,stop_015
+Fall 2020,Red,stop_015,0,Midday,10800.0,56,,,stop_015
+Fall 2020,Red,stop_017,0,Evening,10800.0,56,,,stop_017
+Fall 2020,Red,stop_017,0,Midday,10800.0,56,,,stop_017
+Fall 2020,Red,stop_017,0,PM Peak,1800.0,28,,,stop_017
+Fall 2020,Red,stop_019,0,Midday,10800.0,56,,,stop_019
+Fall 2020,Red,stop_019,0,Other,1800.0,28,,,stop_019
+Fall 2020,Red,stop_019,0,PM Peak,10800.0,56,,,stop_019
+Fall 2020,Red,stop_021,0,AM Peak,1800.0,28,,,stop_021
+Fall 2020,Red,stop_021,0,Evening,10800.0,56,,,stop_021
+Fall 2020,Red,stop_021,0,Midday,10800.0,56,,,stop_021
+Fall 2020,Red,stop_023,0,Evening,10800.0,56,,,stop_023
+Fall 2020,Red,stop_023,0,Midday,10800.0,56,,,stop_023
+Fall 2020,Red,stop_023,0,PM Peak,1800.0,28,,,stop_023
+Fall 2020,Red,stop_025,0,Midday,10800.0,56,,,stop_025
+Fall 2020,Red,stop_025,0,Other,1800.0,28,,,stop_025
+Fall 2020,Red,stop_025,0,PM Peak,10800.0,56,,,stop_025
+Fall 2020,Red,stop_027,0,AM Peak,1800.0,28,,,stop_027
+Fall 2020,Red,stop_027,0,Evening,10800.0,56,,,stop_027
+Fall 2020,Red,stop_027,0,Midday,10800.0,56,,,stop_027
+Fall 2020,Red,stop_029,0,Evening,10800.0,56,,,stop_029
+Fall 2020,Red,stop_029,0,Midday,10800.0,56,,,stop_029
+Fall 2020,Red,stop_029,0,PM Peak,1800.0,28,,,stop_029
+Fall 2021,Orange,stop_002,1,AM Peak,1800.0,28,,,stop_002
+Fall 2021,Orange,stop_002,1,Evening,1800.0,28,,,stop_002
+Fall 2021,Orange,stop_002,1,Midday,10800.0,56,,,stop_002
+Fall 2021,Orange,stop_002,1,PM Peak,19800.0,28,,,stop_002
+Fall 2021,Orange,stop_004,1,AM Peak,1800.0,28,,,stop_004
+Fall 2021,Orange,stop_004,1,Evening,10800.0,56,,,stop_004
+Fall 2021,Orange,stop_004,1,Midday,10800.0,56,,,stop_004
+Fall 2021,Orange,stop_006,1,Evening,10800.0,56,,,stop_006
+Fall 2021,Orange,stop_006,1,Midday,1800.0,28,,,stop_006
+Fall 2021,Orange,stop_006,1,PM Peak,10800.0,56,,,stop_006
+Fall 2021,Orange,stop_008,1,AM Peak,1800.0,28,,,stop_008
+Fall 2021,Orange,stop_008,1,Evening,1800.0,28,,,stop_008
+Fall 2021,Orange,stop_008,1,Midday,10800.0,56,,,stop_008
+Fall 2021,Orange,stop_008,1,PM Peak,19800.0,28,,,stop_008
+Fall 2021,Orange,stop_010,1,AM Peak,1800.0,28,,,stop_010
+Fall 2021,Orange,stop_010,1,Evening,10800.0,56,,,stop_010
+Fall 2021,Orange,stop_010,1,Midday,10800.0,56,,,stop_010
+Fall 2021,Orange,stop_012,1,Evening,10800.0,56,,,stop_012
+Fall 2021,Orange,stop_012,1,Midday,1800.0,28,,,stop_012
+Fall 2021,Orange,stop_012,1,PM Peak,10800.0,56,,,stop_012
+Fall 2021,Orange,stop_014,1,AM Peak,1800.0,28,,,stop_014
+Fall 2021,Orange,stop_014,1,Evening,1800.0,28,,,stop_014
+Fall 2021,Orange,stop_014,1,Midday,10800.0,56,,,stop_014
+Fall 2021,Orange,stop_014,1,PM Peak,19800.0,28,,,stop_014
+Fall 2021,Orange,stop_016,1,AM Peak,1800.0,28,,,stop_016
+Fall 2021,Orange,stop_016,1,Evening,10800.0,56,,,stop_016
+Fall 2021,Orange,stop_016,1,Midday,10800.0,56,,,stop_016
+Fall 2021,Orange,stop_018,1,Evening,10800.0,56,,,stop_018
+Fall 2021,Orange,stop_018,1,Midday,1800.0,28,,,stop_018
+Fall 2021,Orange,stop_018,1,PM Peak,10800.0,56,,,stop_018
+Fall 2021,Orange,stop_020,1,AM Peak,1800.0,28,,,stop_020
+Fall 2021,Orange,stop_020,1,Evening,1800.0,28,,,stop_020
+Fall 2021,Orange,stop_020,1,Midday,10800.0,56,,,stop_020
+Fall 2021,Orange,stop_020,1,PM Peak,19800.0,28,,,stop_020
+Fall 2021,Orange,stop_022,1,AM Peak,1800.0,28,,,stop_022
+Fall 2021,Orange,stop_022,1,Evening,10800.0,56,,,stop_022
+Fall 2021,Orange,stop_022,1,Midday,10800.0,56,,,stop_022
+Fall 2021,Orange,stop_024,1,Evening,10800.0,56,,,stop_024
+Fall 2021,Orange,stop_024,1,Midday,1800.0,28,,,stop_024
+Fall 2021,Orange,stop_024,1,PM Peak,10800.0,56,,,stop_024
+Fall 2021,Orange,stop_026,1,AM Peak,1800.0,28,,,stop_026
+Fall 2021,Orange,stop_026,1,Evening,1800.0,28,,,stop_026
+Fall 2021,Orange,stop_026,1,Midday,10800.0,56,,,stop_026
+Fall 2021,Orange,stop_026,1,PM Peak,19800.0,28,,,stop_026
+Fall 2021,Orange,stop_028,1,AM Peak,1800.0,28,,,stop_028
+Fall 2021,Orange,stop_028,1,Evening,10800.0,56,,,stop_028
+Fall 2021,Orange,stop_028,1,Midday,10800.0,56,,,stop_028
+Fall 2021,Orange,stop_030,1,Evening,10800.0,56,,,stop_030
+Fall 2021,Orange,stop_030,1,Midday,1800.0,28,,,stop_030
+Fall 2021,Orange,stop_030,1,PM Peak,10800.0,56,,,stop_030
+Fall 2021,Red,stop_001,0,Midday,10800.0,56,,,stop_001
+Fall 2021,Red,stop_001,0,Other,1800.0,28,,,stop_001
+Fall 2021,Red,stop_001,0,PM Peak,10800.0,56,,,stop_001
+Fall 2021,Red,stop_003,0,AM Peak,1800.0,28,,,stop_003
+Fall 2021,Red,stop_003,0,Evening,10800.0,56,,,stop_003
+Fall 2021,Red,stop_003,0,Midday,10800.0,56,,,stop_003
+Fall 2021,Red,stop_005,0,Evening,10800.0,56,,,stop_005
+Fall 2021,Red,stop_005,0,Midday,10800.0,56,,,stop_005
+Fall 2021,Red,stop_005,0,PM Peak,1800.0,28,,,stop_005
+Fall 2021,Red,stop_007,0,Midday,10800.0,56,,,stop_007
+Fall 2021,Red,stop_007,0,Other,1800.0,28,,,stop_007
+Fall 2021,Red,stop_007,0,PM Peak,10800.0,56,,,stop_007
+Fall 2021,Red,stop_009,0,AM Peak,1800.0,28,,,stop_009
+Fall 2021,Red,stop_009,0,Evening,10800.0,56,,,stop_009
+Fall 2021,Red,stop_009,0,Midday,10800.0,56,,,stop_009
+Fall 2021,Red,stop_011,0,Evening,10800.0,56,,,stop_011
+Fall 2021,Red,stop_011,0,Midday,10800.0,56,,,stop_011
+Fall 2021,Red,stop_011,0,PM Peak,1800.0,28,,,stop_011
+Fall 2021,Red,stop_013,0,Midday,10800.0,56,,,stop_013
+Fall 2021,Red,stop_013,0,Other,1800.0,28,,,stop_013
+Fall 2021,Red,stop_013,0,PM Peak,10800.0,56,,,stop_013
+Fall 2021,Red,stop_015,0,AM Peak,1800.0,28,,,stop_015
+Fall 2021,Red,stop_015,0,Evening,10800.0,56,,,stop_015
+Fall 2021,Red,stop_015,0,Midday,10800.0,56,,,stop_015
+Fall 2021,Red,stop_017,0,Evening,10800.0,56,,,stop_017
+Fall 2021,Red,stop_017,0,Midday,10800.0,56,,,stop_017
+Fall 2021,Red,stop_017,0,PM Peak,1800.0,28,,,stop_017
+Fall 2021,Red,stop_019,0,Midday,10800.0,56,,,stop_019
+Fall 2021,Red,stop_019,0,Other,1800.0,28,,,stop_019
+Fall 2021,Red,stop_019,0,PM Peak,10800.0,56,,,stop_019
+Fall 2021,Red,stop_021,0,AM Peak,1800.0,28,,,stop_021
+Fall 2021,Red,stop_021,0,Evening,10800.0,56,,,stop_021
+Fall 2021,Red,stop_021,0,Midday,10800.0,56,,,stop_021
+Fall 2021,Red,stop_023,0,Evening,10800.0,56,,,stop_023
+Fall 2021,Red,stop_023,0,Midday,10800.0,56,,,stop_023
+Fall 2021,Red,stop_023,0,PM Peak,1800.0,28,,,stop_023
+Fall 2021,Red,stop_025,0,Midday,10800.0,56,,,stop_025
+Fall 2021,Red,stop_025,0,Other,1800.0,28,,,stop_025
+Fall 2021,Red,stop_025,0,PM Peak,10800.0,56,,,stop_025
+Fall 2021,Red,stop_027,0,AM Peak,1800.0,28,,,stop_027
+Fall 2021,Red,stop_027,0,Evening,10800.0,56,,,stop_027
+Fall 2021,Red,stop_027,0,Midday,10800.0,56,,,stop_027
+Fall 2021,Red,stop_029,0,Evening,10800.0,56,,,stop_029
+Fall 2021,Red,stop_029,0,Midday,10800.0,56,,,stop_029
+Fall 2021,Red,stop_029,0,PM Peak,1800.0,28,,,stop_029
+Fall 2022,Orange,stop_002,1,AM Peak,1800.0,28,,,stop_002
+Fall 2022,Orange,stop_002,1,Evening,1800.0,28,,,stop_002
+Fall 2022,Orange,stop_002,1,Midday,10800.0,56,,,stop_002
+Fall 2022,Orange,stop_002,1,PM Peak,19800.0,28,,,stop_002
+Fall 2022,Orange,stop_004,1,AM Peak,1800.0,28,,,stop_004
+Fall 2022,Orange,stop_004,1,Evening,10800.0,56,,,stop_004
+Fall 2022,Orange,stop_004,1,Midday,10800.0,56,,,stop_004
+Fall 2022,Orange,stop_006,1,Evening,10800.0,56,,,stop_006
+Fall 2022,Orange,stop_006,1,Midday,1800.0,28,,,stop_006
+Fall 2022,Orange,stop_006,1,PM Peak,10800.0,56,,,stop_006
+Fall 2022,Orange,stop_008,1,AM Peak,1800.0,28,,,stop_008
+Fall 2022,Orange,stop_008,1,Evening,1800.0,28,,,stop_008
+Fall 2022,Orange,stop_008,1,Midday,10800.0,56,,,stop_008
+Fall 2022,Orange,stop_008,1,PM Peak,19800.0,28,,,stop_008
+Fall 2022,Orange,stop_010,1,AM Peak,1800.0,28,,,stop_010
+Fall 2022,Orange,stop_010,1,Evening,10800.0,56,,,stop_010
+Fall 2022,Orange,stop_010,1,Midday,10800.0,56,,,stop_010
+Fall 2022,Orange,stop_012,1,Evening,10800.0,56,,,stop_012
+Fall 2022,Orange,stop_012,1,Midday,1800.0,28,,,stop_012
+Fall 2022,Orange,stop_012,1,PM Peak,10800.0,56,,,stop_012
+Fall 2022,Orange,stop_014,1,AM Peak,1800.0,28,,,stop_014
+Fall 2022,Orange,stop_014,1,Evening,1800.0,28,,,stop_014
+Fall 2022,Orange,stop_014,1,Midday,10800.0,56,,,stop_014
+Fall 2022,Orange,stop_014,1,PM Peak,19800.0,28,,,stop_014
+Fall 2022,Orange,stop_016,1,AM Peak,1800.0,28,,,stop_016
+Fall 2022,Orange,stop_016,1,Evening,10800.0,56,,,stop_016
+Fall 2022,Orange,stop_016,1,Midday,10800.0,56,,,stop_016
+Fall 2022,Orange,stop_018,1,Evening,10800.0,56,,,stop_018
+Fall 2022,Orange,stop_018,1,Midday,1800.0,28,,,stop_018
+Fall 2022,Orange,stop_018,1,PM Peak,10800.0,56,,,stop_018
+Fall 2022,Orange,stop_020,1,AM Peak,1800.0,28,,,stop_020
+Fall 2022,Orange,stop_020,1,Evening,1800.0,28,,,stop_020
+Fall 2022,Orange,stop_020,1,Midday,10800.0,56,,,stop_020
+Fall 2022,Orange,stop_020,1,PM Peak,19800.0,28,,,stop_020
+Fall 2022,Orange,stop_022,1,AM Peak,1800.0,28,,,stop_022
+Fall 2022,Orange,stop_022,1,Evening,10800.0,56,,,stop_022
+Fall 2022,Orange,stop_022,1,Midday,10800.0,56,,,stop_022
+Fall 2022,Orange,stop_024,1,Evening,10800.0,56,,,stop_024
+Fall 2022,Orange,stop_024,1,Midday,1800.0,28,,,stop_024
+Fall 2022,Orange,stop_024,1,PM Peak,10800.0,56,,,stop_024
+Fall 2022,Orange,stop_026,1,AM Peak,1800.0,28,,,stop_026
+Fall 2022,Orange,stop_026,1,Evening,1800.0,28,,,stop_026
+Fall 2022,Orange,stop_026,1,Midday,10800.0,56,,,stop_026
+Fall 2022,Orange,stop_026,1,PM Peak,19800.0,28,,,stop_026
+Fall 2022,Orange,stop_028,1,AM Peak,1800.0,28,,,stop_028
+Fall 2022,Orange,stop_028,1,Evening,10800.0,56,,,stop_028
+Fall 2022,Orange,stop_028,1,Midday,10800.0,56,,,stop_028
+Fall 2022,Orange,stop_030,1,Evening,10800.0,56,,,stop_030
+Fall 2022,Orange,stop_030,1,Midday,1800.0,28,,,stop_030
+Fall 2022,Orange,stop_030,1,PM Peak,10800.0,56,,,stop_030
+Fall 2022,Red,stop_001,0,Midday,10800.0,56,,,stop_001
+Fall 2022,Red,stop_001,0,Other,1800.0,28,,,stop_001
+Fall 2022,Red,stop_001,0,PM Peak,10800.0,56,,,stop_001
+Fall 2022,Red,stop_003,0,AM Peak,1800.0,28,,,stop_003
+Fall 2022,Red,stop_003,0,Evening,10800.0,56,,,stop_003
+Fall 2022,Red,stop_003,0,Midday,10800.0,56,,,stop_003
+Fall 2022,Red,stop_005,0,Evening,10800.0,56,,,stop_005
+Fall 2022,Red,stop_005,0,Midday,10800.0,56,,,stop_005
+Fall 2022,Red,stop_005,0,PM Peak,1800.0,28,,,stop_005
+Fall 2022,Red,stop_007,0,Midday,10800.0,56,,,stop_007
+Fall 2022,Red,stop_007,0,Other,1800.0,28,,,stop_007
+Fall 2022,Red,stop_007,0,PM Peak,10800.0,56,,,stop_007
+Fall 2022,Red,stop_009,0,AM Peak,1800.0,28,,,stop_009
+Fall 2022,Red,stop_009,0,Evening,10800.0,56,,,stop_009
+Fall 2022,Red,stop_009,0,Midday,10800.0,56,,,stop_009
+Fall 2022,Red,stop_011,0,Evening,10800.0,56,,,stop_011
+Fall 2022,Red,stop_011,0,Midday,10800.0,56,,,stop_011
+Fall 2022,Red,stop_011,0,PM Peak,1800.0,28,,,stop_011
+Fall 2022,Red,stop_013,0,Midday,10800.0,56,,,stop_013
+Fall 2022,Red,stop_013,0,Other,1800.0,28,,,stop_013
+Fall 2022,Red,stop_013,0,PM Peak,10800.0,56,,,stop_013
+Fall 2022,Red,stop_015,0,AM Peak,1800.0,28,,,stop_015
+Fall 2022,Red,stop_015,0,Evening,10800.0,56,,,stop_015
+Fall 2022,Red,stop_015,0,Midday,10800.0,56,,,stop_015
+Fall 2022,Red,stop_017,0,Evening,10800.0,56,,,stop_017
+Fall 2022,Red,stop_017,0,Midday,10800.0,56,,,stop_017
+Fall 2022,Red,stop_017,0,PM Peak,1800.0,28,,,stop_017
+Fall 2022,Red,stop_019,0,Midday,10800.0,56,,,stop_019
+Fall 2022,Red,stop_019,0,Other,1800.0,28,,,stop_019
+Fall 2022,Red,stop_019,0,PM Peak,10800.0,56,,,stop_019
+Fall 2022,Red,stop_021,0,AM Peak,1800.0,28,,,stop_021
+Fall 2022,Red,stop_021,0,Evening,10800.0,56,,,stop_021
+Fall 2022,Red,stop_021,0,Midday,10800.0,56,,,stop_021
+Fall 2022,Red,stop_023,0,Evening,10800.0,56,,,stop_023
+Fall 2022,Red,stop_023,0,Midday,10800.0,56,,,stop_023
+Fall 2022,Red,stop_023,0,PM Peak,1800.0,28,,,stop_023
+Fall 2022,Red,stop_025,0,Midday,10800.0,56,,,stop_025
+Fall 2022,Red,stop_025,0,Other,1800.0,28,,,stop_025
+Fall 2022,Red,stop_025,0,PM Peak,10800.0,56,,,stop_025
+Fall 2022,Red,stop_027,0,AM Peak,1800.0,28,,,stop_027
+Fall 2022,Red,stop_027,0,Evening,10800.0,56,,,stop_027
+Fall 2022,Red,stop_027,0,Midday,10800.0,56,,,stop_027
+Fall 2022,Red,stop_029,0,Evening,10800.0,56,,,stop_029
+Fall 2022,Red,stop_029,0,Midday,10800.0,56,,,stop_029
+Fall 2022,Red,stop_029,0,PM Peak,1800.0,28,,,stop_029
+Fall 2023,Orange,stop_002,1,AM Peak,1800.0,28,,,stop_002
+Fall 2023,Orange,stop_002,1,Evening,1800.0,28,,,stop_002
+Fall 2023,Orange,stop_002,1,Midday,10800.0,56,,,stop_002
+Fall 2023,Orange,stop_002,1,PM Peak,19800.0,28,,,stop_002
+Fall 2023,Orange,stop_004,1,AM Peak,1800.0,28,,,stop_004
+Fall 2023,Orange,stop_004,1,Evening,10800.0,56,,,stop_004
+Fall 2023,Orange,stop_004,1,Midday,10800.0,56,,,stop_004
+Fall 2023,Orange,stop_006,1,Evening,10800.0,56,,,stop_006
+Fall 2023,Orange,stop_006,1,Midday,1800.0,28,,,stop_006
+Fall 2023,Orange,stop_006,1,PM Peak,10800.0,56,,,stop_006
+Fall 2023,Orange,stop_008,1,AM Peak,1800.0,28,,,stop_008
+Fall 2023,Orange,stop_008,1,Evening,1800.0,28,,,stop_008
+Fall 2023,Orange,stop_008,1,Midday,10800.0,56,,,stop_008
+Fall 2023,Orange,stop_008,1,PM Peak,19800.0,28,,,stop_008
+Fall 2023,Orange,stop_010,1,AM Peak,1800.0,28,,,stop_010
+Fall 2023,Orange,stop_010,1,Evening,10800.0,56,,,stop_010
+Fall 2023,Orange,stop_010,1,Midday,10800.0,56,,,stop_010
+Fall 2023,Orange,stop_012,1,Evening,10800.0,56,,,stop_012
+Fall 2023,Orange,stop_012,1,Midday,1800.0,28,,,stop_012
+Fall 2023,Orange,stop_012,1,PM Peak,10800.0,56,,,stop_012
+Fall 2023,Orange,stop_014,1,AM Peak,1800.0,28,,,stop_014
+Fall 2023,Orange,stop_014,1,Evening,1800.0,28,,,stop_014
+Fall 2023,Orange,stop_014,1,Midday,10800.0,56,,,stop_014
+Fall 2023,Orange,stop_014,1,PM Peak,19800.0,28,,,stop_014
+Fall 2023,Orange,stop_016,1,AM Peak,1800.0,28,,,stop_016
+Fall 2023,Orange,stop_016,1,Evening,10800.0,56,,,stop_016
+Fall 2023,Orange,stop_016,1,Midday,10800.0,56,,,stop_016
+Fall 2023,Orange,stop_018,1,Evening,10800.0,56,,,stop_018
+Fall 2023,Orange,stop_018,1,Midday,1800.0,28,,,stop_018
+Fall 2023,Orange,stop_018,1,PM Peak,10800.0,56,,,stop_018
+Fall 2023,Orange,stop_020,1,AM Peak,1800.0,28,,,stop_020
+Fall 2023,Orange,stop_020,1,Evening,1800.0,28,,,stop_020
+Fall 2023,Orange,stop_020,1,Midday,10800.0,56,,,stop_020
+Fall 2023,Orange,stop_020,1,PM Peak,19800.0,28,,,stop_020
+Fall 2023,Orange,stop_022,1,AM Peak,1800.0,28,,,stop_022
+Fall 2023,Orange,stop_022,1,Evening,10800.0,56,,,stop_022
+Fall 2023,Orange,stop_022,1,Midday,10800.0,56,,,stop_022
+Fall 2023,Orange,stop_024,1,Evening,10800.0,56,,,stop_024
+Fall 2023,Orange,stop_024,1,Midday,1800.0,28,,,stop_024
+Fall 2023,Orange,stop_024,1,PM Peak,10800.0,56,,,stop_024
+Fall 2023,Orange,stop_026,1,AM Peak,1800.0,28,,,stop_026
+Fall 2023,Orange,stop_026,1,Evening,1800.0,28,,,stop_026
+Fall 2023,Orange,stop_026,1,Midday,10800.0,56,,,stop_026
+Fall 2023,Orange,stop_026,1,PM Peak,19800.0,28,,,stop_026
+Fall 2023,Orange,stop_028,1,AM Peak,1800.0,28,,,stop_028
+Fall 2023,Orange,stop_028,1,Evening,10800.0,56,,,stop_028
+Fall 2023,Orange,stop_028,1,Midday,10800.0,56,,,stop_028
+Fall 2023,Orange,stop_030,1,Evening,10800.0,56,,,stop_030
+Fall 2023,Orange,stop_030,1,Midday,1800.0,28,,,stop_030
+Fall 2023,Orange,stop_030,1,PM Peak,10800.0,56,,,stop_030
+Fall 2023,Red,stop_001,0,Midday,10800.0,56,,,stop_001
+Fall 2023,Red,stop_001,0,Other,1800.0,28,,,stop_001
+Fall 2023,Red,stop_001,0,PM Peak,10800.0,56,,,stop_001
+Fall 2023,Red,stop_003,0,AM Peak,1800.0,28,,,stop_003
+Fall 2023,Red,stop_003,0,Evening,10800.0,56,,,stop_003
+Fall 2023,Red,stop_003,0,Midday,10800.0,56,,,stop_003
+Fall 2023,Red,stop_005,0,Evening,10800.0,56,,,stop_005
+Fall 2023,Red,stop_005,0,Midday,10800.0,56,,,stop_005
+Fall 2023,Red,stop_005,0,PM Peak,1800.0,28,,,stop_005
+Fall 2023,Red,stop_007,0,Midday,10800.0,56,,,stop_007
+Fall 2023,Red,stop_007,0,Other,1800.0,28,,,stop_007
+Fall 2023,Red,stop_007,0,PM Peak,10800.0,56,,,stop_007
+Fall 2023,Red,stop_009,0,AM Peak,1800.0,28,,,stop_009
+Fall 2023,Red,stop_009,0,Evening,10800.0,56,,,stop_009
+Fall 2023,Red,stop_009,0,Midday,10800.0,56,,,stop_009
+Fall 2023,Red,stop_011,0,Evening,10800.0,56,,,stop_011
+Fall 2023,Red,stop_011,0,Midday,10800.0,56,,,stop_011
+Fall 2023,Red,stop_011,0,PM Peak,1800.0,28,,,stop_011
+Fall 2023,Red,stop_013,0,Midday,10800.0,56,,,stop_013
+Fall 2023,Red,stop_013,0,Other,1800.0,28,,,stop_013
+Fall 2023,Red,stop_013,0,PM Peak,10800.0,56,,,stop_013
+Fall 2023,Red,stop_015,0,AM Peak,1800.0,28,,,stop_015
+Fall 2023,Red,stop_015,0,Evening,10800.0,56,,,stop_015
+Fall 2023,Red,stop_015,0,Midday,10800.0,56,,,stop_015
+Fall 2023,Red,stop_017,0,Evening,10800.0,56,,,stop_017
+Fall 2023,Red,stop_017,0,Midday,10800.0,56,,,stop_017
+Fall 2023,Red,stop_017,0,PM Peak,1800.0,28,,,stop_017
+Fall 2023,Red,stop_019,0,Midday,10800.0,56,,,stop_019
+Fall 2023,Red,stop_019,0,Other,1800.0,28,,,stop_019
+Fall 2023,Red,stop_019,0,PM Peak,10800.0,56,,,stop_019
+Fall 2023,Red,stop_021,0,AM Peak,1800.0,28,,,stop_021
+Fall 2023,Red,stop_021,0,Evening,10800.0,56,,,stop_021
+Fall 2023,Red,stop_021,0,Midday,10800.0,56,,,stop_021
+Fall 2023,Red,stop_023,0,Evening,10800.0,56,,,stop_023
+Fall 2023,Red,stop_023,0,Midday,10800.0,56,,,stop_023
+Fall 2023,Red,stop_023,0,PM Peak,1800.0,28,,,stop_023
+Fall 2023,Red,stop_025,0,Midday,10800.0,56,,,stop_025
+Fall 2023,Red,stop_025,0,Other,1800.0,28,,,stop_025
+Fall 2023,Red,stop_025,0,PM Peak,10800.0,56,,,stop_025
+Fall 2023,Red,stop_027,0,AM Peak,1800.0,28,,,stop_027
+Fall 2023,Red,stop_027,0,Evening,10800.0,56,,,stop_027
+Fall 2023,Red,stop_027,0,Midday,10800.0,56,,,stop_027
+Fall 2023,Red,stop_029,0,Evening,10800.0,56,,,stop_029
+Fall 2023,Red,stop_029,0,Midday,10800.0,56,,,stop_029
+Fall 2023,Red,stop_029,0,PM Peak,1800.0,28,,,stop_029
+Fall 2024,Orange,stop_002,1,AM Peak,1800.0,28,,,stop_002
+Fall 2024,Orange,stop_002,1,Evening,1800.0,28,,,stop_002
+Fall 2024,Orange,stop_002,1,Midday,10800.0,56,,,stop_002
+Fall 2024,Orange,stop_002,1,PM Peak,19800.0,28,,,stop_002
+Fall 2024,Orange,stop_004,1,AM Peak,1800.0,28,,,stop_004
+Fall 2024,Orange,stop_004,1,Evening,10800.0,56,,,stop_004
+Fall 2024,Orange,stop_004,1,Midday,10800.0,56,,,stop_004
+Fall 2024,Orange,stop_006,1,Evening,10800.0,56,,,stop_006
+Fall 2024,Orange,stop_006,1,Midday,1800.0,28,,,stop_006
+Fall 2024,Orange,stop_006,1,PM Peak,10800.0,56,,,stop_006
+Fall 2024,Orange,stop_008,1,AM Peak,1800.0,28,,,stop_008
+Fall 2024,Orange,stop_008,1,Evening,1800.0,28,,,stop_008
+Fall 2024,Orange,stop_008,1,Midday,10800.0,56,,,stop_008
+Fall 2024,Orange,stop_008,1,PM Peak,19800.0,28,,,stop_008
+Fall 2024,Orange,stop_010,1,AM Peak,1800.0,28,,,stop_010
+Fall 2024,Orange,stop_010,1,Evening,10800.0,56,,,stop_010
+Fall 2024,Orange,stop_010,1,Midday,10800.0,56,,,stop_010
+Fall 2024,Orange,stop_012,1,Evening,10800.0,56,,,stop_012
+Fall 2024,Orange,stop_012,1,Midday,1800.0,28,,,stop_012
+Fall 2024,Orange,stop_012,1,PM Peak,10800.0,56,,,stop_012
+Fall 2024,Orange,stop_014,1,AM Peak,1800.0,28,,,stop_014
+Fall 2024,Orange,stop_014,1,Evening,1800.0,28,,,stop_014
+Fall 2024,Orange,stop_014,1,Midday,10800.0,56,,,stop_014
+Fall 2024,Orange,stop_014,1,PM Peak,19800.0,28,,,stop_014
+Fall 2024,Orange,stop_016,1,AM Peak,1800.0,28,,,stop_016
+Fall 2024,Orange,stop_016,1,Evening,10800.0,56,,,stop_016
+Fall 2024,Orange,stop_016,1,Midday,10800.0,56,,,stop_016
+Fall 2024,Orange,stop_018,1,Evening,10800.0,56,,,stop_018
+Fall 2024,Orange,stop_018,1,Midday,1800.0,28,,,stop_018
+Fall 2024,Orange,stop_018,1,PM Peak,10800.0,56,,,stop_018
+Fall 2024,Orange,stop_020,1,AM Peak,1800.0,28,,,stop_020
+Fall 2024,Orange,stop_020,1,Evening,1800.0,28,,,stop_020
+Fall 2024,Orange,stop_020,1,Midday,10800.0,56,,,stop_020
+Fall 2024,Orange,stop_020,1,PM Peak,19800.0,28,,,stop_020
+Fall 2024,Orange,stop_022,1,AM Peak,1800.0,28,,,stop_022
+Fall 2024,Orange,stop_022,1,Evening,10800.0,56,,,stop_022
+Fall 2024,Orange,stop_022,1,Midday,10800.0,56,,,stop_022
+Fall 2024,Orange,stop_024,1,Evening,10800.0,56,,,stop_024
+Fall 2024,Orange,stop_024,1,Midday,1800.0,28,,,stop_024
+Fall 2024,Orange,stop_024,1,PM Peak,10800.0,56,,,stop_024
+Fall 2024,Orange,stop_026,1,AM Peak,1800.0,28,,,stop_026
+Fall 2024,Orange,stop_026,1,Evening,1800.0,28,,,stop_026
+Fall 2024,Orange,stop_026,1,Midday,10800.0,56,,,stop_026
+Fall 2024,Orange,stop_026,1,PM Peak,19800.0,28,,,stop_026
+Fall 2024,Orange,stop_028,1,AM Peak,1800.0,28,,,stop_028
+Fall 2024,Orange,stop_028,1,Evening,10800.0,56,,,stop_028
+Fall 2024,Orange,stop_028,1,Midday,10800.0,56,,,stop_028
+Fall 2024,Orange,stop_030,1,Evening,10800.0,56,,,stop_030
+Fall 2024,Orange,stop_030,1,Midday,1800.0,28,,,stop_030
+Fall 2024,Orange,stop_030,1,PM Peak,10800.0,56,,,stop_030
+Fall 2024,Red,stop_001,0,Midday,10800.0,56,,,stop_001
+Fall 2024,Red,stop_001,0,Other,1800.0,28,,,stop_001
+Fall 2024,Red,stop_001,0,PM Peak,10800.0,56,,,stop_001
+Fall 2024,Red,stop_003,0,AM Peak,1800.0,28,,,stop_003
+Fall 2024,Red,stop_003,0,Evening,10800.0,56,,,stop_003
+Fall 2024,Red,stop_003,0,Midday,10800.0,56,,,stop_003
+Fall 2024,Red,stop_005,0,Evening,10800.0,56,,,stop_005
+Fall 2024,Red,stop_005,0,Midday,10800.0,56,,,stop_005
+Fall 2024,Red,stop_005,0,PM Peak,1800.0,28,,,stop_005
+Fall 2024,Red,stop_007,0,Midday,10800.0,56,,,stop_007
+Fall 2024,Red,stop_007,0,Other,1800.0,28,,,stop_007
+Fall 2024,Red,stop_007,0,PM Peak,10800.0,56,,,stop_007
+Fall 2024,Red,stop_009,0,AM Peak,1800.0,28,,,stop_009
+Fall 2024,Red,stop_009,0,Evening,10800.0,56,,,stop_009
+Fall 2024,Red,stop_009,0,Midday,10800.0,56,,,stop_009
+Fall 2024,Red,stop_011,0,Evening,10800.0,56,,,stop_011
+Fall 2024,Red,stop_011,0,Midday,10800.0,56,,,stop_011
+Fall 2024,Red,stop_011,0,PM Peak,1800.0,28,,,stop_011
+Fall 2024,Red,stop_013,0,Midday,10800.0,56,,,stop_013
+Fall 2024,Red,stop_013,0,Other,1800.0,28,,,stop_013
+Fall 2024,Red,stop_013,0,PM Peak,10800.0,56,,,stop_013
+Fall 2024,Red,stop_015,0,AM Peak,1800.0,28,,,stop_015
+Fall 2024,Red,stop_015,0,Evening,10800.0,56,,,stop_015
+Fall 2024,Red,stop_015,0,Midday,10800.0,56,,,stop_015
+Fall 2024,Red,stop_017,0,Evening,10800.0,56,,,stop_017
+Fall 2024,Red,stop_017,0,Midday,10800.0,56,,,stop_017
+Fall 2024,Red,stop_017,0,PM Peak,1800.0,28,,,stop_017
+Fall 2024,Red,stop_019,0,Midday,10800.0,56,,,stop_019
+Fall 2024,Red,stop_019,0,Other,1800.0,28,,,stop_019
+Fall 2024,Red,stop_019,0,PM Peak,10800.0,56,,,stop_019
+Fall 2024,Red,stop_021,0,AM Peak,1800.0,28,,,stop_021
+Fall 2024,Red,stop_021,0,Evening,10800.0,56,,,stop_021
+Fall 2024,Red,stop_021,0,Midday,10800.0,56,,,stop_021
+Fall 2024,Red,stop_023,0,Evening,10800.0,56,,,stop_023
+Fall 2024,Red,stop_023,0,Midday,10800.0,56,,,stop_023
+Fall 2024,Red,stop_023,0,PM Peak,1800.0,28,,,stop_023
+Fall 2024,Red,stop_025,0,Midday,10800.0,56,,,stop_025
+Fall 2024,Red,stop_025,0,Other,1800.0,28,,,stop_025
+Fall 2024,Red,stop_025,0,PM Peak,10800.0,56,,,stop_025
+Fall 2024,Red,stop_027,0,AM Peak,1800.0,28,,,stop_027
+Fall 2024,Red,stop_027,0,Evening,10800.0,56,,,stop_027
+Fall 2024,Red,stop_027,0,Midday,10800.0,56,,,stop_027
+Fall 2024,Red,stop_029,0,Evening,10800.0,56,,,stop_029
+Fall 2024,Red,stop_029,0,Midday,10800.0,56,,,stop_029
+Fall 2024,Red,stop_029,0,PM Peak,1800.0,28,,,stop_029
+Winter 2025,Orange,stop_002,1,AM Peak,1800.0,31,,,stop_002
+Winter 2025,Orange,stop_002,1,Evening,1800.0,31,,,stop_002
+Winter 2025,Orange,stop_002,1,Midday,10800.0,62,,,stop_002
+Winter 2025,Orange,stop_002,1,PM Peak,19800.0,31,,,stop_002
+Winter 2025,Orange,stop_004,1,AM Peak,1800.0,31,,,stop_004
+Winter 2025,Orange,stop_004,1,Evening,10800.0,62,,,stop_004
+Winter 2025,Orange,stop_004,1,Midday,10800.0,62,,,stop_004
+Winter 2025,Orange,stop_006,1,Evening,10800.0,62,,,stop_006
+Winter 2025,Orange,stop_006,1,Midday,1800.0,31,,,stop_006
+Winter 2025,Orange,stop_006,1,PM Peak,10800.0,62,,,stop_006
+Winter 2025,Orange,stop_008,1,AM Peak,1800.0,31,,,stop_008
+Winter 2025,Orange,stop_008,1,Evening,1800.0,31,,,stop_008
+Winter 2025,Orange,stop_008,1,Midday,10800.0,62,,,stop_008
+Winter 2025,Orange,stop_008,1,PM Peak,19800.0,31,,,stop_008
+Winter 2025,Orange,stop_010,1,AM Peak,1800.0,31,,,stop_010
+Winter 2025,Orange,stop_010,1,Evening,10800.0,62,,,stop_010
+Winter 2025,Orange,stop_010,1,Midday,10800.0,62,,,stop_010
+Winter 2025,Orange,stop_012,1,Evening,10800.0,62,,,stop_012
+Winter 2025,Orange,stop_012,1,Midday,1800.0,31,,,stop_012
+Winter 2025,Orange,stop_012,1,PM Peak,10800.0,62,,,stop_012
+Winter 2025,Orange,stop_014,1,AM Peak,1800.0,31,,,stop_014
+Winter 2025,Orange,stop_014,1,Evening,1800.0,31,,,stop_014
+Winter 2025,Orange,stop_014,1,Midday,10800.0,62,,,stop_014
+Winter 2025,Orange,stop_014,1,PM Peak,19800.0,31,,,stop_014
+Winter 2025,Orange,stop_016,1,AM Peak,1800.0,31,,,stop_016
+Winter 2025,Orange,stop_016,1,Evening,10800.0,62,,,stop_016
+Winter 2025,Orange,stop_016,1,Midday,10800.0,62,,,stop_016
+Winter 2025,Orange,stop_018,1,Evening,10800.0,62,,,stop_018
+Winter 2025,Orange,stop_018,1,Midday,1800.0,31,,,stop_018
+Winter 2025,Orange,stop_018,1,PM Peak,10800.0,62,,,stop_018
+Winter 2025,Orange,stop_020,1,AM Peak,1800.0,31,,,stop_020
+Winter 2025,Orange,stop_020,1,Evening,1800.0,31,,,stop_020
+Winter 2025,Orange,stop_020,1,Midday,10800.0,62,,,stop_020
+Winter 2025,Orange,stop_020,1,PM Peak,19800.0,31,,,stop_020
+Winter 2025,Orange,stop_022,1,AM Peak,1800.0,31,,,stop_022
+Winter 2025,Orange,stop_022,1,Evening,10800.0,62,,,stop_022
+Winter 2025,Orange,stop_022,1,Midday,10800.0,62,,,stop_022
+Winter 2025,Orange,stop_024,1,Evening,10800.0,62,,,stop_024
+Winter 2025,Orange,stop_024,1,Midday,1800.0,31,,,stop_024
+Winter 2025,Orange,stop_024,1,PM Peak,10800.0,62,,,stop_024
+Winter 2025,Orange,stop_026,1,AM Peak,1800.0,31,,,stop_026
+Winter 2025,Orange,stop_026,1,Evening,1800.0,31,,,stop_026
+Winter 2025,Orange,stop_026,1,Midday,10800.0,62,,,stop_026
+Winter 2025,Orange,stop_026,1,PM Peak,19800.0,31,,,stop_026
+Winter 2025,Orange,stop_028,1,AM Peak,1800.0,31,,,stop_028
+Winter 2025,Orange,stop_028,1,Evening,10800.0,62,,,stop_028
+Winter 2025,Orange,stop_028,1,Midday,10800.0,62,,,stop_028
+Winter 2025,Orange,stop_030,1,Evening,10800.0,62,,,stop_030
+Winter 2025,Orange,stop_030,1,Midday,1800.0,31,,,stop_030
+Winter 2025,Orange,stop_030,1,PM Peak,10800.0,62,,,stop_030
+Winter 2025,Red,stop_001,0,Midday,10800.0,62,,,stop_001
+Winter 2025,Red,stop_001,0,Other,1800.0,31,,,stop_001
+Winter 2025,Red,stop_001,0,PM Peak,10800.0,62,,,stop_001
+Winter 2025,Red,stop_003,0,AM Peak,1800.0,31,,,stop_003
+Winter 2025,Red,stop_003,0,Evening,10800.0,62,,,stop_003
+Winter 2025,Red,stop_003,0,Midday,10800.0,62,,,stop_003
+Winter 2025,Red,stop_005,0,Evening,10800.0,62,,,stop_005
+Winter 2025,Red,stop_005,0,Midday,10800.0,62,,,stop_005
+Winter 2025,Red,stop_005,0,PM Peak,1800.0,31,,,stop_005
+Winter 2025,Red,stop_007,0,Midday,10800.0,62,,,stop_007
+Winter 2025,Red,stop_007,0,Other,1800.0,31,,,stop_007
+Winter 2025,Red,stop_007,0,PM Peak,10800.0,62,,,stop_007
+Winter 2025,Red,stop_009,0,AM Peak,1800.0,31,,,stop_009
+Winter 2025,Red,stop_009,0,Evening,10800.0,62,,,stop_009
+Winter 2025,Red,stop_009,0,Midday,10800.0,62,,,stop_009
+Winter 2025,Red,stop_011,0,Evening,10800.0,62,,,stop_011
+Winter 2025,Red,stop_011,0,Midday,10800.0,62,,,stop_011
+Winter 2025,Red,stop_011,0,PM Peak,1800.0,31,,,stop_011
+Winter 2025,Red,stop_013,0,Midday,10800.0,62,,,stop_013
+Winter 2025,Red,stop_013,0,Other,1800.0,31,,,stop_013
+Winter 2025,Red,stop_013,0,PM Peak,10800.0,62,,,stop_013
+Winter 2025,Red,stop_015,0,AM Peak,1800.0,31,,,stop_015
+Winter 2025,Red,stop_015,0,Evening,10800.0,62,,,stop_015
+Winter 2025,Red,stop_015,0,Midday,10800.0,62,,,stop_015
+Winter 2025,Red,stop_017,0,Evening,10800.0,62,,,stop_017
+Winter 2025,Red,stop_017,0,Midday,10800.0,62,,,stop_017
+Winter 2025,Red,stop_017,0,PM Peak,1800.0,31,,,stop_017
+Winter 2025,Red,stop_019,0,Midday,10800.0,62,,,stop_019
+Winter 2025,Red,stop_019,0,Other,1800.0,31,,,stop_019
+Winter 2025,Red,stop_019,0,PM Peak,10800.0,62,,,stop_019
+Winter 2025,Red,stop_021,0,AM Peak,1800.0,31,,,stop_021
+Winter 2025,Red,stop_021,0,Evening,10800.0,62,,,stop_021
+Winter 2025,Red,stop_021,0,Midday,10800.0,62,,,stop_021
+Winter 2025,Red,stop_023,0,Evening,10800.0,62,,,stop_023
+Winter 2025,Red,stop_023,0,Midday,10800.0,62,,,stop_023
+Winter 2025,Red,stop_023,0,PM Peak,1800.0,31,,,stop_023
+Winter 2025,Red,stop_025,0,Midday,10800.0,62,,,stop_025
+Winter 2025,Red,stop_025,0,Other,1800.0,31,,,stop_025
+Winter 2025,Red,stop_025,0,PM Peak,10800.0,62,,,stop_025
+Winter 2025,Red,stop_027,0,AM Peak,1800.0,31,,,stop_027
+Winter 2025,Red,stop_027,0,Evening,10800.0,62,,,stop_027
+Winter 2025,Red,stop_027,0,Midday,10800.0,62,,,stop_027
+Winter 2025,Red,stop_029,0,Evening,10800.0,62,,,stop_029
+Winter 2025,Red,stop_029,0,Midday,10800.0,62,,,stop_029
+Winter 2025,Red,stop_029,0,PM Peak,1800.0,31,,,stop_029

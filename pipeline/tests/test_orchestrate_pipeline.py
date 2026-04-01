@@ -10,6 +10,7 @@ if str(SRC) not in sys.path:
 
 from orchestrate import run_pipeline  # noqa: E402
 from validate_pipeline import PipelineValidationError  # noqa: E402
+from metric_aggregations import METRIC_FILENAMES  # noqa: E402
 
 
 def _sha(path: Path) -> str:
@@ -98,6 +99,8 @@ def test_pipeline_all_is_idempotent_for_core_outputs(tmp_path: Path) -> None:
         processed_dir / f"summary_{year}.json",
         web_data_dir / f"dashboard_summary_{year}.json",
     ]
+    tracked.extend(processed_dir / name.format(year=year) for name in METRIC_FILENAMES.values())
+    tracked.extend(web_data_dir / name.format(year=year) for name in METRIC_FILENAMES.values())
 
     first_hashes = {str(p): _sha(p) for p in tracked}
 

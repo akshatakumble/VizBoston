@@ -9,6 +9,7 @@ from typing import Dict, Tuple
 import pandas as pd
 
 from common import DATASETS
+from metric_aggregations import METRIC_FILENAMES
 
 
 class PipelineValidationError(RuntimeError):
@@ -122,6 +123,16 @@ def validate_transform(year: int, processed_dir: Path) -> Tuple[Dict[str, int], 
         )
 
     normalized = {k: int(v) for k, v in row_counts.items()}
+
+    metric_artifacts = payload.get("metric_artifacts", {})
+    for key in METRIC_FILENAMES:
+        meta = metric_artifacts.get(key)
+        if not isinstance(meta, dict):
+            raise PipelineValidationError(f"Validation failed: missing metric artifact metadata for {key}")
+        artifact_path = Path(str(meta.get("path", "")))
+        if not artifact_path.exists():
+            raise PipelineValidationError(f"Validation failed: missing metric artifact output for {key}: {artifact_path}")
+
     return normalized, {}
 
 
@@ -132,4 +143,39 @@ def validate_export(year: int, web_data_dir: Path) -> Tuple[Dict[str, int], Dict
 
     payload = json.loads(export_path.read_text(encoding="utf-8"))
     row_counts = payload.get("row_counts", {})
+
+    manifest_path = web_data_dir / f"data_manifest_{year}.json"
+    if not manifest_path.exists():
+        raise PipelineValidationError(f"Missing export manifest: {manifest_path}")
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    files = manifest.get("files", [])
+    if not isinstance(files, list) or not files:
+        raise PipelineValidationError("Validation failed: export manifest has no file entries")
+
+    for entry in files:
+        if not isinstance(entry, dict):
+            continue
+        rel_path = str(entry.get("path", ""))
+        if not rel_path:
+            continue
+        file_path = web_data_dir / rel_path
+        if not file_path.exists():
+            raise PipelineValidationError(f"Validation failed: manifest file missing on disk: {file_path}")
+
+        fmt = str(entry.get("format", "")).lower()
+        if fmt in {"json", "topojson"}:
+            gz_path = Path(str(file_path) + ".gz")
+            if not gz_path.exists():
+                raise PipelineValidationError(f"Validation failed: missing gzip artifact for {file_path}")
+            if gz_path.stat().st_size > 2 * 1024 * 1024:
+                raise PipelineValidationError(f"Validation failed: gzip artifact exceeds 2MB: {gz_path}")
+
+    budget = manifest.get("performance_budget", {})
+    est = budget.get("estimated_full_dashboard_load_seconds_4g")
+    if isinstance(est, (float, int)) and est >= 3.0:
+        raise PipelineValidationError(
+            f"Validation failed: estimated dashboard load exceeds budget (>=3s): {est}"
+        )
+
     return {k: int(v) for k, v in row_counts.items()}, {}
