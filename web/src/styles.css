@@ -1,0 +1,97 @@
+:root {
+  color-scheme: light;
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --ink: #132238;
+  --muted: #4c607b;
+  --line: #d2d9e4;
+  --accent: #0b5cab;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  background: radial-gradient(circle at top left, #ffffff, var(--bg));
+  color: var(--ink);
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.topbar nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.topbar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.topbar a.active {
+  text-decoration: underline;
+}
+
+main {
+  padding: 1rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.map-card,
+.chart-card,
+.about-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem;
+}
+
+.map-container {
+  width: 100%;
+  height: 360px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+p {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .map-container {
+    height: 300px;
+  }
+}

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+pipeline/.pytest_cache/
+
+# Virtual environments
+.venv/
+pipeline/.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+web/node_modules/
+web/dist/
+
+# Data artifacts
+data/raw/*.csv
+data/raw/*.zip
+data/raw/*.json
+data/processed/*.csv
+data/processed/*.json
+data/processed/*.parquet
+data/samples/*.parquet
+web/src/data/*.json
+
+# Keep directory structure
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/samples/.gitkeep
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
