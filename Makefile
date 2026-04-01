@@ -1,4 +1,4 @@
-.PHONY: setup test ingest clean transform export all web-install web-dev
+.PHONY: setup test ingest samples eda clean transform export all web-install web-dev
 
 setup:
 	$(MAKE) -C pipeline setup
@@ -8,6 +8,12 @@ test:
 
 ingest:
 	$(MAKE) -C pipeline ingest
+
+samples:
+	$(MAKE) -C pipeline samples
+
+eda:
+	$(MAKE) -C pipeline eda
 
 clean:
 	$(MAKE) -C pipeline clean

@@ -10,35 +10,108 @@ import clean  # noqa: E402
 import export  # noqa: E402
 import ingest  # noqa: E402
 import transform  # noqa: E402
+from common import DATASETS, write_json  # noqa: E402
 
 
-def test_ingest_creates_manifest_and_files(tmp_path: Path) -> None:
+def _write_minimal_samples(sample_dir: Path, year: int) -> None:
+    sample_dir.mkdir(parents=True, exist_ok=True)
+    for dataset, header in DATASETS.items():
+        sample_file = sample_dir / f"{dataset}_{year}.csv"
+        sample_file.write_text(
+            ",".join(header) + "\n" + ",".join(["x"] * len(header)) + "\n",
+            encoding="utf-8",
+        )
+
+
+def test_ingest_uses_samples_by_default(tmp_path: Path) -> None:
+    year = 2025
     raw_dir = tmp_path / "raw"
     sample_dir = tmp_path / "samples"
-    sample_dir.mkdir(parents=True)
+    _write_minimal_samples(sample_dir, year)
 
     manifest_path = ingest.run_ingest(
-        year=2025,
+        year=year,
         raw_dir=raw_dir,
         sample_dir=sample_dir,
         use_samples=True,
     )
 
     assert manifest_path.exists()
-    assert (raw_dir / "rapid_transit_events_2025.csv").exists()
-    assert (raw_dir / "gtfs_schedules_2025.csv").exists()
+    for dataset in DATASETS:
+        assert (raw_dir / f"{dataset}_{year}.csv").exists()
 
 
-def test_clean_transform_export_flow(tmp_path: Path) -> None:
+def test_ingest_skips_unchanged_download_when_manifest_matches(tmp_path: Path, monkeypatch) -> None:
+    year = 2025
+    raw_dir = tmp_path / "raw"
+    sample_dir = tmp_path / "samples"
+    raw_dir.mkdir(parents=True)
+    sample_dir.mkdir(parents=True)
+
+    destination = raw_dir / f"rapid_transit_events_{year}.csv"
+    destination.write_text("service_date\n2025-01-01\n", encoding="utf-8")
+
+    write_json(
+        raw_dir / "download_manifest.json",
+        {
+            "updated_at_utc": "2026-01-01T00:00:00+00:00",
+            "datasets": {
+                f"rapid_transit_events:{year}": {
+                    "item_id": "item-123",
+                    "etag": "abc",
+                    "last_modified": "Mon, 01 Jan 2026 00:00:00 GMT",
+                    "content_length": "20",
+                }
+            },
+        },
+    )
+
+    monkeypatch.setattr(ingest, "_search_item_id", lambda *_args, **_kwargs: ("item-123", "Events"))
+    monkeypatch.setattr(
+        ingest,
+        "_fetch_item_metadata",
+        lambda *_args, **_kwargs: {"title": "Events", "name": "events.zip", "modified": "1"},
+    )
+    monkeypatch.setattr(
+        ingest,
+        "_head_item_data",
+        lambda *_args, **_kwargs: {
+            "source_url": "https://example.com/item-123/data",
+            "etag": "abc",
+            "last_modified": "Mon, 01 Jan 2026 00:00:00 GMT",
+            "content_length": "20",
+            "content_disposition": "attachment; filename=events.zip",
+        },
+    )
+
+    def _unexpected_download(*_args, **_kwargs):
+        raise AssertionError("Download should have been skipped")
+
+    monkeypatch.setattr(ingest, "_download_zip", _unexpected_download)
+
+    manifest_path = ingest.run_ingest(
+        year=year,
+        raw_dir=raw_dir,
+        sample_dir=sample_dir,
+        use_samples=False,
+        selected_datasets=["rapid_transit_events"],
+    )
+
+    assert manifest_path.exists()
+
+
+def test_clean_transform_export_flow_uses_sample_ingest(tmp_path: Path) -> None:
+    year = 2025
     raw_dir = tmp_path / "raw"
     sample_dir = tmp_path / "samples"
     processed_dir = tmp_path / "processed"
     web_data_dir = tmp_path / "web_data"
 
-    ingest.run_ingest(2025, raw_dir, sample_dir, use_samples=False)
-    clean_report = clean.run_clean(2025, raw_dir, processed_dir)
-    summary_path = transform.run_transform(2025, processed_dir)
-    destination = export.run_export(2025, processed_dir, web_data_dir)
+    _write_minimal_samples(sample_dir, year)
+    ingest.run_ingest(year, raw_dir, sample_dir, use_samples=True)
+    clean_report = clean.run_clean(year, raw_dir, processed_dir)
+    summary_path = transform.run_transform(year, processed_dir)
+    destination = export.run_export(year, processed_dir, web_data_dir)
 
     assert clean_report.exists()
     assert summary_path.exists()

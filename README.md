@@ -53,21 +53,48 @@ Run tests:
 make test
 ```
 
-Run pipeline stages (sample mode by default):
+Run pipeline stages:
 
 ```bash
 make ingest
+make samples
+make eda
 make clean
 make transform
 make export
 make all
 ```
 
-Use full/raw mode by setting `USE_SAMPLE=0`:
+`make ingest` uses sample CSVs by default (`USE_SAMPLE=1`). To download full MBTA
+datasets from ArcGIS Hub:
 
 ```bash
 make ingest USE_SAMPLE=0 YEAR=2025
 ```
+
+You can also run ingestion directly:
+
+```bash
+python pipeline/src/ingest.py --year 2025
+```
+
+Generate filtered development samples (January + Red/Orange by default):
+
+```bash
+make samples YEAR=2025
+```
+
+The sampling step enforces a 5MB max per sample CSV (`MAX_SAMPLE_SIZE_MB=5` by default).
+
+Generate one EDA notebook per dataset and a quality report:
+
+```bash
+make eda YEAR=2025 EDA_SOURCE=samples
+```
+
+Outputs:
+- `pipeline/notebooks/*_eda.ipynb` (four profiling notebooks with saved outputs)
+- `docs/data_quality_report.md` (summary table across datasets)
 
 ## Frontend Setup
 

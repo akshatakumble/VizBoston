@@ -26,6 +26,7 @@ data/processed/*.csv
 data/processed/*.json
 data/processed/*.parquet
 data/samples/*.parquet
+data/samples/*.json
 web/src/data/*.json
 
 # Keep directory structure

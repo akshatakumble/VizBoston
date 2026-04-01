@@ -1,11 +1,12 @@
-"""Shared helpers and constants for the pipeline scaffold."""
+"""Shared helpers and constants for the MBTA pipeline."""
 
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import Any, Dict, Iterable
 
 DATASETS = {
     "rapid_transit_events": [
@@ -57,8 +58,11 @@ def row_count(csv_path: Path) -> int:
         return 0
     with csv_path.open("r", newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
-        rows = list(reader)
-    return max(0, len(rows) - 1)
+        next(reader, None)
+        count = 0
+        for _ in reader:
+            count += 1
+    return count
 
 
 def write_csv_header(path: Path, header: Iterable[str]) -> None:
@@ -67,6 +71,24 @@ def write_csv_header(path: Path, header: Iterable[str]) -> None:
         writer.writerow(list(header))
 
 
-def write_json(path: Path, payload: Dict) -> None:
+def write_json(path: Path, payload: Dict[str, Any]) -> None:
     with path.open("w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
+
+
+def read_json(path: Path) -> Dict[str, Any]:
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as f:
+        while True:
+            chunk = f.read(chunk_size)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return hasher.hexdigest()
