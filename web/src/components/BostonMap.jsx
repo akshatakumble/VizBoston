@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-function BostonMap() {
+function BostonMap({ selectedLine = "All", mapMode = "overview" }) {
   const mapRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -31,7 +31,15 @@ function BostonMap() {
 
   return (
     <section className="map-card">
-      <h2>Boston Map (Placeholder)</h2>
+      <div className="card-header">
+        <h2>{mapMode === "travel" ? "Segment Map" : "System Map"}</h2>
+        <span className="line-chip">{selectedLine}</span>
+      </div>
+      <p className="card-subtitle">
+        {mapMode === "travel"
+          ? "Travel-time segments and slow-zone overlays will render here."
+          : "Station and corridor layers will render here."}
+      </p>
       <div ref={containerRef} className="map-container" aria-label="Boston area map" />
     </section>
   );
