@@ -19,6 +19,7 @@ web/node_modules/
 web/dist/
 
 # Data artifacts
+data/*
 data/raw/*.csv
 data/raw/*.zip
 data/raw/*.json
@@ -29,6 +30,7 @@ data/processed/*.geojson
 data/samples/*.parquet
 data/samples/*.json
 web/src/data/*.json
+web/src/data/downloads/clean_rapid_transit_*.csv
 pipeline/logs/*.jsonl
 
 # Keep directory structure

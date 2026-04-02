@@ -22,6 +22,7 @@ LINE_COLOR_MAP = {
     "Green-D": "#00843D",
     "Green-E": "#00843D",
     "Mattapan": "#DA291C",
+    "Silver": "#7C878E",
 }
 
 ROUTE_ANCHOR_MAP = {
@@ -33,7 +34,18 @@ ROUTE_ANCHOR_MAP = {
     "Green-D": (42.340, -71.145),
     "Green-E": (42.336, -71.095),
     "Mattapan": (42.270, -71.089),
+    "Silver": (42.351, -71.070),
 }
+
+SILVER_ROUTE_IDS = {"741", "742", "743", "746", "749", "751"}
+RAPID_ROUTE_IDS = {"Red", "Orange", "Blue", "Mattapan", "Green-B", "Green-C", "Green-D", "Green-E"}
+
+
+def _normalize_rapid_route_id(route_id: str) -> str:
+    value = str(route_id or "").strip()
+    if value in SILVER_ROUTE_IDS:
+        return "Silver"
+    return value
 
 
 def _parse_hhmmss_to_seconds(series: pd.Series) -> pd.Series:
@@ -239,12 +251,14 @@ def _build_schedule_reference(detail: pd.DataFrame) -> pd.DataFrame:
 
 
 def _route_family(route_id: str) -> str:
+    route_id = _normalize_rapid_route_id(route_id)
     if isinstance(route_id, str) and route_id.startswith("Green"):
         return "Green"
     return route_id
 
 
 def _route_anchor(route_id: str) -> Tuple[float, float]:
+    route_id = _normalize_rapid_route_id(route_id)
     if route_id in ROUTE_ANCHOR_MAP:
         return ROUTE_ANCHOR_MAP[route_id]
     return 42.35, -71.06
@@ -498,6 +512,14 @@ def build_gtfs_schedule_reference_and_geography(
         detail[col] = detail[col].replace({"": pd.NA, "nan": pd.NA, "None": pd.NA, "NaN": pd.NA})
 
     detail = detail.dropna(subset=["route_id", "stop_id"]).copy()
+    # Drop synthetic placeholder stop IDs (e.g. stop_001) that were generated
+    # in lightweight sample recap files and pollute station labels/geography.
+    detail = detail[~detail["stop_id"].astype(str).str.match(r"^stop_\d+$", na=False)].copy()
+    detail["route_id"] = detail["route_id"].map(_normalize_rapid_route_id)
+    detail = detail[
+        detail["route_id"].isin(RAPID_ROUTE_IDS.union({"Silver"}))
+        | detail["route_id"].astype(str).str.startswith("Green")
+    ].copy()
     detail["direction_id"] = pd.to_numeric(detail["direction_id"], errors="coerce").fillna(0).astype("int64")
 
     schedule_reference = _build_schedule_reference(detail)

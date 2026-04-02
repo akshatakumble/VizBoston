@@ -14,7 +14,8 @@ from time_periods import classify_time_period
 LINE_IDS = ["Red", "Orange", "Blue", "Green", "Mattapan"]
 GREEN_BRANCHES = {"Green-B", "Green-C", "Green-D", "Green-E"}
 TIME_PERIOD_ORDER = ["AM Peak", "Midday", "PM Peak", "Evening", "Late Night", "Other", "Unknown"]
-MAX_JSON_BYTES = 2 * 1024 * 1024
+# Transform-stage payloads can be larger; export stage enforces the frontend gzip budget.
+MAX_JSON_BYTES = 16 * 1024 * 1024
 
 METRIC_FILENAMES = {
     "otp_line_daily": "otp_line_daily_{year}.json",
@@ -168,11 +169,6 @@ def _otp_line_daily(df: pd.DataFrame) -> pd.DataFrame:
         )
     )
 
-    dates = sorted(d for d in agg["service_date"].dropna().unique())
-    if dates:
-        full = pd.MultiIndex.from_product([dates, LINE_IDS], names=group_cols).to_frame(index=False)
-        agg = full.merge(agg, on=group_cols, how="left")
-
     for col in ["total_events", "on_time_events", "early_events", "late_events"]:
         agg[col] = agg[col].fillna(0).astype("int64")
     agg["otp_pct"] = _safe_pct(agg["on_time_events"], agg["total_events"])
@@ -205,11 +201,6 @@ def _otp_line_monthly(df: pd.DataFrame) -> pd.DataFrame:
             late_events=("is_late", "sum"),
         )
     )
-
-    months = sorted(m for m in agg["month"].dropna().unique())
-    if months:
-        full = pd.MultiIndex.from_product([months, LINE_IDS], names=group_cols).to_frame(index=False)
-        agg = full.merge(agg, on=group_cols, how="left")
 
     for col in ["total_events", "on_time_events", "early_events", "late_events"]:
         agg[col] = agg[col].fillna(0).astype("int64")
@@ -370,7 +361,6 @@ def _travel_time_segment_time_period_month(df: pd.DataFrame) -> pd.DataFrame:
     group_cols = [
         "month",
         "line_id",
-        "route_id",
         "segment_id",
         "from_stop_id",
         "to_stop_id",
@@ -386,9 +376,7 @@ def _travel_time_segment_time_period_month(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             columns=group_cols
             + [
-                "sample_count",
                 "median_travel_time_sec",
-                "p95_travel_time_sec",
                 "benchmark_median_sec",
                 "travel_time_index",
                 "buffer_time_sec",
@@ -411,7 +399,6 @@ def _travel_time_segment_time_period_month(df: pd.DataFrame) -> pd.DataFrame:
 
     for col in [
         "median_travel_time_sec",
-        "p95_travel_time_sec",
         "benchmark_median_sec",
         "travel_time_index",
         "buffer_time_sec",
@@ -419,6 +406,7 @@ def _travel_time_segment_time_period_month(df: pd.DataFrame) -> pd.DataFrame:
     ]:
         agg[col] = pd.to_numeric(agg[col], errors="coerce").round(3)
     agg["sample_count"] = pd.to_numeric(agg["sample_count"], errors="coerce").fillna(0).astype("int64")
+    agg = agg.drop(columns=["p95_travel_time_sec", "sample_count"])
 
     return agg.sort_values(["month", "line_id", "segment_id", "time_period"]).reset_index(drop=True)
 
@@ -443,7 +431,6 @@ def _travel_time_slow_zones(travel_month: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             columns=[
                 "line_id",
-                "route_id",
                 "segment_id",
                 "from_stop_id",
                 "to_stop_id",
@@ -460,7 +447,7 @@ def _travel_time_slow_zones(travel_month: pd.DataFrame) -> pd.DataFrame:
 
     segment_month = (
         travel_month.groupby(
-            ["month", "line_id", "route_id", "segment_id", "from_stop_id", "to_stop_id", "from_stop_name", "to_stop_name"],
+            ["month", "line_id", "segment_id", "from_stop_id", "to_stop_id", "from_stop_name", "to_stop_name"],
             as_index=False,
         )
         .agg(travel_time_index=("travel_time_index", "median"))
@@ -469,7 +456,7 @@ def _travel_time_slow_zones(travel_month: pd.DataFrame) -> pd.DataFrame:
     threshold = 1.5
     rows: List[Dict[str, object]] = []
     for _, group in segment_month.groupby(
-        ["line_id", "route_id", "segment_id", "from_stop_id", "to_stop_id", "from_stop_name", "to_stop_name"],
+        ["line_id", "segment_id", "from_stop_id", "to_stop_id", "from_stop_name", "to_stop_name"],
         as_index=False,
     ):
         group = group.copy()
@@ -482,7 +469,6 @@ def _travel_time_slow_zones(travel_month: pd.DataFrame) -> pd.DataFrame:
         rows.append(
             {
                 "line_id": group["line_id"].iloc[0],
-                "route_id": group["route_id"].iloc[0],
                 "segment_id": group["segment_id"].iloc[0],
                 "from_stop_id": group["from_stop_id"].iloc[0],
                 "to_stop_id": group["to_stop_id"].iloc[0],

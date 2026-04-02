@@ -180,6 +180,7 @@ function DashboardPage() {
     historicalEffectiveLeftPeriod,
     historicalEffectiveRightPeriod,
     stationOptions,
+    availableLines,
     year,
   } = useDashboardData({
     selectedLine,
@@ -200,6 +201,12 @@ function DashboardPage() {
     setSelectedLine(line);
     setActiveSection("reliability");
   };
+
+  useEffect(() => {
+    if (!loading && selectedLine !== "All" && !availableLines.includes(selectedLine)) {
+      setSelectedLine("All");
+    }
+  }, [loading, selectedLine, availableLines, setSelectedLine]);
 
   useEffect(() => {
     if (!stationOptions.includes(selectedStation)) {

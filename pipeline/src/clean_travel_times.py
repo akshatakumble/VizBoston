@@ -51,6 +51,12 @@ def _resolve_time_seconds(df: pd.DataFrame) -> pd.Series:
     if "event_time_sec" in df.columns:
         return pd.to_numeric(df["event_time_sec"], errors="coerce")
 
+    for col in ["from_stop_departure_sec", "to_stop_arrival_sec", "stop_departure_sec"]:
+        if col in df.columns:
+            parsed = pd.to_numeric(df[col], errors="coerce")
+            if parsed.notna().any():
+                return parsed
+
     for col in ["departure_time", "arrival_time"]:
         if col in df.columns:
             parts = df[col].astype(str).str.split(":", expand=True)
@@ -89,6 +95,15 @@ def clean_travel_times_dataset(
 
     travel_time = pd.to_numeric(df["travel_time_sec"], errors="coerce")
     benchmark = pd.to_numeric(df["benchmark_travel_time_sec"], errors="coerce")
+
+    if benchmark.isna().all():
+        baseline_keys = [col for col in ["route_id", "direction_id", "from_stop_id", "to_stop_id"] if col in df.columns]
+        if baseline_keys:
+            benchmark = benchmark.where(
+                benchmark.notna(),
+                travel_time.groupby([df[key] for key in baseline_keys]).transform("median"),
+            )
+        benchmark = benchmark.where(benchmark.notna(), travel_time)
 
     null_travel_before = int(travel_time.isna().sum())
 

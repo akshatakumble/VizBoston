@@ -4,7 +4,7 @@ PIP := $(VENV)/bin/pip
 PY := $(VENV)/bin/python
 
 YEAR ?= 2025
-USE_SAMPLE ?= 1
+USE_SAMPLE ?= 0
 RAW_DIR ?= ../data/raw
 PROCESSED_DIR ?= ../data/processed
 SAMPLE_DIR ?= ../data/samples
@@ -20,7 +20,7 @@ EDA_SOURCE ?= raw
 
 SAMPLE_FLAG := $(if $(filter 1,$(USE_SAMPLE)),--use-samples,)
 
-.PHONY: setup test ingest samples eda clean transform export all
+.PHONY: setup test ingest samples eda clean transform export all all-sample
 
 setup:
 	$(PYTHON) -m venv --clear $(VENV)
@@ -50,3 +50,6 @@ export:
 
 all:
 	$(PY) src/orchestrate.py --step all --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR) --log-dir $(LOG_DIR) $(SAMPLE_FLAG)
+
+all-sample:
+	$(PY) src/orchestrate.py --step all --year $(YEAR) --raw-dir $(RAW_DIR) --sample-dir $(SAMPLE_DIR) --processed-dir $(PROCESSED_DIR) --web-data-dir $(WEB_DATA_DIR) --log-dir $(LOG_DIR) --use-samples

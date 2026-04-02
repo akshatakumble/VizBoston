@@ -35,8 +35,13 @@ function Layout({ children }) {
             onChange={(event) => setSelectedLine(event.target.value)}
           >
             {lineOptions.map((line) => (
-              <option key={line} value={line}>
-                {line}
+              <option
+                key={line}
+                value={line}
+                disabled={line === "Silver"}
+                title={line === "Silver" ? "Silver Line data is not available in this rapid-transit dataset." : undefined}
+              >
+                {line === "Silver" ? "Silver (no data)" : line}
               </option>
             ))}
           </select>

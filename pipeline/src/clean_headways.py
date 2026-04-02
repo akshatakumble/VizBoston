@@ -71,12 +71,22 @@ def clean_headways_dataset(
     df = pd.read_csv(source_csv, low_memory=False)
     rows_input = int(len(df))
 
+    if "headway_trunk_sec" not in df.columns and "headway_trunk_seconds" in df.columns:
+        df["headway_trunk_sec"] = df["headway_trunk_seconds"]
+    if "headway_branch_sec" not in df.columns and "headway_branch_seconds" in df.columns:
+        df["headway_branch_sec"] = df["headway_branch_seconds"]
+    if "event_time_sec" not in df.columns:
+        if "stop_departure_sec" in df.columns:
+            df["event_time_sec"] = df["stop_departure_sec"]
+        elif "stop_departure_datetime" in df.columns:
+            dt = pd.to_datetime(df["stop_departure_datetime"], errors="coerce")
+            df["event_time_sec"] = dt.dt.hour * 3600 + dt.dt.minute * 60 + dt.dt.second
+        else:
+            df["event_time_sec"] = pd.NA
+
     for col in ["service_date", "route_id", "headway_trunk_sec", "headway_branch_sec", "benchmark_headway_sec"]:
         if col not in df.columns:
             df[col] = pd.NA
-
-    if "event_time_sec" not in df.columns:
-        df["event_time_sec"] = pd.NA
 
     df["service_date"] = pd.to_datetime(df["service_date"], errors="coerce").dt.normalize()
     df["route_id"] = df["route_id"].astype(str).str.strip()
@@ -85,6 +95,15 @@ def clean_headways_dataset(
     trunk_numeric = pd.to_numeric(df["headway_trunk_sec"], errors="coerce")
     branch_numeric = pd.to_numeric(df["headway_branch_sec"], errors="coerce")
     benchmark_numeric = pd.to_numeric(df["benchmark_headway_sec"], errors="coerce")
+
+    if benchmark_numeric.isna().all():
+        baseline_keys = [col for col in ["route_id", "direction_id", "parent_station", "stop_id"] if col in df.columns]
+        if baseline_keys:
+            benchmark_numeric = benchmark_numeric.where(
+                benchmark_numeric.notna(),
+                trunk_numeric.groupby([df[key] for key in baseline_keys]).transform("median"),
+            )
+        benchmark_numeric = benchmark_numeric.where(benchmark_numeric.notna(), trunk_numeric)
 
     null_trunk_before = int(trunk_numeric.isna().sum())
     negative_trunk_before = int((trunk_numeric < 0).fillna(False).sum())

@@ -14,6 +14,9 @@ STOP_LOOKUP_CANDIDATES = (
     "stops_{year}.txt",
     "stops.csv",
     "stops.txt",
+)
+
+FALLBACK_STOP_LOOKUP_CANDIDATES = (
     # Fallback for sample/dev environments where dedicated stops files are absent.
     "gtfs_schedules_{year}.csv",
     "gtfs_schedules.csv",
@@ -25,6 +28,28 @@ def find_stops_lookup(raw_dir: Path, year: int, explicit_path: Optional[Path] = 
         return explicit_path
 
     for template in STOP_LOOKUP_CANDIDATES:
+        candidate = raw_dir / template.format(year=year)
+        if candidate.exists():
+            return candidate
+
+    recursive_candidates = sorted(
+        [
+            p
+            for p in raw_dir.rglob("*")
+            if p.is_file() and p.name.lower() in {"stops.txt", "stops.csv", f"stops_{year}.txt", f"stops_{year}.csv"}
+        ]
+    )
+    if not recursive_candidates:
+        return None
+
+    year_text = str(year)
+    preferred = [p for p in recursive_candidates if year_text in p.as_posix()]
+    if preferred:
+        return preferred[0]
+    if recursive_candidates:
+        return recursive_candidates[0]
+
+    for template in FALLBACK_STOP_LOOKUP_CANDIDATES:
         candidate = raw_dir / template.format(year=year)
         if candidate.exists():
             return candidate

@@ -1,31 +1,440 @@
 stop_id,stop_name,route_id,line_color,latitude,longitude,stop_sequence,is_transfer_station,coordinate_source
-stop_002,stop_002,Orange,#ED8B00,42.3675,-71.075,12.0,False,synthetic_from_stop_sequence
-stop_004,stop_004,Orange,#ED8B00,42.3825,-71.087,14.0,False,synthetic_from_stop_sequence
-stop_006,stop_006,Orange,#ED8B00,42.36,-71.069,11.0,False,synthetic_from_stop_sequence
-stop_008,stop_008,Orange,#ED8B00,42.375,-71.081,13.0,False,synthetic_from_stop_sequence
-stop_010,stop_010,Orange,#ED8B00,42.39,-71.093,15.0,False,synthetic_from_stop_sequence
-stop_012,stop_012,Orange,#ED8B00,42.37,-71.077,12.0,False,synthetic_from_stop_sequence
-stop_014,stop_014,Orange,#ED8B00,42.385,-71.089,14.0,False,synthetic_from_stop_sequence
-stop_016,stop_016,Orange,#ED8B00,42.3625,-71.071,11.0,False,synthetic_from_stop_sequence
-stop_018,stop_018,Orange,#ED8B00,42.3775,-71.083,13.0,False,synthetic_from_stop_sequence
-stop_020,stop_020,Orange,#ED8B00,42.3925,-71.095,15.0,False,synthetic_from_stop_sequence
-stop_022,stop_022,Orange,#ED8B00,42.3725,-71.07900000000001,12.0,False,synthetic_from_stop_sequence
-stop_024,stop_024,Orange,#ED8B00,42.3875,-71.09100000000001,14.0,False,synthetic_from_stop_sequence
-stop_026,stop_026,Orange,#ED8B00,42.365,-71.07300000000001,11.0,False,synthetic_from_stop_sequence
-stop_028,stop_028,Orange,#ED8B00,42.38,-71.08500000000001,13.0,False,synthetic_from_stop_sequence
-stop_030,stop_030,Orange,#ED8B00,42.394999999999996,-71.09700000000001,15.0,False,synthetic_from_stop_sequence
-stop_001,stop_001,Red,#DA291C,42.352,-71.062,11.0,False,synthetic_from_stop_sequence
-stop_003,stop_003,Red,#DA291C,42.367,-71.074,13.0,False,synthetic_from_stop_sequence
-stop_005,stop_005,Red,#DA291C,42.382,-71.086,15.0,False,synthetic_from_stop_sequence
-stop_007,stop_007,Red,#DA291C,42.3595,-71.068,12.0,False,synthetic_from_stop_sequence
-stop_009,stop_009,Red,#DA291C,42.3745,-71.08,14.0,False,synthetic_from_stop_sequence
-stop_011,stop_011,Red,#DA291C,42.354499999999994,-71.064,11.0,False,synthetic_from_stop_sequence
-stop_013,stop_013,Red,#DA291C,42.369499999999995,-71.076,13.0,False,synthetic_from_stop_sequence
-stop_015,stop_015,Red,#DA291C,42.384499999999996,-71.088,15.0,False,synthetic_from_stop_sequence
-stop_017,stop_017,Red,#DA291C,42.361999999999995,-71.07,12.0,False,synthetic_from_stop_sequence
-stop_019,stop_019,Red,#DA291C,42.376999999999995,-71.082,14.0,False,synthetic_from_stop_sequence
-stop_021,stop_021,Red,#DA291C,42.357,-71.066,11.0,False,synthetic_from_stop_sequence
-stop_023,stop_023,Red,#DA291C,42.372,-71.078,13.0,False,synthetic_from_stop_sequence
-stop_025,stop_025,Red,#DA291C,42.38699999999999,-71.09,15.0,False,synthetic_from_stop_sequence
-stop_027,stop_027,Red,#DA291C,42.3645,-71.072,12.0,False,synthetic_from_stop_sequence
-stop_029,stop_029,Red,#DA291C,42.3795,-71.084,14.0,False,synthetic_from_stop_sequence
+70038,Bowdoin,Blue,#003DA5,42.361365,-71.062037,1.0,False,gtfs_stops
+70039,Government Center,Blue,#003DA5,42.359705,-71.059215,100.0,False,gtfs_stops
+70040,Government Center,Blue,#003DA5,42.359705,-71.059215,10.0,False,gtfs_stops
+70041,State,Blue,#003DA5,42.358978,-71.057598,90.0,False,gtfs_stops
+70042,State,Blue,#003DA5,42.358978,-71.057598,20.0,False,gtfs_stops
+70043,Aquarium,Blue,#003DA5,42.359784,-71.051652,80.0,False,gtfs_stops
+70044,Aquarium,Blue,#003DA5,42.359784,-71.051652,30.0,False,gtfs_stops
+70045,Maverick,Blue,#003DA5,42.369119,-71.03953,70.0,False,gtfs_stops
+70046,Maverick,Blue,#003DA5,42.369119,-71.03953,40.0,False,gtfs_stops
+70047,Airport,Blue,#003DA5,42.374262,-71.030395,60.0,False,gtfs_stops
+70048,Airport,Blue,#003DA5,42.374262,-71.030395,50.0,False,gtfs_stops
+70049,Wood Island,Blue,#003DA5,42.37974,-71.022818,50.0,False,gtfs_stops
+70050,Wood Island,Blue,#003DA5,42.379671,-71.022783,60.0,False,gtfs_stops
+70051,Orient Heights,Blue,#003DA5,42.386909,-71.004809,40.0,False,gtfs_stops
+70052,Orient Heights,Blue,#003DA5,42.386842,-71.004767,70.0,False,gtfs_stops
+70053,Suffolk Downs,Blue,#003DA5,42.390422,-70.997323,30.0,False,gtfs_stops
+70054,Suffolk Downs,Blue,#003DA5,42.39061,-70.99703,80.0,False,gtfs_stops
+70055,Beachmont,Blue,#003DA5,42.397219,-70.992647,20.0,False,gtfs_stops
+70056,Beachmont,Blue,#003DA5,42.397204,-70.992551,90.0,False,gtfs_stops
+70057,Revere Beach,Blue,#003DA5,42.40776,-70.992586,10.0,False,gtfs_stops
+70058,Revere Beach,Blue,#003DA5,42.407874,-70.992497,100.0,False,gtfs_stops
+70059,Wonderland,Blue,#003DA5,42.413514,-70.991714,1.0,False,gtfs_stops
+70060,Wonderland,Blue,#003DA5,42.413361,-70.991685,110.0,False,gtfs_stops
+70838,Bowdoin,Blue,#003DA5,42.361365,-71.062037,110.0,False,gtfs_stops
+170136,Babcock Street,Green-B,#00843D,42.351538,-71.119553,120.0,False,gtfs_stops
+170137,Babcock Street,Green-B,#00843D,42.351695,-71.120257,180.0,False,gtfs_stops
+170140,Amory Street,Green-B,#00843D,42.350901,-71.114318,130.0,False,gtfs_stops
+170141,Amory Street,Green-B,#00843D,42.351066,-71.115027,170.0,False,gtfs_stops
+70106,Boston College,Green-B,#00843D,42.340149,-71.167029,1.0,False,gtfs_stops
+70107,Boston College,Green-B,#00843D,42.34024,-71.166849,310.0,False,gtfs_stops
+70110,South Street,Green-B,#00843D,42.339371,-71.157057,10.0,False,gtfs_stops
+70111,South Street,Green-B,#00843D,42.339581,-71.157499,300.0,False,gtfs_stops
+70112,Chestnut Hill Avenue,Green-B,#00843D,42.33873,-71.152526,20.0,False,gtfs_stops
+70113,Chestnut Hill Avenue,Green-B,#00843D,42.33829,-71.153025,290.0,False,gtfs_stops
+70114,Chiswick Road,Green-B,#00843D,42.340808,-71.150633,30.0,False,gtfs_stops
+70115,Chiswick Road,Green-B,#00843D,42.34054,-71.15114,280.0,False,gtfs_stops
+70116,Sutherland Road,Green-B,#00843D,42.341589,-71.146089,40.0,False,gtfs_stops
+70117,Sutherland Road,Green-B,#00843D,42.341577,-71.146607,270.0,False,gtfs_stops
+70120,Washington Street,Green-B,#00843D,42.344329,-71.142385,50.0,False,gtfs_stops
+70121,Washington Street,Green-B,#00843D,42.343974,-71.142731,260.0,False,gtfs_stops
+70124,Warren Street,Green-B,#00843D,42.348285,-71.140436,60.0,False,gtfs_stops
+70125,Warren Street,Green-B,#00843D,42.348819,-71.140051,250.0,False,gtfs_stops
+70126,Allston Street,Green-B,#00843D,42.348649,-71.137881,70.0,False,gtfs_stops
+70127,Allston Street,Green-B,#00843D,42.348546,-71.137362,240.0,False,gtfs_stops
+70128,Griggs Street,Green-B,#00843D,42.348747,-71.1345,80.0,False,gtfs_stops
+70129,Griggs Street,Green-B,#00843D,42.348919,-71.134305,230.0,False,gtfs_stops
+70130,Harvard Avenue,Green-B,#00843D,42.350263,-71.131298,90.0,False,gtfs_stops
+70131,Harvard Avenue,Green-B,#00843D,42.350602,-71.130727,220.0,False,gtfs_stops
+70134,Packard's Corner,Green-B,#00843D,42.351891,-71.125067,100.0,False,gtfs_stops
+70135,Packard's Corner,Green-B,#00843D,42.351651,-71.12551,210.0,False,gtfs_stops
+70136,70136,Green-B,#00843D,42.351499999999994,-71.094,110.0,False,synthetic_from_stop_sequence
+70137,70137,Green-B,#00843D,42.369,-71.108,200.0,False,synthetic_from_stop_sequence
+70138,70138,Green-B,#00843D,42.354,-71.096,120.0,False,synthetic_from_stop_sequence
+70139,70139,Green-B,#00843D,42.366499999999995,-71.106,190.0,False,synthetic_from_stop_sequence
+70140,70140,Green-B,#00843D,42.3565,-71.098,130.0,False,synthetic_from_stop_sequence
+70141,70141,Green-B,#00843D,42.364,-71.104,180.0,False,synthetic_from_stop_sequence
+70142,70142,Green-B,#00843D,42.358999999999995,-71.1,140.0,False,synthetic_from_stop_sequence
+70143,70143,Green-B,#00843D,42.3615,-71.102,170.0,False,synthetic_from_stop_sequence
+70144,Boston University Central,Green-B,#00843D,42.350013,-71.106902,150.0,False,gtfs_stops
+70145,Boston University Central,Green-B,#00843D,42.350148,-71.107455,160.0,False,gtfs_stops
+70146,Boston University East,Green-B,#00843D,42.349659,-71.103989,160.0,False,gtfs_stops
+70147,Boston University East,Green-B,#00843D,42.349811,-71.104657,150.0,False,gtfs_stops
+70148,Blandford Street,Green-B,#00843D,42.349165,-71.099821,170.0,False,gtfs_stops
+70149,Blandford Street,Green-B,#00843D,42.349276,-71.100213,140.0,False,gtfs_stops
+70150,Kenmore,Green-B,#00843D,42.348949,-71.095169,550.0,False,gtfs_stops
+70151,Kenmore,Green-B,#00843D,42.348949,-71.095169,130.0,False,gtfs_stops
+70152,Hynes Convention Center,Green-B,#00843D,42.347888,-71.087903,560.0,False,gtfs_stops
+70153,Hynes Convention Center,Green-B,#00843D,42.347888,-71.087903,120.0,False,gtfs_stops
+70154,Copley,Green-B,#00843D,42.349871,-71.078049,570.0,False,gtfs_stops
+70155,Copley,Green-B,#00843D,42.350126,-71.077376,110.0,False,gtfs_stops
+70156,Arlington,Green-B,#00843D,42.351902,-71.070893,580.0,False,gtfs_stops
+70157,Arlington,Green-B,#00843D,42.351902,-71.070893,100.0,False,gtfs_stops
+70158,Boylston,Green-B,#00843D,42.352531,-71.064682,590.0,False,gtfs_stops
+70159,Boylston,Green-B,#00843D,42.353214,-71.064545,90.0,False,gtfs_stops
+70196,Park Street,Green-B,#00843D,42.356395,-71.062424,50.0,False,gtfs_stops
+70200,Park Street,Green-B,#00843D,42.356395,-71.062424,600.0,False,gtfs_stops
+70201,Government Center,Green-B,#00843D,42.359705,-71.059215,610.0,False,gtfs_stops
+70202,Government Center,Green-B,#00843D,42.359705,-71.059215,40.0,False,gtfs_stops
+70203,Haymarket,Green-B,#00843D,42.363021,-71.05829,620.0,False,gtfs_stops
+70204,Haymarket,Green-B,#00843D,42.363021,-71.05829,30.0,False,gtfs_stops
+70205,North Station,Green-B,#00843D,42.36528,-71.060205,630.0,False,gtfs_stops
+70206,North Station,Green-B,#00843D,42.36528,-71.060205,20.0,False,gtfs_stops
+70207,Science Park/West End,Green-B,#00843D,42.366664,-71.067666,640.0,False,gtfs_stops
+70208,Science Park/West End,Green-B,#00843D,42.366664,-71.067666,10.0,False,gtfs_stops
+70209,70209,Green-B,#00843D,42.3715,-71.11,650.0,False,synthetic_from_stop_sequence
+70210,70210,Green-B,#00843D,42.349,-71.092,1.0,False,synthetic_from_stop_sequence
+70501,Lechmere,Green-B,#00843D,42.371566,-71.076457,650.0,False,gtfs_stops
+70502,Lechmere,Green-B,#00843D,42.370989,-71.07586,9.0,False,gtfs_stops
+70505,Gilman Square,Green-B,#00843D,42.388043,-71.096956,680.0,False,gtfs_stops
+70506,Gilman Square,Green-B,#00843D,42.387831,-71.096629,7.0,False,gtfs_stops
+70507,Magoun Square,Green-B,#00843D,42.394357,-71.106824,690.0,False,gtfs_stops
+70508,Magoun Square,Green-B,#00843D,42.39405,-71.106688,6.0,False,gtfs_stops
+70509,Ball Square,Green-B,#00843D,42.40038,-71.111331,700.0,False,gtfs_stops
+70510,Ball Square,Green-B,#00843D,42.400103,-71.111207,5.0,False,gtfs_stops
+70511,Medford/Tufts,Green-B,#00843D,42.408306,-71.11728,710.0,False,gtfs_stops
+70512,Medford/Tufts,Green-B,#00843D,42.40828,-71.117339,4.0,False,gtfs_stops
+70513,East Somerville,Green-B,#00843D,42.379881,-71.087032,670.0,False,gtfs_stops
+70514,East Somerville,Green-B,#00843D,42.379624,-71.086829,8.0,False,gtfs_stops
+71150,Kenmore,Green-B,#00843D,42.348949,-71.095169,550.0,False,gtfs_stops
+71151,Kenmore,Green-B,#00843D,42.348949,-71.095169,130.0,False,gtfs_stops
+71199,Park Street,Green-B,#00843D,42.356395,-71.062424,600.0,False,gtfs_stops
+70150,Kenmore,Green-C,#00843D,42.348949,-71.095169,550.0,False,gtfs_stops
+70151,Kenmore,Green-C,#00843D,42.348949,-71.095169,130.0,False,gtfs_stops
+70152,Hynes Convention Center,Green-C,#00843D,42.347888,-71.087903,560.0,False,gtfs_stops
+70153,Hynes Convention Center,Green-C,#00843D,42.347888,-71.087903,120.0,False,gtfs_stops
+70154,Copley,Green-C,#00843D,42.349871,-71.078049,570.0,False,gtfs_stops
+70155,Copley,Green-C,#00843D,42.350126,-71.077376,110.0,False,gtfs_stops
+70156,Arlington,Green-C,#00843D,42.351902,-71.070893,580.0,False,gtfs_stops
+70157,Arlington,Green-C,#00843D,42.351902,-71.070893,100.0,False,gtfs_stops
+70158,Boylston,Green-C,#00843D,42.352531,-71.064682,590.0,False,gtfs_stops
+70159,Boylston,Green-C,#00843D,42.353214,-71.064545,90.0,False,gtfs_stops
+70197,Park Street,Green-C,#00843D,42.356395,-71.062424,60.0,False,gtfs_stops
+70200,Park Street,Green-C,#00843D,42.356395,-71.062424,600.0,False,gtfs_stops
+70201,Government Center,Green-C,#00843D,42.359705,-71.059215,610.0,False,gtfs_stops
+70202,Government Center,Green-C,#00843D,42.359705,-71.059215,40.0,False,gtfs_stops
+70203,Haymarket,Green-C,#00843D,42.363021,-71.05829,620.0,False,gtfs_stops
+70204,Haymarket,Green-C,#00843D,42.363021,-71.05829,30.0,False,gtfs_stops
+70205,North Station,Green-C,#00843D,42.36528,-71.060205,630.0,False,gtfs_stops
+70206,North Station,Green-C,#00843D,42.36528,-71.060205,20.0,False,gtfs_stops
+70207,Science Park/West End,Green-C,#00843D,42.366664,-71.067666,640.0,False,gtfs_stops
+70208,Science Park/West End,Green-C,#00843D,42.366664,-71.067666,10.0,False,gtfs_stops
+70209,70209,Green-C,#00843D,42.3455,-71.119,650.0,False,synthetic_from_stop_sequence
+70210,70210,Green-C,#00843D,42.343,-71.117,1.0,False,synthetic_from_stop_sequence
+70211,Saint Mary's Street,Green-C,#00843D,42.345884,-71.107697,320.0,False,gtfs_stops
+70212,Saint Mary's Street,Green-C,#00843D,42.346007,-71.107166,300.0,False,gtfs_stops
+70213,Hawes Street,Green-C,#00843D,42.344758,-71.111761,330.0,False,gtfs_stops
+70214,Hawes Street,Green-C,#00843D,42.344867,-71.111157,290.0,False,gtfs_stops
+70215,Kent Street,Green-C,#00843D,42.344117,-71.114097,340.0,False,gtfs_stops
+70216,Kent Street,Green-C,#00843D,42.343927,-71.114569,280.0,False,gtfs_stops
+70217,Saint Paul Street,Green-C,#00843D,42.34334,-71.116927,350.0,False,gtfs_stops
+70218,Saint Paul Street,Green-C,#00843D,42.343118,-71.117498,270.0,False,gtfs_stops
+70219,Coolidge Corner,Green-C,#00843D,42.342274,-71.120915,360.0,False,gtfs_stops
+70220,Coolidge Corner,Green-C,#00843D,42.342028,-71.121685,260.0,False,gtfs_stops
+70223,Summit Avenue,Green-C,#00843D,42.34112,-71.125652,370.0,False,gtfs_stops
+70224,Summit Avenue,Green-C,#00843D,42.341027,-71.125759,250.0,False,gtfs_stops
+70225,Brandon Hall,Green-C,#00843D,42.340053,-71.128869,380.0,False,gtfs_stops
+70226,Brandon Hall,Green-C,#00843D,42.340038,-71.12866,240.0,False,gtfs_stops
+70227,Fairbanks Street,Green-C,#00843D,42.33969,-71.131228,390.0,False,gtfs_stops
+70228,Fairbanks Street,Green-C,#00843D,42.339644,-71.131078,230.0,False,gtfs_stops
+70229,Washington Square,Green-C,#00843D,42.339471,-71.135139,400.0,False,gtfs_stops
+70230,Washington Square,Green-C,#00843D,42.339519,-71.134587,220.0,False,gtfs_stops
+70231,Tappan Street,Green-C,#00843D,42.338498,-71.138731,410.0,False,gtfs_stops
+70232,Tappan Street,Green-C,#00843D,42.338567,-71.13819,210.0,False,gtfs_stops
+70233,Dean Road,Green-C,#00843D,42.337807,-71.141753,420.0,False,gtfs_stops
+70234,Dean Road,Green-C,#00843D,42.337628,-71.142309,200.0,False,gtfs_stops
+70235,Englewood Avenue,Green-C,#00843D,42.336964,-71.145867,430.0,False,gtfs_stops
+70236,Englewood Avenue,Green-C,#00843D,42.337011,-71.145368,190.0,False,gtfs_stops
+70237,Cleveland Circle,Green-C,#00843D,42.336216,-71.149201,440.0,False,gtfs_stops
+70238,Cleveland Circle,Green-C,#00843D,42.336252,-71.148774,180.0,False,gtfs_stops
+70501,Lechmere,Green-C,#00843D,42.371566,-71.076457,650.0,False,gtfs_stops
+70502,Lechmere,Green-C,#00843D,42.370989,-71.07586,9.0,False,gtfs_stops
+70505,Gilman Square,Green-C,#00843D,42.388043,-71.096956,680.0,False,gtfs_stops
+70506,Gilman Square,Green-C,#00843D,42.387831,-71.096629,7.0,False,gtfs_stops
+70507,Magoun Square,Green-C,#00843D,42.394357,-71.106824,690.0,False,gtfs_stops
+70508,Magoun Square,Green-C,#00843D,42.39405,-71.106688,6.0,False,gtfs_stops
+70509,Ball Square,Green-C,#00843D,42.40038,-71.111331,700.0,False,gtfs_stops
+70510,Ball Square,Green-C,#00843D,42.400103,-71.111207,5.0,False,gtfs_stops
+70511,Medford/Tufts,Green-C,#00843D,42.408306,-71.11728,710.0,False,gtfs_stops
+70512,Medford/Tufts,Green-C,#00843D,42.40828,-71.117339,4.0,False,gtfs_stops
+70513,East Somerville,Green-C,#00843D,42.379881,-71.087032,670.0,False,gtfs_stops
+70514,East Somerville,Green-C,#00843D,42.379624,-71.086829,8.0,False,gtfs_stops
+70150,Kenmore,Green-D,#00843D,42.348949,-71.095169,550.0,False,gtfs_stops
+70151,Kenmore,Green-D,#00843D,42.348949,-71.095169,130.0,False,gtfs_stops
+70152,Hynes Convention Center,Green-D,#00843D,42.347888,-71.087903,560.0,False,gtfs_stops
+70153,Hynes Convention Center,Green-D,#00843D,42.347888,-71.087903,120.0,False,gtfs_stops
+70154,Copley,Green-D,#00843D,42.349871,-71.078049,570.0,False,gtfs_stops
+70155,Copley,Green-D,#00843D,42.350126,-71.077376,110.0,False,gtfs_stops
+70156,Arlington,Green-D,#00843D,42.351902,-71.070893,580.0,False,gtfs_stops
+70157,Arlington,Green-D,#00843D,42.351902,-71.070893,100.0,False,gtfs_stops
+70158,Boylston,Green-D,#00843D,42.352531,-71.064682,590.0,False,gtfs_stops
+70159,Boylston,Green-D,#00843D,42.353214,-71.064545,90.0,False,gtfs_stops
+70160,Riverside,Green-D,#00843D,42.337317,-71.252256,310.0,False,gtfs_stops
+70161,Riverside,Green-D,#00843D,42.337348,-71.252236,570.0,False,gtfs_stops
+70162,Woodland,Green-D,#00843D,42.332703,-71.243055,320.0,False,gtfs_stops
+70163,Woodland,Green-D,#00843D,42.333094,-71.243659,560.0,False,gtfs_stops
+70164,Waban,Green-D,#00843D,42.325695,-71.230476,330.0,False,gtfs_stops
+70165,Waban,Green-D,#00843D,42.325967,-71.230714,550.0,False,gtfs_stops
+70166,Eliot,Green-D,#00843D,42.318871,-71.21642,340.0,False,gtfs_stops
+70167,Eliot,Green-D,#00843D,42.319214,-71.216949,540.0,False,gtfs_stops
+70168,Newton Highlands,Green-D,#00843D,42.322738,-71.205082,350.0,False,gtfs_stops
+70169,Newton Highlands,Green-D,#00843D,42.32253,-71.205421,530.0,False,gtfs_stops
+70170,Newton Centre,Green-D,#00843D,42.329552,-71.192024,360.0,False,gtfs_stops
+70171,Newton Centre,Green-D,#00843D,42.3294,-71.192622,520.0,False,gtfs_stops
+70172,Chestnut Hill,Green-D,#00843D,42.326799,-71.164146,370.0,False,gtfs_stops
+70173,Chestnut Hill,Green-D,#00843D,42.326782,-71.16478,510.0,False,gtfs_stops
+70174,Reservoir,Green-D,#00843D,42.335181,-71.147879,380.0,False,gtfs_stops
+70175,Reservoir,Green-D,#00843D,42.335163,-71.148601,500.0,False,gtfs_stops
+70176,Beaconsfield,Green-D,#00843D,42.335625,-71.140112,390.0,False,gtfs_stops
+70177,Beaconsfield,Green-D,#00843D,42.335912,-71.140903,490.0,False,gtfs_stops
+70178,Brookline Hills,Green-D,#00843D,42.331293,-71.126406,400.0,False,gtfs_stops
+70179,Brookline Hills,Green-D,#00843D,42.331413,-71.127025,480.0,False,gtfs_stops
+70180,Brookline Village,Green-D,#00843D,42.332614,-71.116751,410.0,False,gtfs_stops
+70181,Brookline Village,Green-D,#00843D,42.33257,-71.117041,470.0,False,gtfs_stops
+70182,Longwood,Green-D,#00843D,42.341808,-71.109777,420.0,False,gtfs_stops
+70183,Longwood,Green-D,#00843D,42.341571,-71.110147,460.0,False,gtfs_stops
+70186,Fenway,Green-D,#00843D,42.345328,-71.104269,430.0,False,gtfs_stops
+70187,Fenway,Green-D,#00843D,42.345029,-71.104968,450.0,False,gtfs_stops
+70198,Park Street,Green-D,#00843D,42.356395,-71.062424,60.0,False,gtfs_stops
+70200,Park Street,Green-D,#00843D,42.356395,-71.062424,600.0,False,gtfs_stops
+70201,Government Center,Green-D,#00843D,42.359705,-71.059215,610.0,False,gtfs_stops
+70202,Government Center,Green-D,#00843D,42.359705,-71.059215,40.0,False,gtfs_stops
+70203,Haymarket,Green-D,#00843D,42.363021,-71.05829,620.0,False,gtfs_stops
+70204,Haymarket,Green-D,#00843D,42.363021,-71.05829,30.0,False,gtfs_stops
+70205,North Station,Green-D,#00843D,42.36528,-71.060205,630.0,False,gtfs_stops
+70206,North Station,Green-D,#00843D,42.36528,-71.060205,20.0,False,gtfs_stops
+70207,Science Park/West End,Green-D,#00843D,42.366664,-71.067666,640.0,False,gtfs_stops
+70208,Science Park/West End,Green-D,#00843D,42.366664,-71.067666,10.0,False,gtfs_stops
+70209,70209,Green-D,#00843D,42.3425,-71.14699999999999,650.0,False,synthetic_from_stop_sequence
+70210,70210,Green-D,#00843D,42.34,-71.145,1.0,False,synthetic_from_stop_sequence
+70501,Lechmere,Green-D,#00843D,42.371566,-71.076457,650.0,False,gtfs_stops
+70502,Lechmere,Green-D,#00843D,42.370989,-71.07586,9.0,False,gtfs_stops
+70503,Union Square,Green-D,#00843D,42.377024,-71.093964,660.0,False,gtfs_stops
+70504,Union Square,Green-D,#00843D,42.37699,-71.093993,1.0,False,gtfs_stops
+70505,Gilman Square,Green-D,#00843D,42.388043,-71.096956,26.0,False,gtfs_stops
+70506,Gilman Square,Green-D,#00843D,42.387831,-71.096629,4.0,False,gtfs_stops
+70507,Magoun Square,Green-D,#00843D,42.394357,-71.106824,27.0,False,gtfs_stops
+70508,Magoun Square,Green-D,#00843D,42.39405,-71.106688,3.0,False,gtfs_stops
+70509,Ball Square,Green-D,#00843D,42.40038,-71.111331,28.0,False,gtfs_stops
+70510,Ball Square,Green-D,#00843D,42.400103,-71.111207,2.0,False,gtfs_stops
+70511,Medford/Tufts,Green-D,#00843D,42.408306,-71.11728,29.0,False,gtfs_stops
+70512,Medford/Tufts,Green-D,#00843D,42.40828,-71.117339,1.0,False,gtfs_stops
+70513,East Somerville,Green-D,#00843D,42.379881,-71.087032,25.0,False,gtfs_stops
+70514,East Somerville,Green-D,#00843D,42.379624,-71.086829,5.0,False,gtfs_stops
+70154,Copley,Green-E,#00843D,42.349871,-71.078049,570.0,False,gtfs_stops
+70155,Copley,Green-E,#00843D,42.350126,-71.077376,110.0,False,gtfs_stops
+70156,Arlington,Green-E,#00843D,42.351902,-71.070893,580.0,False,gtfs_stops
+70157,Arlington,Green-E,#00843D,42.351902,-71.070893,100.0,False,gtfs_stops
+70158,Boylston,Green-E,#00843D,42.352531,-71.064682,590.0,False,gtfs_stops
+70159,Boylston,Green-E,#00843D,42.353214,-71.064545,90.0,False,gtfs_stops
+70199,Park Street,Green-E,#00843D,42.356395,-71.062424,80.0,False,gtfs_stops
+70200,Park Street,Green-E,#00843D,42.356395,-71.062424,600.0,False,gtfs_stops
+70201,Government Center,Green-E,#00843D,42.359705,-71.059215,610.0,False,gtfs_stops
+70202,Government Center,Green-E,#00843D,42.359705,-71.059215,40.0,False,gtfs_stops
+70203,Haymarket,Green-E,#00843D,42.363021,-71.05829,620.0,False,gtfs_stops
+70204,Haymarket,Green-E,#00843D,42.363021,-71.05829,30.0,False,gtfs_stops
+70205,North Station,Green-E,#00843D,42.36528,-71.060205,630.0,False,gtfs_stops
+70206,North Station,Green-E,#00843D,42.36528,-71.060205,20.0,False,gtfs_stops
+70207,Science Park/West End,Green-E,#00843D,42.366664,-71.067666,640.0,False,gtfs_stops
+70208,Science Park/West End,Green-E,#00843D,42.366664,-71.067666,10.0,False,gtfs_stops
+70209,70209,Green-E,#00843D,42.3385,-71.097,650.0,False,synthetic_from_stop_sequence
+70210,70210,Green-E,#00843D,42.336,-71.095,1.0,False,synthetic_from_stop_sequence
+70239,Prudential,Green-E,#00843D,42.34557,-71.081696,580.0,False,gtfs_stops
+70240,Prudential,Green-E,#00843D,42.34557,-71.081696,540.0,False,gtfs_stops
+70241,Symphony,Green-E,#00843D,42.342687,-71.085056,590.0,False,gtfs_stops
+70242,Symphony,Green-E,#00843D,42.342687,-71.085056,530.0,False,gtfs_stops
+70243,Northeastern University,Green-E,#00843D,42.339897,-71.09021,600.0,False,gtfs_stops
+70244,Northeastern University,Green-E,#00843D,42.340222,-71.0892,520.0,False,gtfs_stops
+70245,Museum of Fine Arts,Green-E,#00843D,42.337875,-71.09524,610.0,False,gtfs_stops
+70246,Museum of Fine Arts,Green-E,#00843D,42.338017,-71.094682,510.0,False,gtfs_stops
+70247,Longwood Medical Area,Green-E,#00843D,42.33608,-71.099883,620.0,False,gtfs_stops
+70248,Longwood Medical Area,Green-E,#00843D,42.336217,-71.099328,500.0,False,gtfs_stops
+70249,Brigham Circle,Green-E,#00843D,42.334331,-71.104487,630.0,False,gtfs_stops
+70250,Brigham Circle,Green-E,#00843D,42.334846,-71.103017,490.0,False,gtfs_stops
+70251,Fenwood Road,Green-E,#00843D,42.33374,-71.105721,640.0,False,gtfs_stops
+70252,Fenwood Road,Green-E,#00843D,42.333706,-71.105583,480.0,False,gtfs_stops
+70253,Mission Park,Green-E,#00843D,42.333279,-71.109276,650.0,False,gtfs_stops
+70254,Mission Park,Green-E,#00843D,42.333092,-71.10968,470.0,False,gtfs_stops
+70255,Riverway,Green-E,#00843D,42.331391,-71.111925,660.0,False,gtfs_stops
+70256,Riverway,Green-E,#00843D,42.331871,-71.111961,460.0,False,gtfs_stops
+70257,Back of the Hill,Green-E,#00843D,42.329369,-71.111046,670.0,False,gtfs_stops
+70258,Back of the Hill,Green-E,#00843D,42.329399,-71.110931,450.0,False,gtfs_stops
+70260,Heath Street,Green-E,#00843D,42.328316,-71.110252,440.0,False,gtfs_stops
+70501,Lechmere,Green-E,#00843D,42.371566,-71.076457,650.0,False,gtfs_stops
+70502,Lechmere,Green-E,#00843D,42.370989,-71.07586,9.0,False,gtfs_stops
+70503,Union Square,Green-E,#00843D,42.377024,-71.093964,660.0,False,gtfs_stops
+70504,Union Square,Green-E,#00843D,42.37699,-71.093993,17.0,False,gtfs_stops
+70505,Gilman Square,Green-E,#00843D,42.388043,-71.096956,680.0,False,gtfs_stops
+70506,Gilman Square,Green-E,#00843D,42.387831,-71.096629,7.0,False,gtfs_stops
+70507,Magoun Square,Green-E,#00843D,42.394357,-71.106824,690.0,False,gtfs_stops
+70508,Magoun Square,Green-E,#00843D,42.39405,-71.106688,6.0,False,gtfs_stops
+70509,Ball Square,Green-E,#00843D,42.40038,-71.111331,700.0,False,gtfs_stops
+70510,Ball Square,Green-E,#00843D,42.400103,-71.111207,5.0,False,gtfs_stops
+70511,Medford/Tufts,Green-E,#00843D,42.408306,-71.11728,710.0,False,gtfs_stops
+70512,Medford/Tufts,Green-E,#00843D,42.40828,-71.117339,4.0,False,gtfs_stops
+70513,East Somerville,Green-E,#00843D,42.379881,-71.087032,670.0,False,gtfs_stops
+70514,East Somerville,Green-E,#00843D,42.379624,-71.086829,8.0,False,gtfs_stops
+70261,Ashmont,Mattapan,#DA291C,42.283768,-71.063191,4.0,False,gtfs_stops
+70263,Cedar Grove,Mattapan,#DA291C,42.279546,-71.060392,2.0,False,gtfs_stops
+70264,Cedar Grove,Mattapan,#DA291C,42.279693,-71.060381,7.0,False,gtfs_stops
+70265,Butler,Mattapan,#DA291C,42.272449,-71.062513,3.0,False,gtfs_stops
+70266,Butler,Mattapan,#DA291C,42.272477,-71.062438,6.0,False,gtfs_stops
+70267,Milton,Mattapan,#DA291C,42.270388,-71.067253,4.0,False,gtfs_stops
+70268,Milton,Mattapan,#DA291C,42.270308,-71.067289,5.0,False,gtfs_stops
+70269,Central Avenue,Mattapan,#DA291C,42.270054,-71.073523,5.0,False,gtfs_stops
+70270,Central Avenue,Mattapan,#DA291C,42.270001,-71.073358,4.0,False,gtfs_stops
+70271,Valley Road,Mattapan,#DA291C,42.268389,-71.081504,6.0,False,gtfs_stops
+70272,Valley Road,Mattapan,#DA291C,42.268347,-71.081343,3.0,False,gtfs_stops
+70273,Capen Street,Mattapan,#DA291C,42.267589,-71.087139,7.0,False,gtfs_stops
+70274,Capen Street,Mattapan,#DA291C,42.267563,-71.087338,2.0,False,gtfs_stops
+70275,Mattapan,Mattapan,#DA291C,42.267625,-71.092389,8.0,False,gtfs_stops
+70276,Mattapan,Mattapan,#DA291C,42.267559,-71.092233,1.0,False,gtfs_stops
+70001,Forest Hills,Orange,#ED8B00,42.300926,-71.114129,19.5,False,gtfs_stops
+70002,Green Street,Orange,#ED8B00,42.309832,-71.108059,180.0,False,gtfs_stops
+70003,Green Street,Orange,#ED8B00,42.309796,-71.107988,10.0,False,gtfs_stops
+70004,Stony Brook,Orange,#ED8B00,42.317062,-71.104248,170.0,False,gtfs_stops
+70005,Stony Brook,Orange,#ED8B00,42.317062,-71.104248,20.0,False,gtfs_stops
+70006,Jackson Square,Orange,#ED8B00,42.323132,-71.099592,160.0,False,gtfs_stops
+70007,Jackson Square,Orange,#ED8B00,42.323132,-71.099592,30.0,False,gtfs_stops
+70008,Roxbury Crossing,Orange,#ED8B00,42.330671,-71.096121,150.0,False,gtfs_stops
+70009,Roxbury Crossing,Orange,#ED8B00,42.33064,-71.09604,40.0,False,gtfs_stops
+70010,Ruggles,Orange,#ED8B00,42.33649,-71.089684,140.0,False,gtfs_stops
+70011,Ruggles,Orange,#ED8B00,42.336451,-71.089635,50.0,False,gtfs_stops
+70012,Massachusetts Avenue,Orange,#ED8B00,42.340927,-71.084188,130.0,False,gtfs_stops
+70013,Massachusetts Avenue,Orange,#ED8B00,42.340892,-71.084124,60.0,False,gtfs_stops
+70014,Back Bay,Orange,#ED8B00,42.34735,-71.075727,120.0,False,gtfs_stops
+70015,Back Bay,Orange,#ED8B00,42.34735,-71.075727,70.0,False,gtfs_stops
+70016,Tufts Medical Center,Orange,#ED8B00,42.349662,-71.063917,110.0,False,gtfs_stops
+70017,Tufts Medical Center,Orange,#ED8B00,42.349662,-71.063917,80.0,False,gtfs_stops
+70018,Chinatown,Orange,#ED8B00,42.352547,-71.062752,100.0,False,gtfs_stops
+70019,Chinatown,Orange,#ED8B00,42.352547,-71.062752,90.0,False,gtfs_stops
+70020,Downtown Crossing,Orange,#ED8B00,42.355518,-71.060225,90.0,False,gtfs_stops
+70021,Downtown Crossing,Orange,#ED8B00,42.355518,-71.060225,100.0,False,gtfs_stops
+70022,State,Orange,#ED8B00,42.358978,-71.057598,80.0,False,gtfs_stops
+70023,State,Orange,#ED8B00,42.358978,-71.057598,110.0,False,gtfs_stops
+70024,Haymarket,Orange,#ED8B00,42.363021,-71.05829,70.0,False,gtfs_stops
+70025,Haymarket,Orange,#ED8B00,42.363021,-71.05829,120.0,False,gtfs_stops
+70026,North Station,Orange,#ED8B00,42.36528,-71.060205,60.0,False,gtfs_stops
+70027,North Station,Orange,#ED8B00,42.36528,-71.060205,130.0,False,gtfs_stops
+70028,Community College,Orange,#ED8B00,42.373622,-71.069533,50.0,False,gtfs_stops
+70029,Community College,Orange,#ED8B00,42.373622,-71.069533,140.0,False,gtfs_stops
+70030,Sullivan Square,Orange,#ED8B00,42.383975,-71.076994,40.0,False,gtfs_stops
+70031,Sullivan Square,Orange,#ED8B00,42.383975,-71.076994,150.0,False,gtfs_stops
+70032,Wellington,Orange,#ED8B00,42.401505,-71.077252,20.0,False,gtfs_stops
+70033,Wellington,Orange,#ED8B00,42.401507,-71.07715,170.0,False,gtfs_stops
+70034,Malden Center,Orange,#ED8B00,42.426677,-71.074381,10.0,False,gtfs_stops
+70035,Malden Center,Orange,#ED8B00,42.426662,-71.074314,180.0,False,gtfs_stops
+70036,Oak Grove,Orange,#ED8B00,42.437735,-71.070875,20.0,False,gtfs_stops
+70278,Assembly,Orange,#ED8B00,42.392331,-71.077262,30.0,False,gtfs_stops
+70279,Assembly,Orange,#ED8B00,42.392336,-71.07718,160.0,False,gtfs_stops
+70061,Alewife,Red,#DA291C,42.396148,-71.140698,7.5,False,gtfs_stops
+70063,Davis,Red,#DA291C,42.39674,-71.121815,10.0,False,gtfs_stops
+70064,Davis,Red,#DA291C,42.39674,-71.121815,210.0,False,gtfs_stops
+70065,Porter,Red,#DA291C,42.3884,-71.119149,20.0,False,gtfs_stops
+70066,Porter,Red,#DA291C,42.3884,-71.119149,200.0,False,gtfs_stops
+70067,Harvard,Red,#DA291C,42.374663,-71.118814,30.0,False,gtfs_stops
+70068,Harvard,Red,#DA291C,42.374663,-71.118814,190.0,False,gtfs_stops
+70069,Central,Red,#DA291C,42.365304,-71.103621,40.0,False,gtfs_stops
+70070,Central,Red,#DA291C,42.365379,-71.103554,180.0,False,gtfs_stops
+70071,Kendall/MIT,Red,#DA291C,42.362355,-71.085605,50.0,False,gtfs_stops
+70072,Kendall/MIT,Red,#DA291C,42.362434,-71.085591,170.0,False,gtfs_stops
+70073,Charles/MGH,Red,#DA291C,42.361187,-71.071505,60.0,False,gtfs_stops
+70074,Charles/MGH,Red,#DA291C,42.361263,-71.071602,160.0,False,gtfs_stops
+70075,Park Street,Red,#DA291C,42.356395,-71.062424,70.0,False,gtfs_stops
+70076,Park Street,Red,#DA291C,42.356395,-71.062424,150.0,False,gtfs_stops
+70077,Downtown Crossing,Red,#DA291C,42.355518,-71.060225,80.0,False,gtfs_stops
+70078,Downtown Crossing,Red,#DA291C,42.355518,-71.060225,140.0,False,gtfs_stops
+70079,South Station,Red,#DA291C,42.352271,-71.055242,90.0,False,gtfs_stops
+70080,South Station,Red,#DA291C,42.352271,-71.055242,130.0,False,gtfs_stops
+70081,Broadway,Red,#DA291C,42.342622,-71.056967,100.0,False,gtfs_stops
+70082,Broadway,Red,#DA291C,42.342622,-71.056967,120.0,False,gtfs_stops
+70083,Andrew,Red,#DA291C,42.330154,-71.057655,110.0,False,gtfs_stops
+70084,Andrew,Red,#DA291C,42.330154,-71.057655,110.0,False,gtfs_stops
+70085,JFK/UMass,Red,#DA291C,42.320632,-71.052514,130.0,False,gtfs_stops
+70086,JFK/UMass,Red,#DA291C,42.320637,-71.052473,90.0,False,gtfs_stops
+70087,Savin Hill,Red,#DA291C,42.310603,-71.053678,140.0,False,gtfs_stops
+70088,Savin Hill,Red,#DA291C,42.310591,-71.053612,80.0,False,gtfs_stops
+70089,Fields Corner,Red,#DA291C,42.299993,-71.062021,150.0,False,gtfs_stops
+70090,Fields Corner,Red,#DA291C,42.299935,-71.061945,70.0,False,gtfs_stops
+70091,Shawmut,Red,#DA291C,42.293126,-71.065738,160.0,False,gtfs_stops
+70092,Shawmut,Red,#DA291C,42.293126,-71.065738,60.0,False,gtfs_stops
+70093,Ashmont,Red,#DA291C,42.284508,-71.063833,170.0,False,gtfs_stops
+70094,Ashmont,Red,#DA291C,42.28453,-71.063725,50.0,False,gtfs_stops
+70095,JFK/UMass,Red,#DA291C,42.320418,-71.052287,120.0,False,gtfs_stops
+70096,JFK/UMass,Red,#DA291C,42.320434,-71.052215,100.0,False,gtfs_stops
+70097,North Quincy,Red,#DA291C,42.27577,-71.030194,180.0,False,gtfs_stops
+70098,North Quincy,Red,#DA291C,42.275802,-71.030144,40.0,False,gtfs_stops
+70099,Wollaston,Red,#DA291C,42.266762,-71.020542,190.0,False,gtfs_stops
+70100,Wollaston,Red,#DA291C,42.266788,-71.020457,30.0,False,gtfs_stops
+70101,Quincy Center,Red,#DA291C,42.251809,-71.005409,200.0,False,gtfs_stops
+70102,Quincy Center,Red,#DA291C,42.251809,-71.005409,20.0,False,gtfs_stops
+70103,Quincy Adams,Red,#DA291C,42.233391,-71.007153,210.0,False,gtfs_stops
+70104,Quincy Adams,Red,#DA291C,42.233391,-71.007153,10.0,False,gtfs_stops
+70105,Braintree,Red,#DA291C,42.207424,-71.001645,1.0,False,gtfs_stops
+11083,11083,Silver,#7C878E,42.3685,-71.08399999999999,12.0,False,synthetic_from_stop_sequence
+12005,12005,Silver,#7C878E,42.351,-71.07,5.0,False,synthetic_from_stop_sequence
+12006,12006,Silver,#7C878E,42.356,-71.074,6.0,False,synthetic_from_stop_sequence
+12007,12007,Silver,#7C878E,42.3585,-71.076,6.0,False,synthetic_from_stop_sequence
+12008,12008,Silver,#7C878E,42.366,-71.082,7.0,False,synthetic_from_stop_sequence
+12009,12009,Silver,#7C878E,42.361,-71.07799999999999,6.0,False,synthetic_from_stop_sequence
+12010,12010,Silver,#7C878E,42.3635,-71.08,6.0,False,synthetic_from_stop_sequence
+15095,Washington St @ Herald St,Silver,#7C878E,42.345582,-71.064848,9.0,False,gtfs_stops
+15176,Washington St @ Worcester St,Silver,#7C878E,42.337353,-71.075909,8.0,False,gtfs_stops
+17091,Terminal A,Silver,#7C878E,42.364612,-71.020862,1.0,False,gtfs_stops
+17093,Terminal B Stop 2 - Arrivals Level,Silver,#7C878E,42.362099,-71.017983,3.0,False,gtfs_stops
+17094,Terminal C - Arrivals Level,Silver,#7C878E,42.366494,-71.017289,4.0,False,gtfs_stops
+17095,Terminal E - Arrivals Level,Silver,#7C878E,42.369344,-71.020238,5.0,False,gtfs_stops
+17096,Congress St @ World Trade Center Sta,Silver,#7C878E,42.348769,-71.042336,6.0,False,gtfs_stops
+1787,Washington St @ Worcester St,Silver,#7C878E,42.337524,-71.075479,5.0,False,gtfs_stops
+1788,Washington St @ E Newton St,Silver,#7C878E,42.338763,-71.073677,6.0,False,gtfs_stops
+19402,Washington St @ W Newton St,Silver,#7C878E,42.338788,-71.073825,7.0,False,gtfs_stops
+247,Northern Ave @ Harbor St,Silver,#7C878E,42.346634,-71.035301,5.0,False,gtfs_stops
+27092,Terminal B Stop 1 - Arrivals Level,Silver,#7C878E,42.3621,-71.01882,2.0,False,gtfs_stops
+3,Washington St @ Melnea Cass Blvd - Silver Line,Silver,#7C878E,42.333021,-71.080799,2.0,False,gtfs_stops
+30249,Northern Ave @ Tide St,Silver,#7C878E,42.34508,-71.031986,6.0,False,gtfs_stops
+30250,23 Drydock Ave,Silver,#7C878E,42.344649,-71.030268,7.0,False,gtfs_stops
+30251,27 Drydock Ave,Silver,#7C878E,42.344706,-71.028419,2.0,False,gtfs_stops
+31255,Drydock Ave @ Design Center Place,Silver,#7C878E,42.3446,-71.034476,4.0,False,gtfs_stops
+31256,Northern Ave opp Harbor St,Silver,#7C878E,42.346538,-71.034878,6.0,False,gtfs_stops
+31257,Northern Ave @ Tide St,Silver,#7C878E,42.345192,-71.031996,5.0,False,gtfs_stops
+31258,31258,Silver,#7C878E,42.3535,-71.07199999999999,5.0,False,synthetic_from_stop_sequence
+31259,Drydock Ave @ Black Falcon Ave,Silver,#7C878E,42.344232,-71.027213,3.0,False,gtfs_stops
+4,Washington St @ Lenox St,Silver,#7C878E,42.335164,-71.078518,3.0,False,gtfs_stops
+49001,Temple Pl @ Washington St,Silver,#7C878E,42.355385,-71.062211,1.0,False,gtfs_stops
+49002,Washington St @ Tufts Med Ctr,Silver,#7C878E,42.349908,-71.063684,3.0,False,gtfs_stops
+49003,Washington St @ Herald St,Silver,#7C878E,42.346457,-71.064695,4.0,False,gtfs_stops
+5,Washington St @ Massachusetts Ave,Silver,#7C878E,42.336339,-71.07707,4.0,False,gtfs_stops
+5093,Washington St @ Union Pk,Silver,#7C878E,42.341308,-71.069417,7.0,False,gtfs_stops
+5095,Washington St @ E Berkeley St,Silver,#7C878E,42.344189,-71.065726,8.0,False,gtfs_stops
+5098,Washington St @ E Berkeley St,Silver,#7C878E,42.343739,-71.066256,5.0,False,gtfs_stops
+5100,Washington St @ W Dedham St,Silver,#7C878E,42.340497,-71.071317,6.0,False,gtfs_stops
+55,Washington St @ Massachusetts Ave,Silver,#7C878E,42.336361,-71.077214,9.0,False,gtfs_stops
+60,Washington St @ Lenox St,Silver,#7C878E,42.334963,-71.078951,10.0,False,gtfs_stops
+61,Washington St @ Melnea Cass Blvd,Silver,#7C878E,42.332781,-71.081246,11.0,False,gtfs_stops
+64,Nubian,Silver,#7C878E,42.329789,-71.083887,1.0,False,gtfs_stops
+6537,Washington St @ Essex St,Silver,#7C878E,42.352288,-71.062581,11.0,False,gtfs_stops
+6538,Essex St @ Atlantic Ave,Silver,#7C878E,42.35176,-71.056003,12.0,False,gtfs_stops
+6555,Chinatown Gate,Silver,#7C878E,42.35068,-71.059655,2.0,False,gtfs_stops
+6565,Washington St @ Tufts Med Ctr,Silver,#7C878E,42.34997,-71.063413,10.0,False,gtfs_stops
+6567,Washington St @ Essex St,Silver,#7C878E,42.352461,-71.062552,11.0,False,gtfs_stops
+7096,Airport,Silver,#7C878E,42.3745,-71.029541,5.0,False,gtfs_stops
+7097,Airport,Silver,#7C878E,42.374304,-71.029726,5.0,False,gtfs_stops
+74611,South Station,Silver,#7C878E,42.352271,-71.055242,1.0,False,gtfs_stops
+74612,Courthouse,Silver,#7C878E,42.352161,-71.046469,2.0,False,gtfs_stops
+74613,World Trade Center,Silver,#7C878E,42.348222,-71.042661,3.0,False,gtfs_stops
+74614,Silver Line Way,Silver,#7C878E,42.347241,-71.038801,7.0,False,gtfs_stops
+74615,World Trade Center,Silver,#7C878E,42.348354,-71.042565,8.0,False,gtfs_stops
+74616,Courthouse,Silver,#7C878E,42.352329,-71.046342,9.0,False,gtfs_stops
+74617,South Station,Silver,#7C878E,42.352271,-71.055242,10.0,False,gtfs_stops
+74624,Silver Line Way,Silver,#7C878E,42.347066,-71.037969,4.0,False,gtfs_stops
+74630,Chelsea,Silver,#7C878E,42.396661,-71.04029,1.0,False,gtfs_stops
+74631,Chelsea,Silver,#7C878E,42.39682,-71.040437,9.0,False,gtfs_stops
+74632,Bellingham Square,Silver,#7C878E,42.395328,-71.033291,2.0,False,gtfs_stops
+74633,Bellingham Square,Silver,#7C878E,42.395638,-71.034599,8.0,False,gtfs_stops
+74634,Box District,Silver,#7C878E,42.394018,-71.028439,3.0,False,gtfs_stops
+74635,Box District,Silver,#7C878E,42.394168,-71.028452,7.0,False,gtfs_stops
+74636,Eastern Avenue,Silver,#7C878E,42.388403,-71.02409,4.0,False,gtfs_stops
+74637,Eastern Avenue,Silver,#7C878E,42.388476,-71.023829,6.0,False,gtfs_stops
+8279,Tremont St @ Boylston Station,Silver,#7C878E,42.353247,-71.064353,2.0,False,gtfs_stops
+892,Summer St @ Atlantic Ave,Silver,#7C878E,42.352649,-71.055136,8.0,False,gtfs_stops

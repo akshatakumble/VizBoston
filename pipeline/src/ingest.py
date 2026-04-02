@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
+import re
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -24,7 +26,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from zipfile import ZipFile
 
-from common import ensure_dir, read_json, row_count, sha256_file, write_json
+from common import DATASETS, ensure_dir, read_json, row_count, sha256_file, write_json
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_RAW_DIR = REPO_ROOT / "data" / "raw"
@@ -145,33 +147,136 @@ def _download_zip(item_id: str, destination_zip: Path, timeout_sec: int) -> None
             f.write(chunk)
 
 
-def _choose_csv_member(spec: DatasetSpec, year: int, members: Iterable) -> str:
+def _score_csv_member(spec: DatasetSpec, year: int, name: str) -> tuple[int, bool, bool]:
+    basename = Path(name).name.lower()
+    hint_score = sum(5 for hint in spec.filename_hints if hint in basename)
+    has_year = str(year) in basename if spec.year_specific else True
+    has_month_token = bool(re.search(rf"(?<!\d){year}[-_](0[1-9]|1[0-2])(?!\d)", basename))
+    score = hint_score
+    if has_year:
+        score += 4
+    if has_month_token:
+        score += 2
+    return score, has_year, has_month_token
+
+
+def _choose_csv_members(spec: DatasetSpec, year: int, members: Iterable) -> List[str]:
     year_text = str(year)
-    scored: List[tuple[int, int, str]] = []
+    candidates: List[tuple[int, int, str, bool, bool]] = []
 
     for member in members:
         name = member.filename
         if member.is_dir() or not name.lower().endswith(".csv"):
             continue
+        score, has_year, has_month_token = _score_csv_member(spec, year, name)
+        candidates.append((score, int(member.file_size), name, has_year, has_month_token))
 
-        basename = Path(name).name.lower()
-        hint_score = sum(5 for hint in spec.filename_hints if hint in basename)
-        year_score = 2 if (spec.year_specific and year_text in basename) else 0
-        scored.append((hint_score + year_score, int(member.file_size), name))
-
-    if not scored:
+    if not candidates:
         raise RuntimeError(f"No CSV file found in downloaded archive for dataset {spec.key}")
 
-    scored.sort(reverse=True)
-    return scored[0][2]
+    # First, prefer candidates with matching dataset hints (event/headway/travel/etc.)
+    # to avoid auxiliary metadata CSVs in Hub archives.
+    hint_filtered = [item for item in candidates if item[0] >= 5]
+    if hint_filtered:
+        candidates = hint_filtered
+
+    # For year-specific datasets, prefer members that explicitly include the target year.
+    if spec.year_specific:
+        year_filtered = [item for item in candidates if item[3] or year_text in item[2]]
+        if year_filtered:
+            candidates = year_filtered
+
+    # If monthly slices exist, include all of them (this captures HR+LR files per month).
+    monthly_candidates = [item for item in candidates if item[4]]
+    if monthly_candidates:
+        selected = monthly_candidates
+    else:
+        # Fall back to all top-scored candidates. This keeps both HR and LR
+        # when they are not month-stamped but otherwise equally relevant.
+        top_score = max(item[0] for item in candidates)
+        selected = [item for item in candidates if item[0] == top_score]
+
+    selected_names = sorted({item[2] for item in selected}, key=lambda value: Path(value).name.lower())
+    return selected_names
 
 
-def _extract_csv_from_zip(zip_path: Path, spec: DatasetSpec, year: int, destination_csv: Path) -> str:
+def _read_csv_header_from_member(archive: ZipFile, member_name: str) -> List[str]:
+    with archive.open(member_name) as src:
+        text = io.TextIOWrapper(src, encoding="utf-8-sig", newline="")
+        reader = csv.reader(text)
+        for row in reader:
+            if row:
+                return [str(col).strip() for col in row]
+    return []
+
+
+def _extract_csv_from_zip(zip_path: Path, spec: DatasetSpec, year: int, destination_csv: Path) -> List[str]:
     with ZipFile(zip_path, "r") as archive:
-        member_name = _choose_csv_member(spec, year, archive.infolist())
-        with archive.open(member_name) as src, destination_csv.open("wb") as dst:
-            shutil.copyfileobj(src, dst)
-    return member_name
+        member_names = _choose_csv_members(spec, year, archive.infolist())
+
+        # Build a stable superset of columns across all selected members so
+        # schema differences between HR/LR slices do not drop fields.
+        fieldnames: List[str] = []
+        for member_name in member_names:
+            header = _read_csv_header_from_member(archive, member_name)
+            for column in header:
+                if column and column not in fieldnames:
+                    fieldnames.append(column)
+
+        if not fieldnames:
+            raise RuntimeError(f"No readable CSV header found in downloaded archive for dataset {spec.key}")
+
+        with destination_csv.open("w", newline="", encoding="utf-8") as out_f:
+            writer = csv.DictWriter(out_f, fieldnames=fieldnames)
+            writer.writeheader()
+            for member_name in member_names:
+                with archive.open(member_name) as src:
+                    text = io.TextIOWrapper(src, encoding="utf-8-sig", newline="")
+                    reader = csv.DictReader(text)
+                    if not reader.fieldnames:
+                        continue
+                    for row in reader:
+                        if row is None:
+                            continue
+                        merged_row = {column: row.get(column, "") or "" for column in fieldnames}
+                        writer.writerow(merged_row)
+    return member_names
+
+
+def _extract_nested_gtfs_archives(outer_zip_path: Path, raw_dir: Path) -> tuple[List[Path], List[str]]:
+    extracted_roots: List[Path] = []
+    extracted_members: List[str] = []
+    gtfs_root = raw_dir / "gtfs_recaps"
+    ensure_dir(gtfs_root)
+
+    with ZipFile(outer_zip_path, "r") as outer:
+        inner_members = [m.filename for m in outer.infolist() if (not m.is_dir() and m.filename.lower().endswith(".zip"))]
+        for inner_member in inner_members:
+            inner_name = Path(inner_member).name
+            inner_stem = Path(inner_name).stem
+            out_dir = gtfs_root / inner_stem
+            ensure_dir(out_dir)
+
+            inner_blob = outer.read(inner_member)
+            try:
+                with ZipFile(io.BytesIO(inner_blob), "r") as inner_zip:
+                    for file_info in inner_zip.infolist():
+                        if file_info.is_dir():
+                            continue
+                        file_name = Path(file_info.filename).name
+                        if not file_name:
+                            continue
+                        target = out_dir / file_name
+                        with inner_zip.open(file_info) as src, target.open("wb") as dst:
+                            shutil.copyfileobj(src, dst)
+            except Exception:
+                continue
+
+            if (out_dir / "stop_times.txt").exists() and (out_dir / "trips.txt").exists():
+                extracted_roots.append(out_dir)
+                extracted_members.append(inner_name)
+
+    return extracted_roots, extracted_members
 
 
 def _should_skip_download(
@@ -283,7 +388,7 @@ def run_ingest(
         manifest_key = f"{spec.key}:{year}"
         existing_entry = persistent_manifest["datasets"].get(manifest_key)
 
-        result: Dict[str, str | int | float] = {
+        result: Dict[str, object] = {
             "file": str(destination),
             "dataset": spec.key,
         }
@@ -338,10 +443,30 @@ def run_ingest(
                 mode = "downloaded"
                 with tempfile.TemporaryDirectory(prefix="mbta_ingest_") as tmp_dir:
                     tmp_zip = Path(tmp_dir) / f"{spec.key}_{year}.zip"
-                    selected_member = ""
+                    selected_members: List[str] = []
                     _download_zip(item_id, tmp_zip, timeout_sec=timeout_sec)
-                    selected_member = _extract_csv_from_zip(tmp_zip, spec, year, destination)
-                    result["archive_member"] = selected_member
+                    if spec.key == "gtfs_schedules":
+                        gtfs_roots, extracted_members = _extract_nested_gtfs_archives(tmp_zip, raw_dir=raw_dir)
+                        if not gtfs_roots:
+                            raise RuntimeError(
+                                "GTFS dataset downloaded but no nested recap archives with stop_times.txt were extracted"
+                            )
+                        result["archive_member_count"] = int(len(extracted_members))
+                        result["extracted_gtfs_roots"] = [str(p) for p in gtfs_roots]
+                        if extracted_members:
+                            result["archive_member"] = ";".join(extracted_members[:5])
+                        else:
+                            result["archive_member"] = "none"
+
+                        # Keep a lightweight marker CSV for downstream compatibility.
+                        with destination.open("w", newline="", encoding="utf-8") as f:
+                            writer = csv.writer(f)
+                            writer.writerow(DATASETS["gtfs_schedules"])
+                    else:
+                        selected_members = _extract_csv_from_zip(tmp_zip, spec, year, destination)
+                        result["archive_member_count"] = int(len(selected_members))
+                        result["archive_member"] = selected_members[0] if selected_members else ""
+                        result["archive_members"] = selected_members
 
             result.update(remote_head)
 

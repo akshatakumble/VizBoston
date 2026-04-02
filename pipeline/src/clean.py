@@ -7,6 +7,7 @@ remain pass-through until their stories are implemented.
 from __future__ import annotations
 
 import argparse
+import csv
 import shutil
 from pathlib import Path
 
@@ -159,10 +160,38 @@ def run_clean(year: int, raw_dir: Path, processed_dir: Path) -> Path:
 
         if dataset == "gtfs_schedules":
             clean_parquet_path = processed_dir / f"clean_{dataset}_{year}.parquet"
+            gtfs_roots = list(raw_dir.rglob("stop_times.txt"))
+            has_gtfs_snapshots = len(gtfs_roots) > 0
 
-            if raw_path.exists():
-                shutil.copy2(raw_path, clean_path)
-                pd.read_csv(clean_path, low_memory=False).to_parquet(clean_parquet_path, index=False)
+            if raw_path.exists() or has_gtfs_snapshots:
+                if raw_path.exists():
+                    shutil.copy2(raw_path, clean_path)
+                    pd.read_csv(clean_path, low_memory=False).to_parquet(clean_parquet_path, index=False)
+                else:
+                    with clean_path.open("w", newline="", encoding="utf-8") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(
+                            [
+                                "service_date",
+                                "route_id",
+                                "trip_id",
+                                "stop_id",
+                                "arrival_time",
+                                "departure_time",
+                                "stop_sequence",
+                            ]
+                        )
+                    pd.DataFrame(
+                        columns=[
+                            "service_date",
+                            "route_id",
+                            "trip_id",
+                            "stop_id",
+                            "arrival_time",
+                            "departure_time",
+                            "stop_sequence",
+                        ]
+                    ).to_parquet(clean_parquet_path, index=False)
                 gtfs_metrics = build_gtfs_schedule_reference_and_geography(
                     raw_dir=raw_dir,
                     processed_dir=processed_dir,
