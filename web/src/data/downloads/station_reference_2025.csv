@@ -238,7 +238,7 @@ stop_id,stop_name,route_id,line_color,latitude,longitude,stop_sequence,is_transf
 70206,North Station,Green-E,#00843D,42.36528,-71.060205,20.0,False,gtfs_stops
 70207,Science Park/West End,Green-E,#00843D,42.366664,-71.067666,640.0,False,gtfs_stops
 70208,Science Park/West End,Green-E,#00843D,42.366664,-71.067666,10.0,False,gtfs_stops
-70209,70209,Green-E,#00843D,42.3385,-71.097,650.0,False,synthetic_from_stop_sequence
+70209,70209,Green-E,#00843D,42.338499999999996,-71.097,650.0,False,synthetic_from_stop_sequence
 70210,70210,Green-E,#00843D,42.336,-71.095,1.0,False,synthetic_from_stop_sequence
 70239,Prudential,Green-E,#00843D,42.34557,-71.081696,580.0,False,gtfs_stops
 70240,Prudential,Green-E,#00843D,42.34557,-71.081696,540.0,False,gtfs_stops

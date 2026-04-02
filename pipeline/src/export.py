@@ -16,10 +16,6 @@ JSON_GZIP_MAX_BYTES = 2 * 1024 * 1024
 ASSUMED_4G_BYTES_PER_SEC = 1_000_000  # ~8 Mbps
 
 CSV_DOWNLOAD_CANDIDATES = (
-    "clean_rapid_transit_events_{year}.csv",
-    "clean_rapid_transit_headways_{year}.csv",
-    "clean_rapid_transit_travel_times_{year}.csv",
-    "schedule_reference_{year}.csv",
     "station_reference_{year}.csv",
 )
 
@@ -36,6 +32,7 @@ DESCRIPTIONS = {
     "scheduled_vs_actual_line_time_period_season": "Seasonal planned-vs-actual headway/frequency comparison.",
     "service_delivery_line_season": "Service delivery rate by line and season with schedule change indicators.",
     "mbta_transit_geography": "Geographic MBTA station and line data.",
+    "station_reference": "Canonical station metadata used for stop ordering and labels in the UI.",
     "data_manifest": "Catalog of export files, sizes, and update timestamps.",
 }
 
@@ -180,10 +177,25 @@ def _manifest_entry(
     }
 
 
+def _prune_stale_exports(year: int, web_data_dir: Path, downloads_dir: Path) -> None:
+    expected_downloads = {template.format(year=year) for template in CSV_DOWNLOAD_CANDIDATES}
+
+    for csv_path in downloads_dir.glob(f"*_{year}.csv"):
+        if csv_path.name not in expected_downloads:
+            csv_path.unlink(missing_ok=True)
+
+    # Frontend consumes TopoJSON; remove stale GeoJSON exports for this year.
+    stale_geojson = web_data_dir / f"mbta_transit_geography_{year}.geojson"
+    stale_geojson_gz = web_data_dir / f"mbta_transit_geography_{year}.geojson.gz"
+    stale_geojson.unlink(missing_ok=True)
+    stale_geojson_gz.unlink(missing_ok=True)
+
+
 def run_export(year: int, processed_dir: Path, web_data_dir: Path) -> Path:
     ensure_dir(web_data_dir)
     downloads_dir = web_data_dir / "downloads"
     ensure_dir(downloads_dir)
+    _prune_stale_exports(year=year, web_data_dir=web_data_dir, downloads_dir=downloads_dir)
 
     source = processed_dir / f"summary_{year}.json"
     destination = web_data_dir / f"dashboard_summary_{year}.json"
@@ -214,10 +226,7 @@ def run_export(year: int, processed_dir: Path, web_data_dir: Path) -> Path:
 
     geojson_src = processed_dir / f"mbta_transit_geography_{year}.geojson"
     if geojson_src.exists():
-        geojson_dst = web_data_dir / geojson_src.name
         geojson_payload = json.loads(geojson_src.read_text(encoding="utf-8"))
-        _write_minified_json(geojson_dst, geojson_payload)
-        json_artifacts.append(geojson_dst)
 
         topojson_dst = web_data_dir / f"mbta_transit_geography_{year}.topojson"
         topojson_payload = _geojson_to_topojson_payload(geojson_payload)
