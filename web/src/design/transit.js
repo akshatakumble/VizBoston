@@ -10,6 +10,16 @@ export const MBTA_LINE_COLORS = {
   Silver: "#7C878E",
   Mattapan: "#DA291C",
   All: "#4E6B95",
+  Scheduled: "#2563EB",
+  Actual: "#F59E0B",
+  Median: "#0284C7",
+  P95: "#DC2626",
+  "2022": "#0F766E",
+  "2023": "#0EA5E9",
+  "2024": "#FB923C",
+  "2025": "#334155",
+  "Selected A": "#2563EB",
+  "Selected B": "#DC2626",
 };
 
 export const TIME_PERIOD_OPTIONS = [

@@ -8,6 +8,7 @@ const SECTIONS = [
   { id: "wait-times", label: "Wait Times" },
   { id: "travel-times", label: "Travel Times" },
   { id: "commuter-tool", label: "Commuter Tool" },
+  { id: "historical-trends", label: "Historical Trends" },
 ];
 
 const DashboardContext = createContext(null);

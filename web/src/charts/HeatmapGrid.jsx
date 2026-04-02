@@ -10,6 +10,9 @@ function HeatmapGrid({
   columnKey = "column",
   valueKey = "value",
   valueFormatter = (value) => Number(value).toFixed(2),
+  colorInterpolator = interpolateYlOrRd,
+  onCellClick,
+  selectedCell = null,
   width = 760,
   height = 340,
 }) {
@@ -38,7 +41,7 @@ function HeatmapGrid({
   const yScale = scaleBand().domain(rows).range([0, innerHeight]).padding(0.08);
   const minValue = min(normalized, (d) => d.__value) ?? 0;
   const maxValue = max(normalized, (d) => d.__value) ?? 1;
-  const colorScale = scaleSequential(interpolateYlOrRd).domain([minValue, maxValue || minValue + 1]);
+  const colorScale = scaleSequential(colorInterpolator).domain([minValue, maxValue || minValue + 1]);
 
   if (normalized.length === 0) {
     return (
@@ -62,6 +65,10 @@ function HeatmapGrid({
             {normalized.map((cell, idx) => {
               const x = xScale(cell.__column);
               const y = yScale(cell.__row);
+              const isSelected =
+                selectedCell &&
+                String(selectedCell.row ?? "") === String(cell.__row) &&
+                String(selectedCell.column ?? "") === String(cell.__column);
               return (
                 <rect
                   key={`${cell.__row}-${cell.__column}-${idx}`}
@@ -71,6 +78,17 @@ function HeatmapGrid({
                   height={yScale.bandwidth()}
                   rx={6}
                   fill={colorScale(cell.__value)}
+                  stroke={isSelected ? "var(--accent-strong)" : "transparent"}
+                  strokeWidth={isSelected ? 2.6 : 0}
+                  className={onCellClick ? "heatmap-clickable-cell" : undefined}
+                  onClick={() =>
+                    onCellClick?.({
+                      row: cell.__row,
+                      column: cell.__column,
+                      value: cell.__value,
+                      data: cell,
+                    })
+                  }
                   onMouseEnter={(event) => {
                     const bounds = event.currentTarget.ownerSVGElement.getBoundingClientRect();
                     setTooltip({
