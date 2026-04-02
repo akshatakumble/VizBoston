@@ -44,6 +44,24 @@ function DataErrorState({ message, onRetry }) {
   );
 }
 
+function SilverCoverageNotice({ selectedLine }) {
+  if (selectedLine !== "Silver") {
+    return null;
+  }
+
+  return (
+    <section className="chart-card">
+      <div className="card-header">
+        <h2>Silver Line Coverage</h2>
+      </div>
+      <p className="card-subtitle">
+        Silver views are powered by MBTA observed bus arrival/departure data (SL1-SL5 and legacy aliases),
+        so OTP and reliability metrics remain observation-based end-to-end.
+      </p>
+    </section>
+  );
+}
+
 function DashboardFilters({
   startDate,
   endDate,
@@ -288,6 +306,7 @@ function DashboardPage() {
           title="Reliability Deep Dive"
           subtitle={`Detailed on-time performance analysis for ${lineLabel}`}
         />
+        <SilverCoverageNotice selectedLine={selectedLine} />
 
         <DashboardFilters
           startDate={startDate}
@@ -380,6 +399,7 @@ function DashboardPage() {
           title="Wait Time Regularity"
           subtitle={`How long passengers actually wait on ${lineLabel}`}
         />
+        <SilverCoverageNotice selectedLine={selectedLine} />
 
         <DashboardFilters
           startDate={startDate}
@@ -465,6 +485,7 @@ function DashboardPage() {
           title="Travel Times & Slow Zones"
           subtitle={`Where the system slows down for ${lineLabel}`}
         />
+        <SilverCoverageNotice selectedLine={selectedLine} />
 
         <DashboardFilters
           startDate={startDate}
@@ -537,6 +558,7 @@ function DashboardPage() {
           title="Commuter Tool"
           subtitle={`Personal trip-planning insights for ${lineLabel}`}
         />
+        <SilverCoverageNotice selectedLine={selectedLine} />
 
         <section className="commuter-controls-card">
           <div className="card-header">
@@ -683,6 +705,7 @@ function DashboardPage() {
           title="Historical Trends & Schedule Changes"
           subtitle={`How service changed over time for ${lineLabel}`}
         />
+        <SilverCoverageNotice selectedLine={selectedLine} />
 
         <section className="historical-compare-card">
           <div className="card-header">
@@ -838,6 +861,7 @@ function DashboardPage() {
         title="System Overview"
         subtitle={`${year} high-level snapshot of system health for ${lineLabel}`}
       />
+      <SilverCoverageNotice selectedLine={selectedLine} />
 
       {error ? <DataErrorState message={error} onRetry={retry} /> : null}
       {!error && loading ? <LoadingState title="System Scorecards" rows={6} /> : null}

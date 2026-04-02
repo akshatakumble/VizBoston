@@ -20,8 +20,15 @@ def _dataset_row_count(dataset: str, year: int, processed_dir: Path) -> int:
         "rapid_transit_headways",
         "rapid_transit_travel_times",
         "gtfs_schedules",
+        "silver_line_events",
+        "silver_line_headways",
     }:
-        parquet_path = processed_dir / f"clean_{dataset}_{year}.parquet"
+        parquet_name = dataset
+        if dataset == "silver_line_events":
+            parquet_name = "silver_line_events"
+        if dataset == "silver_line_headways":
+            parquet_name = "silver_line_headways"
+        parquet_path = processed_dir / f"clean_{parquet_name}_{year}.parquet"
         if parquet_path.exists():
             return int(len(pd.read_parquet(parquet_path)))
 
@@ -34,6 +41,9 @@ def run_transform(year: int, processed_dir: Path) -> Path:
 
     for dataset in DATASETS:
         summary["row_counts"][dataset] = _dataset_row_count(dataset, year, processed_dir)
+
+    summary["row_counts"]["silver_line_events"] = _dataset_row_count("silver_line_events", year, processed_dir)
+    summary["row_counts"]["silver_line_headways"] = _dataset_row_count("silver_line_headways", year, processed_dir)
 
     summary["metric_artifacts"] = compute_metric_aggregations(year=year, processed_dir=processed_dir)
 

@@ -16,6 +16,7 @@ import pandas as pd
 from common import DATASETS, ensure_dir, row_count, write_json
 from clean_events import clean_events_dataset
 from clean_headways import clean_headways_dataset
+from clean_silver_bus import clean_silver_bus_observations
 from clean_travel_times import clean_travel_times_dataset
 from gtfs_reference import build_gtfs_schedule_reference_and_geography
 
@@ -242,6 +243,55 @@ def run_clean(year: int, raw_dir: Path, processed_dir: Path) -> Path:
             }
         )
         report["datasets"][dataset] = dataset_report
+
+    silver_raw_path = raw_dir / f"silver_line_bus_observations_{year}.csv"
+    silver_events_parquet = processed_dir / f"clean_silver_line_events_{year}.parquet"
+    silver_headways_parquet = processed_dir / f"clean_silver_line_headways_{year}.parquet"
+    silver_events_csv = processed_dir / f"clean_silver_line_events_{year}.csv"
+    silver_headways_csv = processed_dir / f"clean_silver_line_headways_{year}.csv"
+
+    silver_report = {
+        "raw_file": str(silver_raw_path),
+        "clean_events_file": str(silver_events_csv),
+        "clean_headways_file": str(silver_headways_csv),
+    }
+    if silver_raw_path.exists():
+        silver_metrics = clean_silver_bus_observations(
+            source_csv=silver_raw_path,
+            events_destination_parquet=silver_events_parquet,
+            headways_destination_parquet=silver_headways_parquet,
+            events_destination_csv=silver_events_csv,
+            headways_destination_csv=silver_headways_csv,
+            raw_dir=raw_dir,
+            year=year,
+        )
+        silver_report.update(
+            {
+                "status": "cleaned",
+                "rows_events": int(silver_metrics["rows_events_output"]),
+                "rows_headways": int(silver_metrics["rows_headways_output"]),
+                "clean_events_parquet_file": str(silver_events_parquet),
+                "clean_headways_parquet_file": str(silver_headways_parquet),
+                "metrics": silver_metrics,
+            }
+        )
+        print(
+            "[silver_line_bus_observations] "
+            f"rows_in={silver_metrics['rows_input']} "
+            f"rows_events_out={silver_metrics['rows_events_output']} "
+            f"rows_headways_out={silver_metrics['rows_headways_output']}"
+        )
+    else:
+        silver_report.update(
+            {
+                "status": "missing_raw",
+                "rows_events": 0,
+                "rows_headways": 0,
+                "clean_events_parquet_file": str(silver_events_parquet),
+                "clean_headways_parquet_file": str(silver_headways_parquet),
+            }
+        )
+    report["datasets"]["silver_line_bus_observations"] = silver_report
 
     report_path = processed_dir / f"clean_report_{year}.json"
     write_json(report_path, report)

@@ -63,6 +63,21 @@ def test_transform_computes_epic4_metrics_aggregates(tmp_path: Path) -> None:
         ]
     )
     events.to_parquet(processed_dir / f"clean_rapid_transit_events_{year}.parquet", index=False)
+    silver_events = pd.DataFrame(
+        [
+            {
+                "service_date": "2025-01-01",
+                "route_id": "SL1",
+                "stop_id": "s4",
+                "trip_id": "silver_t1",
+                "event_type": "DEP",
+                "event_time_sec": 26100,
+                "schedule_deviation_sec": 45,
+                "canonical_stop_name": "Silver Stop",
+            }
+        ]
+    )
+    silver_events.to_parquet(processed_dir / f"clean_silver_line_events_{year}.parquet", index=False)
 
     headways = pd.DataFrame(
         [
@@ -109,6 +124,20 @@ def test_transform_computes_epic4_metrics_aggregates(tmp_path: Path) -> None:
         ]
     )
     headways.to_parquet(processed_dir / f"clean_rapid_transit_headways_{year}.parquet", index=False)
+    silver_headways = pd.DataFrame(
+        [
+            {
+                "service_date": "2025-01-01",
+                "route_id": "SL1",
+                "stop_id": "s4",
+                "headway_trunk_sec": 540,
+                "benchmark_headway_sec": 600,
+                "time_period": "AM Peak",
+                "event_time_sec": 26100,
+            }
+        ]
+    )
+    silver_headways.to_parquet(processed_dir / f"clean_silver_line_headways_{year}.parquet", index=False)
 
     travel = pd.DataFrame(
         [
@@ -226,13 +255,20 @@ def test_transform_computes_epic4_metrics_aggregates(tmp_path: Path) -> None:
     assert red_day["total_events"] == 3
     assert red_day["on_time_events"] == 1
     assert red_day["otp_pct"] == 33.33
+    silver_day = next(
+        r
+        for r in otp_daily_payload["records"]
+        if r["service_date"] == "2025-01-01" and r["line_id"] == "Silver"
+    )
+    assert silver_day["total_events"] == 1
+    assert silver_day["otp_pct"] == 100.0
 
     system_daily_payload = json.loads(
         Path(artifacts["otp_system_daily"]["path"]).read_text(encoding="utf-8")
     )
     system_day = next(r for r in system_daily_payload["records"] if r["service_date"] == "2025-01-01")
-    assert system_day["total_events"] == 4
-    assert system_day["reliability_score_pct"] == 50.0
+    assert system_day["total_events"] == 5
+    assert system_day["reliability_score_pct"] == 60.0
 
     headway_payload = json.loads(
         Path(artifacts["headway_station_time_month"]["path"]).read_text(encoding="utf-8")
@@ -251,6 +287,12 @@ def test_transform_computes_epic4_metrics_aggregates(tmp_path: Path) -> None:
     assert red_headway["avg_headway_sec"] == 450.0
     assert red_headway["excess_wait_time_sec"] == 150.0
     assert red_headway["bunching_rate_pct"] == 0.0
+    silver_headway = next(
+        r
+        for r in headway_payload["records"]
+        if r["line_id"] == "Silver" and r["route_id"] == "SL1"
+    )
+    assert silver_headway["avg_headway_sec"] == 540.0
 
     green_branch_payload = json.loads(
         Path(artifacts["headway_green_branch_month"]["path"]).read_text(encoding="utf-8")

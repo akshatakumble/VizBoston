@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
@@ -11,11 +12,11 @@ import pandas as pd
 from common import ensure_dir
 from time_periods import classify_time_period
 
-LINE_IDS = ["Red", "Orange", "Blue", "Green", "Mattapan"]
+LINE_IDS = ["Red", "Orange", "Blue", "Green", "Mattapan", "Silver"]
 GREEN_BRANCHES = {"Green-B", "Green-C", "Green-D", "Green-E"}
 TIME_PERIOD_ORDER = ["AM Peak", "Midday", "PM Peak", "Evening", "Late Night", "Other", "Unknown"]
-# Transform-stage payloads can be larger; export stage enforces the frontend gzip budget.
-MAX_JSON_BYTES = 16 * 1024 * 1024
+# Transform-stage payloads can be larger; export stage still enforces frontend gzip budgets.
+MAX_JSON_BYTES = int(os.getenv("MBTA_MAX_METRIC_JSON_BYTES", str(64 * 1024 * 1024)))
 
 METRIC_FILENAMES = {
     "otp_line_daily": "otp_line_daily_{year}.json",
@@ -40,7 +41,13 @@ def metric_output_paths(processed_dir: Path, year: int) -> Dict[str, Path]:
 
 def _line_id_from_route(route_id: pd.Series) -> pd.Series:
     route = route_id.astype(str).str.strip()
-    return route.where(~route.str.startswith("Green"), "Green")
+    line = route.where(~route.str.startswith("Green"), "Green")
+    silver_mask = (
+        line.str.startswith("SL")
+        | line.isin({"741", "742", "743", "746", "749", "751"})
+        | line.eq("Silver")
+    )
+    return line.where(~silver_mask, "Silver")
 
 
 def _season_from_service_date(dates: pd.Series) -> pd.Series:
@@ -817,11 +824,19 @@ def compute_metric_aggregations(year: int, processed_dir: Path) -> Dict[str, Dic
     output_paths = metric_output_paths(processed_dir=processed_dir, year=year)
 
     events_path = processed_dir / f"clean_rapid_transit_events_{year}.parquet"
+    silver_events_path = processed_dir / f"clean_silver_line_events_{year}.parquet"
     if events_path.exists():
         events = pd.read_parquet(events_path)
         otp_base = _enrich_events(events)
     else:
         otp_base = pd.DataFrame()
+    if silver_events_path.exists():
+        silver_events = pd.read_parquet(silver_events_path)
+        silver_otp_base = _enrich_events(silver_events)
+        if otp_base.empty:
+            otp_base = silver_otp_base
+        elif not silver_otp_base.empty:
+            otp_base = pd.concat([otp_base, silver_otp_base], ignore_index=True)
 
     otp_outputs: Dict[str, pd.DataFrame] = {
         "otp_line_daily": _otp_line_daily(otp_base) if not otp_base.empty else pd.DataFrame(),
@@ -836,11 +851,19 @@ def compute_metric_aggregations(year: int, processed_dir: Path) -> Dict[str, Dic
         stop_name_map = dict(zip(stop_dim["stop_id"], stop_dim["stop_name"]))
 
     headways_path = processed_dir / f"clean_rapid_transit_headways_{year}.parquet"
+    silver_headways_path = processed_dir / f"clean_silver_line_headways_{year}.parquet"
     if headways_path.exists():
         headways = pd.read_parquet(headways_path)
         headway_base = _enrich_headways(headways, stop_name_map)
     else:
         headway_base = pd.DataFrame()
+    if silver_headways_path.exists():
+        silver_headways = pd.read_parquet(silver_headways_path)
+        silver_headway_base = _enrich_headways(silver_headways, stop_name_map)
+        if headway_base.empty:
+            headway_base = silver_headway_base
+        elif not silver_headway_base.empty:
+            headway_base = pd.concat([headway_base, silver_headway_base], ignore_index=True)
 
     if not headway_base.empty:
         station_metrics = _headway_group_metrics(

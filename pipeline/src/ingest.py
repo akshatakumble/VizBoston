@@ -49,6 +49,8 @@ class DatasetSpec:
     type_name: str = "CSV Collection"
     year_specific: bool = True
     filename_hints: tuple[str, ...] = ()
+    sample_optional: bool = False
+    sample_header: tuple[str, ...] = ()
 
 
 DATASET_SPECS: tuple[DatasetSpec, ...] = (
@@ -76,6 +78,28 @@ DATASET_SPECS: tuple[DatasetSpec, ...] = (
         fallback_item_id="9ab1dc7ea2bf4ad7b7e25cc6b941b39a",
         year_specific=False,
         filename_hints=("gtfs", "recap", "schedule"),
+    ),
+    DatasetSpec(
+        key="silver_line_bus_observations",
+        title_template="MBTA Bus Arrival Departure Times {year}",
+        fallback_item_id="924df13d845f4907bb6a6c3ed380d57a",
+        filename_hints=("bus", "arrival", "departure"),
+        sample_optional=True,
+        sample_header=(
+            "service_date",
+            "route_id",
+            "direction_id",
+            "half_trip_id",
+            "stop_id",
+            "time_point_id",
+            "time_point_order",
+            "point_type",
+            "standard_type",
+            "scheduled",
+            "actual",
+            "scheduled_headway",
+            "headway",
+        ),
     ),
 )
 
@@ -421,6 +445,20 @@ def run_ingest(
                     )
                     if synthetic_paths:
                         result["synthetic_historical_sample_files"] = [str(p) for p in synthetic_paths]
+        elif use_samples and spec.sample_optional:
+            # Keep sample-mode runs fully offline when optional datasets are absent.
+            mode = "sample_missing_optional"
+            header = list(spec.sample_header) if spec.sample_header else []
+            with destination.open("w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                if header:
+                    writer.writerow(header)
+            result.update(
+                {
+                    "sample_source": str(sample_source),
+                    "note": "Optional sample dataset not found; wrote empty placeholder.",
+                }
+            )
         else:
             item_id, resolved_title = _search_item_id(spec, year)
             item_meta = _fetch_item_metadata(item_id)

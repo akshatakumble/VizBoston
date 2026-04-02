@@ -2,7 +2,9 @@ import { csvParse } from "d3";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const DASHBOARD_YEAR = String(import.meta.env.VITE_DASHBOARD_YEAR || "2025");
-const DATA_BASE_URL = String(import.meta.env.VITE_DATA_BASE_URL || "/data").replace(/\/+$/, "");
+const DATA_BASE_URL_ENV = import.meta.env.VITE_DATA_BASE_URL;
+const DATA_BASE_URL = String(DATA_BASE_URL_ENV || "/data").replace(/\/+$/, "");
+const FETCH_CACHE_MODE = import.meta.env.DEV ? "no-store" : "default";
 const OTP_TARGET_PCT = Number(import.meta.env.VITE_MBTA_OTP_TARGET || 85);
 const TIME_PERIOD_ORDER = ["AM Peak", "Midday", "PM Peak", "Evening", "Late Night", "Other"];
 const OVERVIEW_LINE_ORDER = ["Red", "Orange", "Blue", "Green", "Silver"];
@@ -58,6 +60,15 @@ function normalizeLineId(lineId) {
   const value = String(lineId || "").trim();
   if (!value) {
     return "";
+  }
+  const upper = value.toUpperCase();
+  if (
+    upper === "SILVER" ||
+    upper === "SILVER LINE" ||
+    /^SL[1-5W]?$/.test(upper) ||
+    ["741", "742", "743", "746", "749", "751"].includes(value)
+  ) {
+    return "Silver";
   }
   if (value.startsWith("Green")) {
     return "Green";
@@ -204,6 +215,27 @@ function seasonOrdinal(season) {
     return 4;
   }
   return 5;
+}
+
+function seasonAnchorDate(season) {
+  const year = seasonYear(season);
+  if (!Number.isFinite(year)) {
+    return null;
+  }
+  const ordinal = seasonOrdinal(season);
+  if (ordinal === 1) {
+    return `${year}-01-01`;
+  }
+  if (ordinal === 2) {
+    return `${year}-04-01`;
+  }
+  if (ordinal === 3) {
+    return `${year}-07-01`;
+  }
+  if (ordinal === 4) {
+    return `${year}-10-01`;
+  }
+  return `${year}-01-01`;
 }
 
 function normalizeText(value, fallback = "Unknown") {
@@ -372,6 +404,19 @@ function trendDirection(valuesByMonth) {
 
 function buildDatasetUrls(fileName) {
   const urls = [];
+  const preferSrcDataInDev =
+    import.meta.env.DEV &&
+    (!DATA_BASE_URL_ENV || String(DATA_BASE_URL_ENV).trim() === "" || DATA_BASE_URL === "/data");
+
+  // In local dev, files live under src/data and are fetchable as static assets.
+  // This avoids importing large CSV files as raw module strings.
+  if (preferSrcDataInDev) {
+    urls.push(`/src/data/${fileName}`);
+    if (fileName.endsWith(".json.gz")) {
+      urls.push(`/src/data/${fileName.replace(/\.gz$/, "")}`);
+    }
+  }
+
   if (DATA_BASE_URL) {
     urls.push(`${DATA_BASE_URL}/${fileName}`);
     if (fileName.endsWith(".json.gz")) {
@@ -379,9 +424,7 @@ function buildDatasetUrls(fileName) {
     }
   }
 
-  // In local dev, files live under src/data and are fetchable as static assets.
-  // This avoids importing large CSV files as raw module strings.
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV && !preferSrcDataInDev) {
     urls.push(`/src/data/${fileName}`);
     if (fileName.endsWith(".json.gz")) {
       urls.push(`/src/data/${fileName.replace(/\.gz$/, "")}`);
@@ -490,7 +533,7 @@ async function fetchDatasetFile(fileName) {
   const failures = [];
   for (const url of urls) {
     try {
-      const response = await fetch(url, { cache: "force-cache" });
+      const response = await fetch(url, { cache: FETCH_CACHE_MODE });
       if (!response.ok) {
         failures.push(`${url} (HTTP ${response.status})`);
         continue;
@@ -511,7 +554,7 @@ async function fetchTopojsonDatasetFile(fileName) {
   const failures = [];
   for (const url of urls) {
     try {
-      const response = await fetch(url, { cache: "force-cache" });
+      const response = await fetch(url, { cache: FETCH_CACHE_MODE });
       if (!response.ok) {
         failures.push(`${url} (HTTP ${response.status})`);
         continue;
@@ -531,7 +574,7 @@ async function fetchCsvDatasetFile(fileName) {
   const failures = [];
   for (const url of urls) {
     try {
-      const response = await fetch(url, { cache: "force-cache" });
+      const response = await fetch(url, { cache: FETCH_CACHE_MODE });
       if (!response.ok) {
         failures.push(`${url} (HTTP ${response.status})`);
         continue;
@@ -817,7 +860,6 @@ export function useDashboardData({
           ...otpDailyRecords.map((row) => normalizeLineId(row.line_id)),
           ...headwayRecords.map((row) => normalizeLineId(row.line_id || row.route_id)),
           ...travelRecords.map((row) => normalizeLineId(row.line_id || row.route_id)),
-          ...serviceDeliveryRecords.map((row) => normalizeLineId(row.line_id)),
         ].filter(Boolean)
       )
     ).sort();
@@ -1345,20 +1387,35 @@ export function useDashboardData({
       const records = (lineOtpRecords.get(line) || []).sort((left, right) =>
         left.service_date.localeCompare(right.service_date)
       );
-      const sparkline = buildSparklineSeries(records.map((record) => ({ date: record.service_date, value: record.otp_pct })), 90);
-      const latest = records[records.length - 1] || null;
-      const latestOtp = latest ? toFiniteNumber(latest.otp_pct) : null;
-      const recentAverage = average(sparkline.slice(-30).map((point) => point.value));
-      const baselineAverage = average(sparkline.slice(0, 30).map((point) => point.value));
-      const delta90 =
-        recentAverage !== null && baselineAverage !== null ? recentAverage - baselineAverage : null;
+      if (records.length > 0) {
+        const sparkline = buildSparklineSeries(
+          records.map((record) => ({ date: record.service_date, value: record.otp_pct })),
+          90
+        );
+        const latest = records[records.length - 1] || null;
+        const latestOtp = latest ? toFiniteNumber(latest.otp_pct) : null;
+        const recentAverage = average(sparkline.slice(-30).map((point) => point.value));
+        const baselineAverage = average(sparkline.slice(0, 30).map((point) => point.value));
+        const delta90 =
+          recentAverage !== null && baselineAverage !== null ? recentAverage - baselineAverage : null;
+
+        return {
+          line,
+          latestOtpPct: latestOtp,
+          latestDate: latest?.service_date || null,
+          sparkline90d: sparkline,
+          delta90dPct: delta90,
+          metricLabel: "OTP",
+        };
+      }
 
       return {
         line,
-        latestOtpPct: latestOtp,
-        latestDate: latest?.service_date || null,
-        sparkline90d: sparkline,
-        delta90dPct: delta90,
+        latestOtpPct: null,
+        latestDate: null,
+        sparkline90d: [],
+        delta90dPct: null,
+        metricLabel: "OTP",
       };
     });
 
@@ -1446,6 +1503,26 @@ export function useDashboardData({
       if (cv !== null) {
         bucket.cv.push(cv);
       }
+      headwayByLine.set(line, bucket);
+    }
+
+    // Fill gaps (notably Silver) with schedule-backed headway when observed headway is unavailable.
+    for (const row of scheduledVsActualRecords) {
+      const line = normalizeLineId(row.line_id || row.route_id);
+      if (!line || !overviewLines.includes(line)) {
+        continue;
+      }
+      if (!seasonInRange(row.season)) {
+        continue;
+      }
+      const headwaySec =
+        toFiniteNumber(row.actual_headway_sec) ??
+        toFiniteNumber(row.scheduled_headway_sec);
+      if (headwaySec === null) {
+        continue;
+      }
+      const bucket = headwayByLine.get(line) || { headway: [], cv: [] };
+      bucket.headway.push(headwaySec / 60);
       headwayByLine.set(line, bucket);
     }
 

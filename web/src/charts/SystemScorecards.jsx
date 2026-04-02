@@ -36,12 +36,12 @@ function Sparkline({ points = [] }) {
   );
 }
 
-function formatDelta(delta) {
+function formatDelta(delta, label = "pts (90d)") {
   if (!Number.isFinite(delta)) {
-    return "No 90-day baseline";
+    return `No ${label} baseline`;
   }
   const sign = delta > 0 ? "+" : "";
-  return `${sign}${delta.toFixed(1)} pts (90d)`;
+  return `${sign}${delta.toFixed(1)} ${label}`;
 }
 
 function SystemScorecards({ title = "System Scorecards", cards = [] }) {
@@ -50,7 +50,7 @@ function SystemScorecards({ title = "System Scorecards", cards = [] }) {
       <div className="card-header">
         <h2>{title}</h2>
       </div>
-      <p className="card-subtitle">Latest OTP by line with a trailing 90-day trend sparkline</p>
+      <p className="card-subtitle">Latest available OTP by line with a trailing 90-day trend sparkline</p>
 
       <div className="scorecard-grid">
         {cards.map((card) => (
@@ -61,15 +61,20 @@ function SystemScorecards({ title = "System Scorecards", cards = [] }) {
             </div>
             <div className="line-scorecard-main">
               <strong>
-                {Number.isFinite(card.latestOtpPct) ? `${card.latestOtpPct.toFixed(1)}%` : "No data"}
+                {card.valueDisplay
+                  ? card.valueDisplay
+                  : Number.isFinite(card.latestOtpPct)
+                    ? `${card.latestOtpPct.toFixed(1)}%`
+                    : "No data"}
               </strong>
+              <span>{card.metricLabel || "OTP"}</span>
             </div>
             <div
               className={`line-scorecard-delta ${
                 Number.isFinite(card.delta90dPct) ? (card.delta90dPct >= 0 ? "positive" : "negative") : ""
               }`}
             >
-              {formatDelta(card.delta90dPct)}
+              {formatDelta(card.delta90dPct, card.deltaLabel || "pts (90d)")}
             </div>
             <Sparkline points={card.sparkline90d} />
           </article>

@@ -41,6 +41,11 @@ def test_ingest_uses_samples_by_default(tmp_path: Path) -> None:
     assert manifest_path.exists()
     for dataset in DATASETS:
         assert (raw_dir / f"{dataset}_{year}.csv").exists()
+    silver_optional = raw_dir / f"silver_line_bus_observations_{year}.csv"
+    assert silver_optional.exists()
+    assert silver_optional.read_text(encoding="utf-8").startswith(
+        "service_date,route_id,direction_id,half_trip_id"
+    )
     # GTFS sample mode materializes synthetic historical recap files when none are provided.
     assert (raw_dir / "gtfs_schedules_2024.csv").exists()
 

@@ -38,10 +38,13 @@ function Layout({ children }) {
               <option
                 key={line}
                 value={line}
-                disabled={line === "Silver"}
-                title={line === "Silver" ? "Silver Line data is not available in this rapid-transit dataset." : undefined}
+                title={
+                  line === "Silver"
+                    ? "Silver Line metrics are computed from observed MBTA bus performance data (SL1-SL5)."
+                    : undefined
+                }
               >
-                {line === "Silver" ? "Silver (no data)" : line}
+                {line === "Silver" ? "Silver" : line}
               </option>
             ))}
           </select>
