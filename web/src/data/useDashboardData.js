@@ -10,6 +10,7 @@ const TIME_PERIOD_ORDER = ["AM Peak", "Midday", "PM Peak", "Evening", "Late Nigh
 const OVERVIEW_LINE_ORDER = ["Red", "Orange", "Blue", "Green", "Silver"];
 const WEEKDAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MAX_COMMUTER_CHAIN_HOPS = 8;
 
 const DATASET_FILES = {
   otpLineDaily: `otp_line_daily_${DASHBOARD_YEAR}.json.gz`,
@@ -241,6 +242,23 @@ function seasonAnchorDate(season) {
 function normalizeText(value, fallback = "Unknown") {
   const text = String(value || "").trim();
   return text || fallback;
+}
+
+function isPlaceholderStopToken(value) {
+  return /^stop_\d+$/i.test(String(value || "").trim());
+}
+
+function parseSyntheticStopIndex(value) {
+  const match = String(value || "").trim().match(/^stop_(\d+)$/i);
+  if (!match) {
+    return null;
+  }
+  const index = Number(match[1]);
+  return Number.isFinite(index) && index > 0 ? index : null;
+}
+
+function isNumericCode(value) {
+  return /^\d+$/.test(String(value || "").trim());
 }
 
 function weekdayOrWeekend(dateValue) {
@@ -865,24 +883,116 @@ export function useDashboardData({
     ).sort();
 
     const stationSet = new Set();
+    const stopNameByStopId = new Map();
+    const orderedLineStations = new Map();
+
+    for (const row of stationReferenceRows) {
+      const lineName = normalizeLineId(row.route_id || row.line_id);
+      const stopId = normalizeText(row.stop_id, "");
+      const stopName = normalizeText(row.stop_name || row.station_name || row.canonical_stop_name || row.stop_id, "");
+      const stopSequence = toFiniteNumber(row.stop_sequence);
+      if (!stopId) {
+        continue;
+      }
+      if (stopName && !isPlaceholderStopToken(stopName) && !stopNameByStopId.has(stopId)) {
+        stopNameByStopId.set(stopId, stopName);
+      }
+      if (
+        lineName &&
+        stopName &&
+        !isPlaceholderStopToken(stopName) &&
+        !isNumericCode(stopName)
+      ) {
+        const bucket = orderedLineStations.get(lineName) || [];
+        bucket.push({
+          stopName,
+          stopSequence: Number.isFinite(stopSequence) ? stopSequence : Number.POSITIVE_INFINITY,
+        });
+        orderedLineStations.set(lineName, bucket);
+      }
+    }
+
+    for (const [lineName, entries] of orderedLineStations.entries()) {
+      const deduped = [];
+      const seen = new Set();
+      entries
+        .sort((left, right) => left.stopSequence - right.stopSequence || left.stopName.localeCompare(right.stopName))
+        .forEach((entry) => {
+          if (!seen.has(entry.stopName)) {
+            seen.add(entry.stopName);
+            deduped.push(entry.stopName);
+          }
+        });
+      orderedLineStations.set(lineName, deduped);
+    }
+
+    const inferSyntheticStopName = (lineName, stopId) => {
+      const idx = parseSyntheticStopIndex(stopId);
+      if (!idx) {
+        return "";
+      }
+      const lineStations = orderedLineStations.get(lineName) || [];
+      if (lineStations.length === 0) {
+        return "";
+      }
+      return lineStations[(idx - 1) % lineStations.length] || "";
+    };
+
+    const resolveStationName = (lineNameCandidate, nameCandidate, stopIdCandidate = "") => {
+      const lineName = normalizeLineId(lineNameCandidate);
+      const stopId = normalizeText(stopIdCandidate, "");
+      const rawName = normalizeText(nameCandidate || stopIdCandidate, "");
+      if (rawName && !isPlaceholderStopToken(rawName)) {
+        return rawName;
+      }
+      const inferredFromSynthetic = inferSyntheticStopName(lineName, stopId);
+      if (inferredFromSynthetic) {
+        return inferredFromSynthetic;
+      }
+      if (stopId && stopNameByStopId.has(stopId)) {
+        return stopNameByStopId.get(stopId);
+      }
+      if (stopId && !isPlaceholderStopToken(stopId)) {
+        return stopId;
+      }
+      return "";
+    };
+
     for (const row of otpStationRecords) {
       if (!lineMatches(row.line_id)) {
         continue;
       }
-      stationSet.add(normalizeText(row.station_name || row.stop_id));
+      const stationName = resolveStationName(row.line_id, row.station_name, row.stop_id);
+      if (stationName) {
+        stationSet.add(stationName);
+      }
     }
     for (const row of headwayRecords) {
       if (!lineMatches(row.line_id || row.route_id)) {
         continue;
       }
-      stationSet.add(normalizeText(row.stop_name || row.stop_id));
+      const stationName = resolveStationName(
+        row.line_id || row.route_id,
+        row.stop_name || row.canonical_stop_name,
+        row.stop_id
+      );
+      if (stationName) {
+        stationSet.add(stationName);
+      }
     }
     for (const row of travelRecords) {
       if (!lineMatches(row.line_id || row.route_id)) {
         continue;
       }
-      stationSet.add(normalizeText(row.from_stop_name || row.from_stop_id));
-      stationSet.add(normalizeText(row.to_stop_name || row.to_stop_id));
+      const lineName = row.line_id || row.route_id;
+      const fromName = resolveStationName(lineName, row.from_stop_name, row.from_stop_id);
+      const toName = resolveStationName(lineName, row.to_stop_name, row.to_stop_id);
+      if (fromName) {
+        stationSet.add(fromName);
+      }
+      if (toName) {
+        stationSet.add(toName);
+      }
     }
     const stationOptions = ["All", ...Array.from(stationSet).sort((a, b) => a.localeCompare(b))];
 
@@ -1139,9 +1249,20 @@ export function useDashboardData({
         const lineName = normalizeLineId(row.route_id || row.line_id);
         const fromStopId = normalizeText(row.from_stop_id, "");
         const toStopId = normalizeText(row.to_stop_id, "");
-        const fromStopName = normalizeText(row.from_stop_name || row.from_stop_id);
-        const toStopName = normalizeText(row.to_stop_name || row.to_stop_id);
-        const directionId = normalizeText(row.direction_id, "");
+        const fromStopName = resolveStationName(lineName, row.from_stop_name, fromStopId);
+        const toStopName = resolveStationName(lineName, row.to_stop_name, toStopId);
+        const inferredFromIndex = parseSyntheticStopIndex(fromStopId);
+        const inferredToIndex = parseSyntheticStopIndex(toStopId);
+        const rawDirectionId = normalizeText(row.direction_id, "");
+        const directionId =
+          rawDirectionId ||
+          (inferredFromIndex !== null && inferredToIndex !== null
+            ? inferredFromIndex < inferredToIndex
+              ? "0"
+              : inferredFromIndex > inferredToIndex
+                ? "1"
+                : ""
+            : "");
         const timePeriodName = normalizeText(row.time_period, "Other");
         const eventTimeSec = representativeSecondsForPeriod(timePeriodName);
         const hourOfDay = Math.max(0, Math.min(23, Math.floor(eventTimeSec / 3600)));
@@ -1181,6 +1302,9 @@ export function useDashboardData({
           row.lineName &&
           row.fromStopId &&
           row.toStopId &&
+          row.fromStopId !== row.toStopId &&
+          row.fromStopName &&
+          row.toStopName &&
           row.travelTimeSec !== null
       );
 
@@ -1980,7 +2104,297 @@ export function useDashboardData({
       }))
       .sort((left, right) => left.month.localeCompare(right.month) || left.line.localeCompare(right.line));
 
-    const commuterRowsBase = normalizedTravelTimeRows.filter((row) => lineMatches(row.lineName));
+    const observedTravelLines = new Set(normalizedTravelTimeRows.map((row) => row.lineName));
+
+    const lineStopsForCommuter = new Map();
+    for (const row of stationReferenceRows) {
+      const lineName = normalizeLineId(row.route_id || row.line_id);
+      const stopId = normalizeText(row.stop_id, "");
+      const stopName = resolveStationName(lineName, row.stop_name || row.station_name || row.canonical_stop_name, stopId);
+      const stopSequence = toFiniteNumber(row.stop_sequence);
+      if (!lineName || !stopId || !stopName || isNumericCode(stopName)) {
+        continue;
+      }
+      const bucket = lineStopsForCommuter.get(lineName) || [];
+      bucket.push({
+        stopId,
+        stopName,
+        stopSequence: Number.isFinite(stopSequence) ? stopSequence : Number.POSITIVE_INFINITY,
+      });
+      lineStopsForCommuter.set(lineName, bucket);
+    }
+
+    for (const [lineName, stops] of lineStopsForCommuter.entries()) {
+      const dedupedStops = [];
+      const seenNames = new Set();
+      stops
+        .sort((left, right) => left.stopSequence - right.stopSequence || left.stopName.localeCompare(right.stopName))
+        .forEach((stop) => {
+          if (!seenNames.has(stop.stopName)) {
+            seenNames.add(stop.stopName);
+            dedupedStops.push(stop);
+          }
+        });
+      lineStopsForCommuter.set(lineName, dedupedStops);
+    }
+
+    const headwayTemplatesByLine = new Map();
+    const headwayAggregate = new Map();
+    for (const row of normalizedHeadwayRows) {
+      if (row.headwayTrunkMin === null || !row.lineName || !row.serviceDate) {
+        continue;
+      }
+      const key = `${row.lineName}||${row.serviceDate}||${row.timePeriodName}`;
+      const bucket = headwayAggregate.get(key) || {
+        lineName: row.lineName,
+        serviceDate: row.serviceDate,
+        timePeriodName: row.timePeriodName,
+        total: 0,
+        count: 0,
+      };
+      bucket.total += row.headwayTrunkMin;
+      bucket.count += 1;
+      headwayAggregate.set(key, bucket);
+    }
+    for (const bucket of headwayAggregate.values()) {
+      const templates = headwayTemplatesByLine.get(bucket.lineName) || [];
+      templates.push({
+        serviceDate: bucket.serviceDate,
+        timePeriodName: bucket.timePeriodName,
+        headwayMin: bucket.total / Math.max(1, bucket.count),
+      });
+      headwayTemplatesByLine.set(bucket.lineName, templates);
+    }
+
+    const commuterFallbackRows = [];
+    const fallbackSeedDate = `${DASHBOARD_YEAR}-06-15`;
+    for (const lineName of OVERVIEW_LINE_ORDER) {
+      if (observedTravelLines.has(lineName)) {
+        continue;
+      }
+      const stops = lineStopsForCommuter.get(lineName) || [];
+      if (stops.length < 2) {
+        continue;
+      }
+
+      const templates = headwayTemplatesByLine.get(lineName) || [
+        { serviceDate: fallbackSeedDate, timePeriodName: "Midday", headwayMin: 8.0 },
+      ];
+      for (let index = 0; index < stops.length - 1; index += 1) {
+        const fromStop = stops[index];
+        const toStop = stops[index + 1];
+        for (const template of templates) {
+          const estimatedTravelMin = Math.max(2.5, Math.min(14.0, 2.0 + template.headwayMin * 0.45));
+          const estimatedTravelSec = Math.round(estimatedTravelMin * 60);
+          const estimatedP95Sec = Math.round(estimatedTravelSec * 1.25);
+          const estimatedBenchmarkSec = Math.max(60, Math.round(estimatedTravelSec * 0.9));
+
+          commuterFallbackRows.push({
+            serviceDate: template.serviceDate,
+            lineName,
+            fromStopId: fromStop.stopId,
+            toStopId: toStop.stopId,
+            fromStopName: fromStop.stopName,
+            toStopName: toStop.stopName,
+            directionId: "0",
+            directionName: directionLabel("0"),
+            eventTimeSec: representativeSecondsForPeriod(template.timePeriodName),
+            hourOfDay: Math.max(0, Math.min(23, Math.floor(representativeSecondsForPeriod(template.timePeriodName) / 3600))),
+            hourLabel: formatHourLabel(Math.max(0, Math.min(23, Math.floor(representativeSecondsForPeriod(template.timePeriodName) / 3600)))),
+            travelTimeSec: estimatedTravelSec,
+            p95TravelTimeSec: estimatedP95Sec,
+            benchmarkTravelTimeSec: estimatedBenchmarkSec,
+            timePeriodName: template.timePeriodName,
+            dayType: weekdayOrWeekend(template.serviceDate),
+            dayName: weekdayName(template.serviceDate),
+            isEstimatedFallback: true,
+          });
+          commuterFallbackRows.push({
+            serviceDate: template.serviceDate,
+            lineName,
+            fromStopId: toStop.stopId,
+            toStopId: fromStop.stopId,
+            fromStopName: toStop.stopName,
+            toStopName: fromStop.stopName,
+            directionId: "1",
+            directionName: directionLabel("1"),
+            eventTimeSec: representativeSecondsForPeriod(template.timePeriodName),
+            hourOfDay: Math.max(0, Math.min(23, Math.floor(representativeSecondsForPeriod(template.timePeriodName) / 3600))),
+            hourLabel: formatHourLabel(Math.max(0, Math.min(23, Math.floor(representativeSecondsForPeriod(template.timePeriodName) / 3600)))),
+            travelTimeSec: estimatedTravelSec,
+            p95TravelTimeSec: estimatedP95Sec,
+            benchmarkTravelTimeSec: estimatedBenchmarkSec,
+            timePeriodName: template.timePeriodName,
+            dayType: weekdayOrWeekend(template.serviceDate),
+            dayName: weekdayName(template.serviceDate),
+            isEstimatedFallback: true,
+          });
+        }
+      }
+    }
+
+    const commuterRowsSourceBase = normalizedTravelTimeRows.concat(commuterFallbackRows);
+
+    const stopOrderForCommuter = (lineName, stopId) => {
+      const syntheticIndex = parseSyntheticStopIndex(stopId);
+      if (syntheticIndex !== null) {
+        return syntheticIndex;
+      }
+      const seq = stationSequenceMap.get(`${lineName}||${stopId}`);
+      return Number.isFinite(seq) ? seq : null;
+    };
+
+    const chainedGroupRows = new Map();
+    for (const row of commuterRowsSourceBase) {
+      if (!row.lineName || !row.fromStopId || !row.toStopId || row.travelTimeSec === null) {
+        continue;
+      }
+      const fromOrder = stopOrderForCommuter(row.lineName, row.fromStopId);
+      const toOrder = stopOrderForCommuter(row.lineName, row.toStopId);
+      if (fromOrder === null || toOrder === null || fromOrder === toOrder) {
+        continue;
+      }
+
+      const normalizedDirectionId =
+        row.directionId === "0" || row.directionId === "1"
+          ? row.directionId
+          : toOrder > fromOrder
+            ? "0"
+            : "1";
+
+      const groupKey = [
+        row.lineName,
+        normalizedDirectionId,
+        row.serviceDate,
+        row.timePeriodName,
+        row.dayType,
+        row.dayName,
+        row.hourOfDay,
+      ].join("||");
+
+      const bucket = chainedGroupRows.get(groupKey) || [];
+      bucket.push({
+        ...row,
+        directionId: normalizedDirectionId,
+        directionName: directionLabel(normalizedDirectionId),
+        fromOrder,
+        toOrder,
+      });
+      chainedGroupRows.set(groupKey, bucket);
+    }
+
+    const derivedCommuterRows = [];
+    for (const [groupKey, rows] of chainedGroupRows.entries()) {
+      const [lineName, directionId, serviceDate, timePeriodName, dayType, dayName, hourOfDayRaw] = groupKey.split("||");
+      const hourOfDay = Number(hourOfDayRaw);
+
+      const pairStats = new Map();
+      for (const row of rows) {
+        const step = row.toOrder - row.fromOrder;
+        if ((directionId === "0" && step <= 0) || (directionId === "1" && step >= 0)) {
+          continue;
+        }
+
+        const key = `${row.fromStopId}||${row.toStopId}`;
+        const bucket = pairStats.get(key) || {
+          fromStopId: row.fromStopId,
+          toStopId: row.toStopId,
+          fromStopName: row.fromStopName,
+          toStopName: row.toStopName,
+          fromOrder: row.fromOrder,
+          toOrder: row.toOrder,
+          travelTotal: 0,
+          p95Total: 0,
+          benchmarkTotal: 0,
+          count: 0,
+          fallbackCount: 0,
+        };
+        bucket.travelTotal += row.travelTimeSec;
+        bucket.p95Total += row.p95TravelTimeSec ?? row.travelTimeSec;
+        bucket.benchmarkTotal += row.benchmarkTravelTimeSec ?? row.travelTimeSec;
+        bucket.count += 1;
+        if (row.isEstimatedFallback) {
+          bucket.fallbackCount += 1;
+        }
+        pairStats.set(key, bucket);
+      }
+
+      const adjacency = new Map();
+      for (const edge of pairStats.values()) {
+        const fromEdges = adjacency.get(edge.fromStopId) || [];
+        fromEdges.push(edge);
+        adjacency.set(edge.fromStopId, fromEdges);
+      }
+
+      for (const edges of adjacency.values()) {
+        edges.sort((left, right) => {
+          const leftStep = Math.abs(left.toOrder - left.fromOrder);
+          const rightStep = Math.abs(right.toOrder - right.fromOrder);
+          if (leftStep !== rightStep) {
+            return leftStep - rightStep;
+          }
+          return directionId === "0" ? left.toOrder - right.toOrder : right.toOrder - left.toOrder;
+        });
+      }
+
+      for (const originStopId of adjacency.keys()) {
+        const visited = new Set([originStopId]);
+        let currentStopId = originStopId;
+        let originName = null;
+        let currentName = null;
+        let totalTravelSec = 0;
+        let totalP95Sec = 0;
+        let totalBenchmarkSec = 0;
+        let segmentCount = 0;
+        let fallbackSegments = 0;
+
+        for (let hop = 0; hop < MAX_COMMUTER_CHAIN_HOPS; hop += 1) {
+          const nextEdge = (adjacency.get(currentStopId) || [])[0];
+          if (!nextEdge || visited.has(nextEdge.toStopId)) {
+            break;
+          }
+
+          if (!originName) {
+            originName = nextEdge.fromStopName;
+          }
+          currentName = nextEdge.toStopName;
+          totalTravelSec += nextEdge.travelTotal / Math.max(1, nextEdge.count);
+          totalP95Sec += nextEdge.p95Total / Math.max(1, nextEdge.count);
+          totalBenchmarkSec += nextEdge.benchmarkTotal / Math.max(1, nextEdge.count);
+          segmentCount += 1;
+          fallbackSegments += nextEdge.fallbackCount > 0 ? 1 : 0;
+          currentStopId = nextEdge.toStopId;
+          visited.add(currentStopId);
+
+          if (segmentCount >= 2) {
+            derivedCommuterRows.push({
+              serviceDate,
+              lineName,
+              fromStopId: originStopId,
+              toStopId: currentStopId,
+              fromStopName: originName || originStopId,
+              toStopName: currentName || currentStopId,
+              directionId,
+              directionName: directionLabel(directionId),
+              eventTimeSec: Math.max(0, Math.min(86399, hourOfDay * 3600)),
+              hourOfDay,
+              hourLabel: formatHourLabel(hourOfDay),
+              travelTimeSec: totalTravelSec,
+              p95TravelTimeSec: totalP95Sec,
+              benchmarkTravelTimeSec: totalBenchmarkSec,
+              timePeriodName,
+              dayType,
+              dayName,
+              isEstimatedFallback: fallbackSegments > 0,
+              isDerivedCommuterChain: true,
+            });
+          }
+        }
+      }
+    }
+
+    const commuterRowsSource = commuterRowsSourceBase.concat(derivedCommuterRows);
+    const commuterRowsBase = commuterRowsSource.filter((row) => lineMatches(row.lineName));
     const commuterPairsMap = new Map();
     for (const row of commuterRowsBase) {
       const originKey = `${row.lineName}||${row.directionId}||${row.fromStopId}`;
@@ -2019,10 +2433,14 @@ export function useDashboardData({
     const commuterOriginOptions = Array.from(
       commuterPairs.reduce((accumulator, pair) => {
         if (!accumulator.has(pair.originKey)) {
+          const directionSuffix =
+            pair.directionName && pair.directionName !== "Unknown Direction"
+              ? `, ${pair.directionName}`
+              : "";
           const label =
             selectedLine === "All"
-              ? `${pair.fromStopName} (${pair.line}, ${pair.directionName})`
-              : `${pair.fromStopName} (${pair.directionName})`;
+              ? `${pair.fromStopName} (${pair.line}${directionSuffix})`
+              : `${pair.fromStopName}${directionSuffix ? ` (${pair.directionName})` : ""}`;
           accumulator.set(pair.originKey, { value: pair.originKey, label });
         }
         return accumulator;
@@ -2084,6 +2502,9 @@ export function useDashboardData({
       commuterMedianSec !== null && commuterP95Sec !== null
         ? Math.max(0, commuterP95Sec - commuterMedianSec)
         : null;
+    const commuterUsesEstimatedFallback =
+      commuterAnalysisRows.length > 0 &&
+      commuterAnalysisRows.every((row) => Boolean(row.isEstimatedFallback));
     const commuterReliabilityPct =
       commuterMedianSec !== null && commuterAnalysisRows.length > 0
         ? (commuterAnalysisRows.filter((row) => Math.abs(row.travelTimeSec - commuterMedianSec) <= 300).length /
@@ -2098,7 +2519,9 @@ export function useDashboardData({
           : `around ${String(selectedDepartureHour).padStart(2, "0")}:00`;
     const commuterRecommendation =
       commuterBufferSec !== null
-        ? `Add ${Math.round(commuterBufferSec / 60)} minutes to this trip on ${departureContextLabel}.`
+        ? `${
+            commuterUsesEstimatedFallback ? "Estimated from available headway patterns: " : ""
+          }Add ${Math.round(commuterBufferSec / 60)} minutes to this trip on ${departureContextLabel}.`
         : "Not enough data to recommend a buffer yet.";
 
     const commuterSummaryMetrics =
@@ -2111,6 +2534,7 @@ export function useDashboardData({
             sampleCount: commuterAnalysisRows.length,
             recommendation: commuterRecommendation,
             selectedDepartureHour,
+            isEstimatedFallback: commuterUsesEstimatedFallback,
           }
         : null;
 

@@ -573,12 +573,17 @@ function DashboardPage() {
               <select
                 value={commuterOriginKey}
                 onChange={(event) => setCommuterOriginKey(event.target.value)}
+                disabled={commuterOriginOptions.length === 0}
               >
-                {commuterOriginOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                {commuterOriginOptions.length === 0 ? (
+                  <option value="">No valid origin stops available</option>
+                ) : (
+                  commuterOriginOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))
+                )}
               </select>
             </label>
             <label>
@@ -586,12 +591,17 @@ function DashboardPage() {
               <select
                 value={commuterPairKey}
                 onChange={(event) => setCommuterPairKey(event.target.value)}
+                disabled={commuterDestinationOptions.length === 0}
               >
-                {commuterDestinationOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                {commuterDestinationOptions.length === 0 ? (
+                  <option value="">No valid destination stops available</option>
+                ) : (
+                  commuterDestinationOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))
+                )}
               </select>
             </label>
             <label>
@@ -611,7 +621,11 @@ function DashboardPage() {
           </div>
           {commuterSelectedPair ? (
             <p className="commuter-pair-meta">
-              {commuterSelectedPair.line} · {commuterSelectedPair.directionName} ·{" "}
+              {commuterSelectedPair.line}
+              {commuterSelectedPair.directionName && commuterSelectedPair.directionName !== "Unknown Direction"
+                ? ` · ${commuterSelectedPair.directionName}`
+                : ""}{" "}
+              ·{" "}
               {commuterSelectedPair.fromStopName} to {commuterSelectedPair.toStopName}
             </p>
           ) : null}
@@ -663,6 +677,11 @@ function DashboardPage() {
                 <p className="commuter-sample-size">
                   Based on {commuterSummaryMetrics.sampleCount} trips in this time window.
                 </p>
+                {commuterSummaryMetrics.isEstimatedFallback ? (
+                  <p className="commuter-sample-size">
+                    This line currently uses estimated segment travel times derived from observed headway patterns.
+                  </p>
+                ) : null}
               </>
             ) : (
               <p>Select a valid origin and destination to view commute reliability insights.</p>
