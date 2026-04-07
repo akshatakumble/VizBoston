@@ -12,6 +12,53 @@ MBTA reliability dashboard monorepo with:
 - npm
 - `make`
 
+## Windows Reproducibility
+
+Windows users can fully reproduce the dataset outputs in two ways:
+
+### Option A (Recommended): WSL2 Ubuntu
+
+Use WSL2 and run the same commands as Linux/macOS (`make setup`, `make all`, etc.).
+This is the lowest-friction path and keeps parity with the rest of the team.
+
+### Option B: Native PowerShell (No `make` required)
+
+From repo root, run:
+
+```powershell
+# 1) Python env + deps
+py -3 -m venv pipeline\.venv
+.\pipeline\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r pipeline\requirements.txt
+
+# 2) Frontend deps
+cd web
+npm install
+cd ..
+
+# 3) Force-download raw datasets (reproducible ingest)
+python pipeline\src\ingest.py --year 2025 --raw-dir data\raw --sample-dir data\samples --force-download --timeout-sec 900
+
+# 4) Clean -> Transform -> Export
+python pipeline\src\orchestrate.py --step clean --year 2025 --raw-dir data\raw --sample-dir data\samples --processed-dir data\processed --web-data-dir web\src\data --log-dir pipeline\logs
+python pipeline\src\orchestrate.py --step transform --year 2025 --raw-dir data\raw --sample-dir data\samples --processed-dir data\processed --web-data-dir web\src\data --log-dir pipeline\logs
+python pipeline\src\orchestrate.py --step export --year 2025 --raw-dir data\raw --sample-dir data\samples --processed-dir data\processed --web-data-dir web\src\data --log-dir pipeline\logs
+```
+
+Run the dashboard:
+
+```powershell
+cd web
+npm run dev
+```
+
+If script execution is blocked in PowerShell, run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
 ## Fresh Clone Quickstart (Fast Path)
 
 This path is best for first-time setup and uses sample data so you can run everything quickly.

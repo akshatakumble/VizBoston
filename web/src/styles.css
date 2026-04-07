@@ -517,6 +517,10 @@ main {
   gap: 0.6rem;
 }
 
+.time-filter-grid.time-filter-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .time-filter-grid label {
   display: grid;
   gap: 0.32rem;

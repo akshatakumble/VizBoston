@@ -23,7 +23,7 @@ function HeadwayBoxPlot({
 
   const categories = data.map((row) => `${row.line} ${row.periodGroup}`);
   const xScale = scaleBand().domain(categories).range([0, innerWidth]).padding(0.35);
-  const yMax = max(data, (row) => row.max) ?? 1;
+  const yMax = max(data, (row) => row.p90 ?? row.q3 ?? row.median ?? row.max) ?? 1;
   const yScale = scaleLinear().domain([0, yMax]).range([innerHeight, 0]).nice();
   const yTicks = yScale.ticks(5);
 
@@ -41,7 +41,7 @@ function HeadwayBoxPlot({
               <g key={tick} transform={`translate(0,${yScale(tick)})`}>
                 <line x1={0} x2={innerWidth} className="axis-grid-line" />
                 <text x={-10} y={4} className="axis-tick-label axis-tick-label-y" textAnchor="end">
-                  {tick.toFixed(1)}m
+                  {tick.toFixed(1)} min
                 </text>
               </g>
             ))}
@@ -52,11 +52,14 @@ function HeadwayBoxPlot({
               const boxWidth = xScale.bandwidth();
               const center = x + boxWidth / 2;
               const lineColor = getLineColor(row.line);
+              const whiskerLow = Number.isFinite(row.p10) ? row.p10 : row.min;
+              const whiskerHigh = Number.isFinite(row.p90) ? row.p90 : row.max;
+              const isClipped = Number.isFinite(row.max) && row.max > yScale.domain()[1];
               return (
                 <g key={category}>
-                  <line x1={center} x2={center} y1={yScale(row.min)} y2={yScale(row.max)} className="boxplot-whisker" />
-                  <line x1={x + 4} x2={x + boxWidth - 4} y1={yScale(row.min)} y2={yScale(row.min)} className="boxplot-cap" />
-                  <line x1={x + 4} x2={x + boxWidth - 4} y1={yScale(row.max)} y2={yScale(row.max)} className="boxplot-cap" />
+                  <line x1={center} x2={center} y1={yScale(whiskerLow)} y2={yScale(whiskerHigh)} className="boxplot-whisker" />
+                  <line x1={x + 4} x2={x + boxWidth - 4} y1={yScale(whiskerLow)} y2={yScale(whiskerLow)} className="boxplot-cap" />
+                  <line x1={x + 4} x2={x + boxWidth - 4} y1={yScale(whiskerHigh)} y2={yScale(whiskerHigh)} className="boxplot-cap" />
                   <rect
                     x={x}
                     y={yScale(row.q3)}
@@ -68,12 +71,19 @@ function HeadwayBoxPlot({
                     strokeWidth={1.5}
                   />
                   <line x1={x} x2={x + boxWidth} y1={yScale(row.median)} y2={yScale(row.median)} className="boxplot-median" />
+                  {isClipped ? (
+                    <path
+                      d={`M ${center - 4} 2 L ${center + 4} 2 L ${center} 8 Z`}
+                      fill={lineColor}
+                      opacity={0.9}
+                    />
+                  ) : null}
                   <title>
-                    {`${row.line} ${row.periodGroup}: min ${row.min.toFixed(1)}m, q1 ${row.q1.toFixed(
+                    {`${row.line} ${row.periodGroup}: p10 ${whiskerLow.toFixed(1)}m, q1 ${row.q1.toFixed(
                       1
                     )}m, median ${row.median.toFixed(1)}m, q3 ${row.q3.toFixed(1)}m, max ${row.max.toFixed(
                       1
-                    )}m`}
+                    )}m, n=${row.count}`}
                   </title>
                 </g>
               );
@@ -93,6 +103,10 @@ function HeadwayBoxPlot({
           </g>
         </svg>
       </div>
+
+      <p className="card-footnote">
+        Whiskers show P10-P90 (not absolute min/max) to reduce outlier distortion and improve cross-line comparison.
+      </p>
     </section>
   );
 }

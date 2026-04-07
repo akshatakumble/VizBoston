@@ -1519,11 +1519,29 @@ export function useDashboardData({
         hourValue: row.hourOfDay,
         line: row.lineName,
         stationSortOrder,
-        total: 0,
-        count: 0,
+        headwayTotal: 0,
+        headwayCount: 0,
+        p90Total: 0,
+        p90Count: 0,
+        cvTotal: 0,
+        cvCount: 0,
+        bunchingTotal: 0,
+        bunchingCount: 0,
       };
-      bucket.total += row.headwayTrunkMin;
-      bucket.count += 1;
+      bucket.headwayTotal += row.headwayTrunkMin;
+      bucket.headwayCount += 1;
+      if (row.p90HeadwayMin !== null) {
+        bucket.p90Total += row.p90HeadwayMin;
+        bucket.p90Count += 1;
+      }
+      if (row.headwayCv !== null) {
+        bucket.cvTotal += row.headwayCv;
+        bucket.cvCount += 1;
+      }
+      if (row.bunchingRatePct !== null) {
+        bucket.bunchingTotal += row.bunchingRatePct;
+        bucket.bunchingCount += 1;
+      }
       waitHeatBuckets.set(key, bucket);
     }
 
@@ -1531,8 +1549,12 @@ export function useDashboardData({
       .map((bucket) => ({
         station: bucket.station,
         hour: bucket.hour,
-        value: bucket.total / Math.max(1, bucket.count),
-        sampleCount: bucket.count,
+        value: bucket.headwayTotal / Math.max(1, bucket.headwayCount),
+        headwayMin: bucket.headwayTotal / Math.max(1, bucket.headwayCount),
+        p90HeadwayMin: bucket.p90Count > 0 ? bucket.p90Total / bucket.p90Count : null,
+        headwayCvPct: bucket.cvCount > 0 ? (bucket.cvTotal / bucket.cvCount) * 100 : null,
+        bunchingRatePct: bucket.bunchingCount > 0 ? bucket.bunchingTotal / bucket.bunchingCount : null,
+        sampleCount: bucket.headwayCount,
         line: bucket.line,
         stationSortOrder: bucket.stationSortOrder,
         hourValue: bucket.hourValue,
@@ -1569,29 +1591,76 @@ export function useDashboardData({
           periodGroup,
           count: sorted.length,
           min: quantileFromSorted(sorted, 0),
+          p10: quantileFromSorted(sorted, 0.1),
           q1: quantileFromSorted(sorted, 0.25),
           median: quantileFromSorted(sorted, 0.5),
           q3: quantileFromSorted(sorted, 0.75),
+          p90: quantileFromSorted(sorted, 0.9),
           max: quantileFromSorted(sorted, 1),
         };
       })
-      .sort((left, right) => left.line.localeCompare(right.line) || left.periodGroup.localeCompare(right.periodGroup));
-
-    const waitTimesBunchingScatter = filteredWaitTimesRows
-      .filter((row) => row.headwayTrunkMin !== null && row.p90HeadwayMin !== null)
-      .map((row) => {
-        const cv = row.headwayCv ?? 0;
-        const regularity = Math.max(0, 1 - cv);
-        const bunched = (row.bunchingRatePct ?? 0) > 5;
-        return {
-          x: row.headwayTrunkMin,
-          y: row.p90HeadwayMin,
-          line: row.lineName,
-          station: row.stationName,
-          regularity,
-          bunched,
-        };
+      .sort((left, right) => {
+        const leftRank = lineOrderMap.get(left.line) ?? 99;
+        const rightRank = lineOrderMap.get(right.line) ?? 99;
+        if (leftRank !== rightRank) {
+          return leftRank - rightRank;
+        }
+        const periodRank = { Peak: 0, "Off-Peak": 1 };
+        const leftPeriod = periodRank[left.periodGroup] ?? 9;
+        const rightPeriod = periodRank[right.periodGroup] ?? 9;
+        if (leftPeriod !== rightPeriod) {
+          return leftPeriod - rightPeriod;
+        }
+        return left.line.localeCompare(right.line);
       });
+
+    const bunchingBuckets = new Map();
+    for (const row of filteredWaitTimesRows) {
+      if (row.headwayTrunkMin === null || row.p90HeadwayMin === null) {
+        continue;
+      }
+      const key = `${row.lineName}||${row.stationName}`;
+      const bucket = bunchingBuckets.get(key) || {
+        line: row.lineName,
+        station: row.stationName,
+        headwayTotal: 0,
+        p90Total: 0,
+        cvTotal: 0,
+        cvCount: 0,
+        bunchingTotal: 0,
+        bunchingCount: 0,
+        sampleCount: 0,
+      };
+      bucket.headwayTotal += row.headwayTrunkMin;
+      bucket.p90Total += row.p90HeadwayMin;
+      bucket.sampleCount += 1;
+      if (row.headwayCv !== null) {
+        bucket.cvTotal += row.headwayCv;
+        bucket.cvCount += 1;
+      }
+      if (row.bunchingRatePct !== null) {
+        bucket.bunchingTotal += row.bunchingRatePct;
+        bucket.bunchingCount += 1;
+      }
+      bunchingBuckets.set(key, bucket);
+    }
+
+    const waitTimesBunchingScatter = Array.from(bunchingBuckets.values())
+      .map((bucket) => {
+        const avgCv = bucket.cvCount > 0 ? bucket.cvTotal / bucket.cvCount : 0;
+        const avgBunching = bucket.bunchingCount > 0 ? bucket.bunchingTotal / bucket.bunchingCount : 0;
+        return {
+          x: bucket.headwayTotal / Math.max(1, bucket.sampleCount),
+          y: bucket.p90Total / Math.max(1, bucket.sampleCount),
+          line: bucket.line,
+          station: bucket.station,
+          regularity: Math.max(0, 1 - avgCv),
+          bunchingRatePct: avgBunching,
+          bunched: avgBunching > 5,
+          sampleCount: bucket.sampleCount,
+        };
+      })
+      .sort((left, right) => right.sampleCount - left.sampleCount || left.line.localeCompare(right.line));
 
     const greenBranchSource =
       (greenBranchRecords || []).length > 0

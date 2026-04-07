@@ -18,6 +18,8 @@ function BunchingScatterChart({
       y: Number(row.y),
       regularity: Number(row.regularity),
       bunched: Boolean(row.bunched),
+      sampleCount: Math.max(1, Number(row.sampleCount) || 1),
+      bunchingRatePct: Number(row.bunchingRatePct),
     }))
     .filter((row) => Number.isFinite(row.x) && Number.isFinite(row.y));
 
@@ -31,6 +33,7 @@ function BunchingScatterChart({
   }
 
   const axisMax = max(points, (point) => Math.max(point.x, point.y)) ?? 1;
+  const maxSampleCount = max(points, (point) => point.sampleCount) ?? 1;
   const xScale = scaleLinear().domain([0, axisMax]).range([0, innerWidth]).nice();
   const yScale = scaleLinear().domain([0, axisMax]).range([innerHeight, 0]).nice();
   const ticks = xScale.ticks(6);
@@ -49,7 +52,7 @@ function BunchingScatterChart({
               <g key={`x-${tick}`} transform={`translate(${xScale(tick)},0)`}>
                 <line y1={0} y2={innerHeight} className="axis-grid-line" />
                 <text y={innerHeight + 20} className="axis-tick-label axis-tick-label-x" textAnchor="middle">
-                  {tick.toFixed(1)}m
+                  {tick.toFixed(1)} min
                 </text>
               </g>
             ))}
@@ -58,7 +61,7 @@ function BunchingScatterChart({
               <g key={`y-${tick}`} transform={`translate(0,${yScale(tick)})`}>
                 <line x1={0} x2={innerWidth} className="axis-grid-line" />
                 <text x={-10} y={4} className="axis-tick-label axis-tick-label-y" textAnchor="end">
-                  {tick.toFixed(1)}m
+                  {tick.toFixed(1)} min
                 </text>
               </g>
             ))}
@@ -67,28 +70,44 @@ function BunchingScatterChart({
             <text x={innerWidth - 4} y={14} className="goal-line-label" textAnchor="end">
               Perfectly even spacing
             </text>
+            <text x={innerWidth / 2} y={innerHeight + 38} className="axis-tick-label" textAnchor="middle">
+              Average observed headway (min)
+            </text>
+            <text
+              x={-innerHeight / 2}
+              y={-38}
+              transform="rotate(-90)"
+              className="axis-tick-label"
+              textAnchor="middle"
+            >
+              P90 headway (min)
+            </text>
 
             {points.map((point, index) => (
               <circle
                 key={index}
                 cx={xScale(point.x)}
                 cy={yScale(point.y)}
-                r={point.bunched ? 4 : 3}
+                r={2 + 3 * Math.sqrt(point.sampleCount / Math.max(1, maxSampleCount))}
                 fill={interpolateRdYlGn(Math.max(0, Math.min(1, point.regularity)))}
-                opacity={0.75}
+                opacity={0.72}
                 stroke={point.bunched ? "var(--ink)" : "transparent"}
                 strokeWidth={point.bunched ? 0.8 : 0}
               >
                 <title>
-                  {`${point.line}: prev ${point.x.toFixed(1)}m, current ${point.y.toFixed(1)}m, regularity ${(
+                  {`${point.line}: avg ${point.x.toFixed(1)} min, p90 ${point.y.toFixed(1)} min, regularity ${(
                     point.regularity * 100
-                  ).toFixed(0)}%${point.bunched ? " (bunched)" : ""}`}
+                  ).toFixed(0)}%, bunching ${Number.isFinite(point.bunchingRatePct) ? point.bunchingRatePct.toFixed(1) : "NA"}%, n=${point.sampleCount}${point.bunched ? " (bunched)" : ""}`}
                 </title>
               </circle>
             ))}
           </g>
         </svg>
       </div>
+
+      <p className="card-footnote">
+        Points are aggregated by station under current filters; larger points indicate more observations.
+      </p>
     </section>
   );
 }

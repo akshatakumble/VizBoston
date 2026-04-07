@@ -11,27 +11,32 @@ function TimeFilter({
   onStationChange,
   periodOptions = TIME_PERIOD_OPTIONS,
   stationOptions = ["All"],
+  showDateInputs = false,
 }) {
   return (
     <section className="time-filter-card" aria-label="Time filters">
       <h3>Time Filter</h3>
-      <div className="time-filter-grid">
-        <label>
-          Start Date
-          <input
-            type="date"
-            value={startDate}
-            onChange={(event) => onStartDateChange?.(event.target.value)}
-          />
-        </label>
-        <label>
-          End Date
-          <input
-            type="date"
-            value={endDate}
-            onChange={(event) => onEndDateChange?.(event.target.value)}
-          />
-        </label>
+      <div className={`time-filter-grid ${showDateInputs ? "" : "time-filter-grid-compact"}`.trim()}>
+        {showDateInputs ? (
+          <>
+            <label>
+              Start Date
+              <input
+                type="date"
+                value={startDate}
+                onChange={(event) => onStartDateChange?.(event.target.value)}
+              />
+            </label>
+            <label>
+              End Date
+              <input
+                type="date"
+                value={endDate}
+                onChange={(event) => onEndDateChange?.(event.target.value)}
+              />
+            </label>
+          </>
+        ) : null}
         <label>
           Time Period
           <select value={timePeriod} onChange={(event) => onTimePeriodChange?.(event.target.value)}>

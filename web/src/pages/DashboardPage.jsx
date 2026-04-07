@@ -1,8 +1,6 @@
-import { interpolateViridis } from "d3";
 import { useEffect, useState } from "react";
 import BostonMap from "../components/BostonMap";
 import LineChart from "../charts/LineChart";
-import HeatmapGrid from "../charts/HeatmapGrid";
 import BarChart from "../charts/BarChart";
 import AreaTrendChart from "../charts/AreaTrendChart";
 import RadarComparisonChart from "../charts/RadarComparisonChart";
@@ -11,13 +9,13 @@ import OtpCalendarHeatmap from "../charts/OtpCalendarHeatmap";
 import OtpStationHeatmap from "../charts/OtpStationHeatmap";
 import OnTimeWindowBreakdown from "../charts/OnTimeWindowBreakdown";
 import StationOtpRanking from "../charts/StationOtpRanking";
+import WaitTimeStationHeatmap from "../charts/WaitTimeStationHeatmap";
 import HeadwayBoxPlot from "../charts/HeadwayBoxPlot";
 import BunchingScatterChart from "../charts/BunchingScatterChart";
 import AnnotatedTimelineChart from "../charts/AnnotatedTimelineChart";
 import Legend from "../charts/components/Legend";
 import LoadingState from "../charts/components/LoadingState";
 import TimeFilter from "../filters/TimeFilter";
-import DateRangeSlider from "../filters/DateRangeSlider";
 import HighlightsPanel from "../components/HighlightsPanel";
 import TravelSegmentDetailPanel from "../components/TravelSegmentDetailPanel";
 import SlowZoneTable, { sortSlowZoneRows } from "../components/SlowZoneTable";
@@ -65,29 +63,22 @@ function SilverCoverageNotice({ selectedLine }) {
 }
 
 function DashboardFilters({
-  startDate,
-  endDate,
   timePeriod,
   selectedStation,
   timePeriodOptions,
   stationOptions,
-  onStartDateChange,
-  onEndDateChange,
   onTimePeriodChange,
   onStationChange,
 }) {
   return (
     <TimeFilter
-      startDate={startDate}
-      endDate={endDate}
       timePeriod={timePeriod}
       selectedStation={selectedStation}
-      onStartDateChange={onStartDateChange}
-      onEndDateChange={onEndDateChange}
       onTimePeriodChange={onTimePeriodChange}
       onStationChange={onStationChange}
       periodOptions={timePeriodOptions}
       stationOptions={stationOptions}
+      showDateInputs={false}
     />
   );
 }
@@ -95,10 +86,6 @@ function DashboardFilters({
 function ReliabilityControls({
   dayType,
   onDayTypeChange,
-  dates,
-  startDate,
-  endDate,
-  onDateChange,
 }) {
   return (
     <section className="reliability-control-card">
@@ -117,13 +104,6 @@ function ReliabilityControls({
           ))}
         </div>
       </div>
-
-      <DateRangeSlider
-        dates={dates}
-        startDate={startDate}
-        endDate={endDate}
-        onChange={onDateChange}
-      />
     </section>
   );
 }
@@ -148,6 +128,8 @@ function DashboardPage() {
   const [reliabilityDayType, setReliabilityDayType] = useState("All");
   const [otpHeatmapRowMode, setOtpHeatmapRowMode] = useState("worst20");
   const [reliabilityHeatmapMetric, setReliabilityHeatmapMetric] = useState("otp");
+  const [waitHeatmapMetric, setWaitHeatmapMetric] = useState("headwayMin");
+  const [waitHeatmapRowMode, setWaitHeatmapRowMode] = useState("worst20");
   const [selectedHeatmapCell, setSelectedHeatmapCell] = useState(null);
   const [selectedTravelSegmentId, setSelectedTravelSegmentId] = useState(null);
   const [slowZoneSortBy, setSlowZoneSortBy] = useState("travelTimeIndex");
@@ -173,7 +155,6 @@ function DashboardPage() {
     reliabilityWorstStations,
     reliabilityRankingMinEvents,
     reliabilitySelectedCell,
-    reliabilityAvailableDates,
     waitTimesHeadwayHeatmap,
     waitTimesDistribution,
     waitTimesBunchingScatter,
@@ -316,14 +297,10 @@ function DashboardPage() {
         <SilverCoverageNotice selectedLine={selectedLine} />
 
         <DashboardFilters
-          startDate={startDate}
-          endDate={endDate}
           timePeriod={timePeriod}
           selectedStation={selectedStation}
           stationOptions={stationOptions}
           timePeriodOptions={timePeriodOptions}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
           onTimePeriodChange={setTimePeriod}
           onStationChange={setSelectedStation}
         />
@@ -331,13 +308,6 @@ function DashboardPage() {
         <ReliabilityControls
           dayType={reliabilityDayType}
           onDayTypeChange={setReliabilityDayType}
-          dates={reliabilityAvailableDates}
-          startDate={startDate}
-          endDate={endDate}
-          onDateChange={(nextStart, nextEnd) => {
-            setStartDate(nextStart);
-            setEndDate(nextEnd);
-          }}
         />
 
         {error ? <DataErrorState message={error} onRetry={retry} /> : null}
@@ -411,14 +381,10 @@ function DashboardPage() {
         <SilverCoverageNotice selectedLine={selectedLine} />
 
         <DashboardFilters
-          startDate={startDate}
-          endDate={endDate}
           timePeriod={timePeriod}
           selectedStation={selectedStation}
           stationOptions={stationOptions}
           timePeriodOptions={timePeriodOptions}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
           onTimePeriodChange={setTimePeriod}
           onStationChange={setSelectedStation}
         />
@@ -431,22 +397,21 @@ function DashboardPage() {
         {!error && loading ? <LoadingState title="Excess Wait Time Trend" rows={6} /> : null}
 
         {!error && !loading ? (
-          <HeatmapGrid
-            title="Headway Heatmap (Station × Hour)"
-            subtitle={`Average headway in minutes for ${lineLabel}`}
+          <WaitTimeStationHeatmap
+            title="Wait-Time Heatmap (Station × Time Period)"
+            subtitle={`Metric view for ${lineLabel}. Source: headway_station_time_month dataset.`}
             data={waitTimesHeadwayHeatmap}
-            rowKey="station"
-            columnKey="hour"
-            valueKey="value"
-            colorInterpolator={interpolateViridis}
-            valueFormatter={(value) => `${value.toFixed(1)} min`}
+            metricId={waitHeatmapMetric}
+            onMetricChange={setWaitHeatmapMetric}
+            rowMode={waitHeatmapRowMode}
+            onRowModeChange={setWaitHeatmapRowMode}
           />
         ) : null}
 
         {!error && !loading ? (
           <HeadwayBoxPlot
-            title="Headway Distribution"
-            subtitle="Box plots show spread during Peak vs Off-Peak by line"
+            title="Headway Distribution (Robust)"
+            subtitle={`IQR with P10-P90 whiskers for ${timePeriod === "All" ? "Peak and Off-Peak periods" : timePeriod}`}
             data={waitTimesDistribution}
           />
         ) : null}
@@ -454,7 +419,7 @@ function DashboardPage() {
         {!error && !loading ? (
           <BunchingScatterChart
             title="Train Bunching Indicator"
-            subtitle="Current vs previous headway; diagonal represents perfectly even spacing"
+            subtitle="Station-level average headway vs P90 headway; diagonal represents perfectly even spacing"
             data={waitTimesBunchingScatter}
           />
         ) : null}
@@ -462,7 +427,7 @@ function DashboardPage() {
         {!error && !loading ? (
           <BarChart
             title="Green Line Branch Comparison"
-            subtitle="Grouped branch headways at shared trunk stations (B/C/D/E)"
+            subtitle="Grouped branch headways at shared trunk stations (B/C/D/E). Source: headway_green_branch_month (fallback: headway_station_time_month)."
             data={waitTimesGreenBranchComparison}
             categoryKey="station"
             valueKey="headwayMin"
@@ -497,14 +462,10 @@ function DashboardPage() {
         <SilverCoverageNotice selectedLine={selectedLine} />
 
         <DashboardFilters
-          startDate={startDate}
-          endDate={endDate}
           timePeriod={timePeriod}
           selectedStation={selectedStation}
           stationOptions={stationOptions}
           timePeriodOptions={timePeriodOptions}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
           onTimePeriodChange={setTimePeriod}
           onStationChange={setSelectedStation}
         />
