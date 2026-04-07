@@ -8,7 +8,9 @@ import AreaTrendChart from "../charts/AreaTrendChart";
 import RadarComparisonChart from "../charts/RadarComparisonChart";
 import SystemScorecards from "../charts/SystemScorecards";
 import OtpCalendarHeatmap from "../charts/OtpCalendarHeatmap";
-import DelayHistogram from "../charts/DelayHistogram";
+import OtpStationHeatmap from "../charts/OtpStationHeatmap";
+import OnTimeWindowBreakdown from "../charts/OnTimeWindowBreakdown";
+import StationOtpRanking from "../charts/StationOtpRanking";
 import HeadwayBoxPlot from "../charts/HeadwayBoxPlot";
 import BunchingScatterChart from "../charts/BunchingScatterChart";
 import AnnotatedTimelineChart from "../charts/AnnotatedTimelineChart";
@@ -144,6 +146,8 @@ function DashboardPage() {
   } = useDashboard();
 
   const [reliabilityDayType, setReliabilityDayType] = useState("All");
+  const [otpHeatmapRowMode, setOtpHeatmapRowMode] = useState("worst20");
+  const [reliabilityHeatmapMetric, setReliabilityHeatmapMetric] = useState("otp");
   const [selectedHeatmapCell, setSelectedHeatmapCell] = useState(null);
   const [selectedTravelSegmentId, setSelectedTravelSegmentId] = useState(null);
   const [slowZoneSortBy, setSlowZoneSortBy] = useState("travelTimeIndex");
@@ -165,8 +169,9 @@ function DashboardPage() {
     overviewGoalPct,
     reliabilityStationHourHeatmap,
     reliabilityCalendarHeatmap,
-    reliabilityDelayValues,
+    reliabilityOnTimeWindowBreakdown,
     reliabilityWorstStations,
+    reliabilityRankingMinEvents,
     reliabilitySelectedCell,
     reliabilityAvailableDates,
     waitTimesHeadwayHeatmap,
@@ -176,6 +181,7 @@ function DashboardPage() {
     waitTimesExcessTrend,
     travelMapSegments,
     travelLinePaths,
+    travelStationPoints,
     travelSlowZoneTable,
     travelSegmentIds,
     commuterOriginOptions,
@@ -189,6 +195,7 @@ function DashboardPage() {
     historicalYoyOtp,
     historicalYoyCoverage,
     historicalFrequencyBars,
+    historicalPredictionAccuracy,
     historicalServiceDeliveryTrend,
     historicalTimelineSeries,
     historicalTimelineMarkers,
@@ -336,21 +343,26 @@ function DashboardPage() {
         {error ? <DataErrorState message={error} onRetry={retry} /> : null}
         {!error && loading ? <LoadingState title="OTP Heatmap" rows={6} /> : null}
         {!error && loading ? <LoadingState title="OTP Calendar Heatmap" rows={6} /> : null}
-        {!error && loading ? <LoadingState title="Delay Distribution" rows={6} /> : null}
+        {!error && loading ? <LoadingState title="On-Time Window Composition" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Worst Stations Ranking" rows={6} /> : null}
 
         {!error && !loading ? (
-          <HeatmapGrid
-            title="OTP Heatmap (Station × Hour)"
-            subtitle={`Viridis OTP map for ${lineLabel}. Click a cell for distribution drilldown.`}
+          <OtpStationHeatmap
+            title="Reliability Heatmap (Station × Time Period)"
+            subtitle={`Station-by-time reliability view for ${lineLabel}. Pick a metric and click a cell for delay drilldown.`}
             data={reliabilityStationHourHeatmap}
-            rowKey="station"
-            columnKey="hour"
-            valueKey="value"
-            colorInterpolator={interpolateViridis}
             selectedCell={selectedHeatmapCell}
+            metricId={reliabilityHeatmapMetric}
+            onMetricChange={(metric) => {
+              setReliabilityHeatmapMetric(metric);
+              setSelectedHeatmapCell(null);
+            }}
+            rowMode={otpHeatmapRowMode}
+            onRowModeChange={(mode) => {
+              setOtpHeatmapRowMode(mode);
+              setSelectedHeatmapCell(null);
+            }}
             onCellClick={(cell) => setSelectedHeatmapCell({ row: cell.row, column: cell.column })}
-            valueFormatter={(value) => `${value.toFixed(1)}% OTP`}
           />
         ) : null}
 
@@ -363,27 +375,24 @@ function DashboardPage() {
         ) : null}
 
         {!error && !loading ? (
-          <DelayHistogram
-            title="Delay Distribution"
+          <OnTimeWindowBreakdown
+            title="On-Time Window Composition"
             subtitle={
               reliabilitySelectedCell
                 ? `Drilldown: ${reliabilitySelectedCell.row} at ${reliabilitySelectedCell.column} (${reliabilitySelectedCell.totalEvents} events)`
-                : `Schedule deviation distribution for ${lineLabel}`
+                : `Early / on-time / late shares for ${lineLabel}`
             }
-            values={reliabilityDelayValues}
+            breakdown={reliabilityOnTimeWindowBreakdown}
           />
         ) : null}
 
         {!error && !loading ? (
-          <BarChart
-            title="Worst Stations Ranking"
-            subtitle="Stations with lowest OTP under current filters"
+          <StationOtpRanking
+            title="Worst Stations Ranking (Sample-Size Aware)"
+            subtitle="Lowest OTP stations under current filters with raw late-rate context"
             data={reliabilityWorstStations}
-            categoryKey="station"
-            valueKey="otpPct"
-            groupKey="line"
-            orientation="horizontal"
-            metricFormatter={(value) => `${value.toFixed(1)}%`}
+            minEvents={reliabilityRankingMinEvents}
+            otpTarget={overviewGoalPct}
           />
         ) : null}
 
@@ -510,6 +519,7 @@ function DashboardPage() {
             selectedLine={selectedLine}
             mapMode="travel"
             linePaths={travelLinePaths}
+            stationPoints={travelStationPoints}
             segmentData={travelMapSegments}
             selectedSegmentId={selectedTravelSegmentId}
             onSegmentSelect={setSelectedTravelSegmentId}
@@ -766,6 +776,7 @@ function DashboardPage() {
         {error ? <DataErrorState message={error} onRetry={retry} /> : null}
         {!error && loading ? <LoadingState title="Year-over-Year OTP" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Scheduled vs Actual Frequency" rows={6} /> : null}
+        {!error && loading ? <LoadingState title="Schedule Prediction Accuracy" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Service Delivery Trend" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Annotated Timeline" rows={6} /> : null}
 
@@ -810,6 +821,19 @@ function DashboardPage() {
             valueKey="value"
             groupKey="metric"
             metricFormatter={(value) => `${value.toFixed(2)} tph`}
+          />
+        ) : null}
+
+        {!error && !loading ? (
+          <LineChart
+            title="Schedule Prediction Accuracy"
+            subtitle="Accuracy proxy = 100 - |actual tph - scheduled tph| / scheduled tph (weighted by observed samples)"
+            data={historicalPredictionAccuracy}
+            xKey="season"
+            yKey="value"
+            seriesKey="line"
+            yLabel="Accuracy"
+            metricFormatter={(value) => `${value.toFixed(1)}%`}
           />
         ) : null}
 
@@ -885,7 +909,7 @@ function DashboardPage() {
       {error ? <DataErrorState message={error} onRetry={retry} /> : null}
       {!error && loading ? <LoadingState title="System Scorecards" rows={6} /> : null}
       {!error && loading ? <LoadingState title="Daily Reliability Trend" rows={6} /> : null}
-      {!error && loading ? <LoadingState title="Line Comparison Radar" rows={6} /> : null}
+      {!error && loading ? <LoadingState title="Line Comparison Matrix" rows={6} /> : null}
       {!error && loading ? <LoadingState title="Recent Highlights" rows={4} /> : null}
 
       {!error && !loading ? (
@@ -909,8 +933,8 @@ function DashboardPage() {
 
       {!error && !loading ? (
         <RadarComparisonChart
-          title="Line Comparison Radar"
-          subtitle="Compare OTP, headway, travel reliability, and service delivery across lines"
+          title="Line Comparison Matrix"
+          subtitle="Raw metric comparison by line (Avg OTP over selected period) with aligned scales and normalized composite score"
           data={overviewRadar}
           onLineClick={handleRadarLineClick}
         />
@@ -924,6 +948,7 @@ function DashboardPage() {
         selectedLine={selectedLine}
         mapMode="overview"
         linePaths={travelLinePaths}
+        stationPoints={travelStationPoints}
       />
     </div>
   );

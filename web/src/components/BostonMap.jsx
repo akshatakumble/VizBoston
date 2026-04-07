@@ -35,6 +35,7 @@ function BostonMap({
   selectedLine = "All",
   mapMode = "overview",
   linePaths = [],
+  stationPoints = [],
   segmentData = [],
   selectedSegmentId = null,
   onSegmentSelect,
@@ -42,6 +43,7 @@ function BostonMap({
   const mapRef = useRef(null);
   const containerRef = useRef(null);
   const lineLayerRef = useRef(null);
+  const stationLayerRef = useRef(null);
   const segmentLayerRef = useRef(null);
   const legendRef = useRef(null);
 
@@ -61,6 +63,7 @@ function BostonMap({
     }).addTo(mapRef.current);
 
     lineLayerRef.current = L.layerGroup().addTo(mapRef.current);
+    stationLayerRef.current = L.layerGroup().addTo(mapRef.current);
     segmentLayerRef.current = L.layerGroup().addTo(mapRef.current);
 
     return () => {
@@ -73,11 +76,12 @@ function BostonMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !lineLayerRef.current || !segmentLayerRef.current) {
+    if (!map || !lineLayerRef.current || !stationLayerRef.current || !segmentLayerRef.current) {
       return;
     }
 
     lineLayerRef.current.clearLayers();
+    stationLayerRef.current.clearLayers();
     segmentLayerRef.current.clearLayers();
 
     const lineRows = (linePaths || []).filter((linePath) =>
@@ -86,9 +90,44 @@ function BostonMap({
     for (const linePath of lineRows) {
       L.polyline(linePath.coordinates, {
         color: linePath.lineColor || "#4E6B95",
-        weight: mapMode === "travel" ? 2.5 : 4,
-        opacity: mapMode === "travel" ? 0.45 : 0.75,
+        weight: mapMode === "travel" ? 2.2 : 3.4,
+        opacity: mapMode === "travel" ? 0.35 : 0.78,
+        lineCap: "round",
+        lineJoin: "round",
       }).addTo(lineLayerRef.current);
+    }
+
+    const stationRows = (stationPoints || []).filter((station) =>
+      selectedLine === "All" ? true : station.routeId === selectedLine
+    );
+    for (const station of stationRows) {
+      if (!Array.isArray(station.coordinates) || station.coordinates.length < 2) {
+        continue;
+      }
+      const marker = L.circleMarker(station.coordinates, {
+        radius: station.isTransferStation ? 4.4 : 3.1,
+        color: station.lineColor || "#4E6B95",
+        fillColor: station.lineColor || "#4E6B95",
+        fillOpacity: station.isTransferStation ? 0.95 : 0.82,
+        weight: station.isTransferStation ? 1.5 : 0.9,
+      }).addTo(stationLayerRef.current);
+
+      const lineLabel =
+        station.rawRouteId && station.rawRouteId !== station.routeId
+          ? `${station.routeId} (${station.rawRouteId})`
+          : station.routeId;
+      const labelText = `${station.stopName} - ${lineLabel}`;
+
+      const showPermanentLabel =
+        mapMode === "overview" && (selectedLine !== "All" || station.isTransferStation);
+
+      marker.bindTooltip(labelText, {
+        direction: "top",
+        sticky: !showPermanentLabel,
+        permanent: showPermanentLabel,
+        offset: [0, showPermanentLabel ? -2 : -6],
+        className: showPermanentLabel ? "station-label-tooltip" : "station-hover-tooltip",
+      });
     }
 
     if (mapMode === "travel") {
@@ -121,13 +160,31 @@ function BostonMap({
 
     const bounds = [];
     lineRows.forEach((path) => path.coordinates.forEach((point) => bounds.push(point)));
+    stationRows.forEach((station) => {
+      if (Array.isArray(station.coordinates) && station.coordinates.length >= 2) {
+        bounds.push(station.coordinates);
+      }
+    });
     if (mapMode === "travel") {
-      segmentData.forEach((segment) => segment.coordinates.forEach((point) => bounds.push(point)));
+      const filteredSegments = (segmentData || []).filter((segment) =>
+        selectedLine === "All" ? true : segment.line === selectedLine
+      );
+      filteredSegments.forEach((segment) =>
+        segment.coordinates.forEach((point) => bounds.push(point))
+      );
     }
     if (bounds.length > 0) {
       map.fitBounds(L.latLngBounds(bounds), { padding: [24, 24], maxZoom: 13 });
     }
-  }, [linePaths, mapMode, segmentData, selectedLine, selectedSegmentId, onSegmentSelect]);
+  }, [
+    linePaths,
+    mapMode,
+    segmentData,
+    selectedLine,
+    selectedSegmentId,
+    onSegmentSelect,
+    stationPoints,
+  ]);
 
   return (
     <section className="map-card">
@@ -138,7 +195,7 @@ function BostonMap({
       <p className="card-subtitle">
         {mapMode === "travel"
           ? "Segments are colored by travel time index and selectable for detail analysis."
-          : "Station and corridor layers render here."}
+          : "Simplified MBTA line topology with station markers. Transfer labels are always shown; choose one line to label every stop."}
       </p>
       <div ref={containerRef} className="map-container" aria-label="Boston area map" />
     </section>

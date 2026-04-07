@@ -8,7 +8,20 @@ function closestIndex(dates, targetDate) {
   if (!targetDate || dates.length === 0) {
     return -1;
   }
-  const target = new Date(targetDate).getTime();
+  const parseDate = (value) => {
+    const parts = String(value || "").split("-");
+    if (parts.length === 3) {
+      const year = Number(parts[0]);
+      const month = Number(parts[1]);
+      const day = Number(parts[2]);
+      if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+        return new Date(year, month - 1, day);
+      }
+    }
+    return new Date(value);
+  };
+
+  const target = parseDate(targetDate).getTime();
   if (Number.isNaN(target)) {
     return -1;
   }
@@ -16,7 +29,7 @@ function closestIndex(dates, targetDate) {
   let bestIndex = 0;
   let bestDistance = Number.POSITIVE_INFINITY;
   dates.forEach((date, index) => {
-    const current = new Date(date).getTime();
+    const current = parseDate(date).getTime();
     const distance = Math.abs(current - target);
     if (distance < bestDistance) {
       bestDistance = distance;
@@ -27,7 +40,11 @@ function closestIndex(dates, targetDate) {
 }
 
 function prettyDate(value) {
-  const parsed = new Date(value);
+  const parts = String(value || "").split("-");
+  const parsed =
+    parts.length === 3
+      ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+      : new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }

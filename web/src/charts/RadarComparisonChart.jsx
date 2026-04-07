@@ -1,46 +1,95 @@
 import { getLineColor } from "../design/transit";
 
 const METRICS = [
-  { key: "otp_pct", label: "OTP %" },
-  { key: "avg_headway_min", label: "Headway (min)" },
-  { key: "travel_time_index", label: "Travel Index" },
-  { key: "headway_cv_pct", label: "Headway CV %" },
-  { key: "service_delivery_pct", label: "Delivery %" },
+  {
+    key: "otp_pct",
+    label: "Avg OTP % (selected period)",
+    higherIsBetter: true,
+    format: (value) => `${value.toFixed(1)}%`,
+  },
+  {
+    key: "avg_headway_min",
+    label: "Headway (min)",
+    higherIsBetter: false,
+    format: (value) => `${value.toFixed(1)} min`,
+  },
+  {
+    key: "travel_time_index",
+    label: "Travel Index",
+    higherIsBetter: false,
+    format: (value) => `${value.toFixed(2)}x`,
+  },
+  {
+    key: "headway_cv_pct",
+    label: "Headway CV %",
+    higherIsBetter: false,
+    format: (value) => `${value.toFixed(1)}%`,
+  },
+  {
+    key: "service_delivery_pct",
+    label: "Delivery %",
+    higherIsBetter: true,
+    format: (value) => `${value.toFixed(1)}%`,
+  },
 ];
 
-function polarToCartesian(centerX, centerY, radius, angleRadians) {
-  return {
-    x: centerX + radius * Math.cos(angleRadians),
-    y: centerY + radius * Math.sin(angleRadians),
-  };
+function toFinite(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
 }
 
-function formatMetric(metricKey, value) {
-  if (!Number.isFinite(value)) {
-    return "No data";
+function buildMetricRanges(data) {
+  const ranges = {};
+  for (const metric of METRICS) {
+    const values = data
+      .map((row) => toFinite(row.metrics?.[metric.key]))
+      .filter((value) => value !== null);
+    ranges[metric.key] = {
+      min: values.length > 0 ? Math.min(...values) : null,
+      max: values.length > 0 ? Math.max(...values) : null,
+    };
   }
-  if (metricKey.includes("pct")) {
-    return `${value.toFixed(1)}%`;
+  return ranges;
+}
+
+function rawPosition(value, range) {
+  if (value === null || range.min === null || range.max === null) {
+    return null;
   }
-  if (metricKey.includes("index")) {
-    return `${value.toFixed(2)}x`;
+  if (range.max === range.min) {
+    return 0.5;
   }
-  return `${value.toFixed(1)}`;
+  return Math.max(0, Math.min(1, (value - range.min) / (range.max - range.min)));
+}
+
+function computeCompositeScore(row, ranges) {
+  const scores = [];
+  for (const metric of METRICS) {
+    const value = toFinite(row.metrics?.[metric.key]);
+    const range = ranges[metric.key];
+    if (value === null || range.min === null || range.max === null) {
+      continue;
+    }
+    if (range.max === range.min) {
+      scores.push(0.5);
+      continue;
+    }
+    const normalizedRaw = (value - range.min) / (range.max - range.min);
+    const normalized = metric.higherIsBetter ? normalizedRaw : 1 - normalizedRaw;
+    scores.push(Math.max(0, Math.min(1, normalized)));
+  }
+  if (scores.length === 0) {
+    return null;
+  }
+  return (scores.reduce((sum, value) => sum + value, 0) / scores.length) * 100;
 }
 
 function RadarComparisonChart({
-  title = "Line Comparison Radar",
+  title = "Line Metric Comparison",
   subtitle = "",
   data = [],
-  width = 760,
-  height = 360,
   onLineClick,
 }) {
-  const centerX = width / 2;
-  const centerY = height / 2 + 8;
-  const radius = Math.min(width, height) * 0.28;
-  const angleStep = (Math.PI * 2) / METRICS.length;
-
   if (!Array.isArray(data) || data.length === 0) {
     return (
       <section className="chart-card">
@@ -50,7 +99,7 @@ function RadarComparisonChart({
     );
   }
 
-  const rings = [20, 40, 60, 80, 100];
+  const ranges = buildMetricRanges(data);
 
   return (
     <section className="chart-card">
@@ -59,93 +108,103 @@ function RadarComparisonChart({
       </div>
       {subtitle ? <p className="card-subtitle">{subtitle}</p> : null}
 
-      <div className="chart-frame">
-        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
-          <g>
-            {rings.map((ring) => (
-              <circle
-                key={ring}
-                cx={centerX}
-                cy={centerY}
-                r={(ring / 100) * radius}
-                fill="none"
-                className="radar-ring"
-              />
-            ))}
-
-            {METRICS.map((metric, index) => {
-              const angle = -Math.PI / 2 + index * angleStep;
-              const outer = polarToCartesian(centerX, centerY, radius + 16, angle);
-              const axisEnd = polarToCartesian(centerX, centerY, radius, angle);
-              return (
-                <g key={metric.key}>
-                  <line x1={centerX} y1={centerY} x2={axisEnd.x} y2={axisEnd.y} className="radar-axis" />
-                  <text x={outer.x} y={outer.y} className="radar-axis-label" textAnchor="middle">
-                    {metric.label}
-                  </text>
-                </g>
-              );
-            })}
-
+      <div className="metric-matrix-wrap">
+        <table className="metric-matrix" aria-label={title}>
+          <thead>
+            <tr>
+              <th>Line</th>
+              {METRICS.map((metric) => {
+                const range = ranges[metric.key];
+                const direction = metric.higherIsBetter ? "Higher is better" : "Lower is better";
+                const rangeLabel =
+                  range.min !== null && range.max !== null
+                    ? `${metric.format(range.min)} to ${metric.format(range.max)}`
+                    : "No range";
+                return (
+                  <th key={metric.key}>
+                    <div className="metric-header-label">{metric.label}</div>
+                    <div className="metric-header-direction">{direction}</div>
+                    <div className="metric-header-range">{rangeLabel}</div>
+                  </th>
+                );
+              })}
+              <th>
+                <div className="metric-header-label">Score</div>
+                <div className="metric-header-direction">Normalized</div>
+                <div className="metric-header-range">0 to 100</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
             {data.map((lineRow) => {
-              const points = METRICS.map((metric, index) => {
-                const angle = -Math.PI / 2 + index * angleStep;
-                const normalized = Number(lineRow.normalized?.[metric.key]);
-                const scaled = Number.isFinite(normalized) ? Math.max(0, Math.min(100, normalized)) : 0;
-                return polarToCartesian(centerX, centerY, (scaled / 100) * radius, angle);
-              });
-              const path = points
-                .map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(2)},${point.y.toFixed(2)}`)
-                .join(" ")
-                .concat(" Z");
-
+              const compositeScore = computeCompositeScore(lineRow, ranges);
+              const lineColor = getLineColor(lineRow.line);
               return (
-                <g
-                  key={lineRow.line}
-                  className="radar-line-group"
-                  onClick={() => onLineClick?.(lineRow.line)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onLineClick?.(lineRow.line);
-                    }
-                  }}
-                  role={onLineClick ? "button" : undefined}
-                  tabIndex={onLineClick ? 0 : undefined}
-                  aria-label={onLineClick ? `Open ${lineRow.line} detail view` : undefined}
-                >
-                  <path
-                    d={path}
-                    fill={getLineColor(lineRow.line)}
-                    fillOpacity={0.14}
-                    stroke={getLineColor(lineRow.line)}
-                    strokeWidth={2}
-                  />
-                  {points.map((point, index) => (
-                    <circle
-                      key={`${lineRow.line}-${index}`}
-                      cx={point.x}
-                      cy={point.y}
-                      r={3.2}
-                      fill={getLineColor(lineRow.line)}
-                      className="radar-point"
-                    />
-                  ))}
-                  <text
-                    x={centerX}
-                    y={centerY + 16 + data.findIndex((item) => item.line === lineRow.line) * 16}
-                    className="radar-line-label"
-                    fill={getLineColor(lineRow.line)}
-                  >
-                    {lineRow.line}:{" "}
-                    {METRICS.map((metric) => formatMetric(metric.key, lineRow.metrics?.[metric.key])).join(" | ")}
-                  </text>
-                </g>
+                <tr key={lineRow.line}>
+                  <th scope="row">
+                    {onLineClick ? (
+                      <button
+                        type="button"
+                        className="metric-line-button"
+                        onClick={() => onLineClick(lineRow.line)}
+                        style={{ "--line-color": lineColor }}
+                      >
+                        {lineRow.line}
+                      </button>
+                    ) : (
+                      <span className="metric-line-label" style={{ "--line-color": lineColor }}>
+                        {lineRow.line}
+                      </span>
+                    )}
+                  </th>
+
+                  {METRICS.map((metric) => {
+                    const value = toFinite(lineRow.metrics?.[metric.key]);
+                    const range = ranges[metric.key];
+                    const position = rawPosition(value, range);
+                    return (
+                      <td key={`${lineRow.line}-${metric.key}`}>
+                        <div className="metric-cell">
+                          <span className="metric-cell-value">
+                            {value !== null ? metric.format(value) : "NA"}
+                          </span>
+                          {value !== null && position !== null ? (
+                            <svg
+                              viewBox="0 0 120 14"
+                              className="metric-cell-plot"
+                              aria-hidden="true"
+                            >
+                              <line x1="2" y1="7" x2="118" y2="7" className="metric-cell-track" />
+                              <circle
+                                cx={(2 + position * 116).toFixed(2)}
+                                cy="7"
+                                r="3.4"
+                                fill={lineColor}
+                              />
+                            </svg>
+                          ) : (
+                            <span className="metric-cell-empty" aria-hidden="true" />
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
+
+                  <td className="metric-score-cell">
+                    {compositeScore !== null ? compositeScore.toFixed(0) : "NA"}
+                  </td>
+                </tr>
               );
             })}
-          </g>
-        </svg>
+          </tbody>
+        </table>
       </div>
+
+      <p className="card-footnote">
+        Avg OTP is computed for the selected period (event-weighted when counts are available). Score is an
+        average of within-metric normalized rankings (higher is better for OTP and Delivery; lower is better
+        for Headway, Travel Index, and Headway CV). Missing values are excluded from scoring.
+      </p>
     </section>
   );
 }

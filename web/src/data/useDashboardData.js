@@ -6,6 +6,7 @@ const DATA_BASE_URL_ENV = import.meta.env.VITE_DATA_BASE_URL;
 const DATA_BASE_URL = String(DATA_BASE_URL_ENV || "/data").replace(/\/+$/, "");
 const FETCH_CACHE_MODE = import.meta.env.DEV ? "no-store" : "default";
 const OTP_TARGET_PCT = Number(import.meta.env.VITE_MBTA_OTP_TARGET || 85);
+const RELIABILITY_RANKING_MIN_EVENTS = Number(import.meta.env.VITE_RELIABILITY_RANKING_MIN_EVENTS || 200);
 const TIME_PERIOD_ORDER = ["AM Peak", "Midday", "PM Peak", "Evening", "Late Night", "Other"];
 const OVERVIEW_LINE_ORDER = ["Red", "Orange", "Blue", "Green", "Silver"];
 const WEEKDAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -248,6 +249,11 @@ function isPlaceholderStopToken(value) {
   return /^stop_\d+$/i.test(String(value || "").trim());
 }
 
+function isNullLikeToken(value) {
+  const token = String(value || "").trim().toLowerCase();
+  return token === "nan" || token === "null" || token === "none" || token === "n/a" || token === "na" || token === "undefined";
+}
+
 function parseSyntheticStopIndex(value) {
   const match = String(value || "").trim().match(/^stop_(\d+)$/i);
   if (!match) {
@@ -364,7 +370,179 @@ function decodeTopologyArc(topology, arcIndex) {
   return arcIndex >= 0 ? coordinates : coordinates.reverse();
 }
 
-function extractLinePathsFromTopology(topology) {
+function haversineDistanceKm(latA, lonA, latB, lonB) {
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+  const dLat = toRadians(latB - latA);
+  const dLon = toRadians(lonB - lonA);
+  const lat1 = toRadians(latA);
+  const lat2 = toRadians(latB);
+  const haversine =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(haversine));
+}
+
+function extractStationPointsFromTopology(topology) {
+  const collection = topology?.objects?.station_points;
+  if (!collection || !Array.isArray(collection.geometries)) {
+    return [];
+  }
+
+  const deduped = new Map();
+  for (const geometry of collection.geometries) {
+    if (!geometry || geometry.type !== "Point" || !Array.isArray(geometry.coordinates)) {
+      continue;
+    }
+    const lon = toFiniteNumber(geometry.coordinates[0]);
+    const lat = toFiniteNumber(geometry.coordinates[1]);
+    if (lat === null || lon === null) {
+      continue;
+    }
+
+    const rawRouteId = normalizeText(geometry.properties?.route_id, "");
+    const routeId = normalizeLineId(rawRouteId);
+    if (!routeId) {
+      continue;
+    }
+
+    const stopId = normalizeText(geometry.properties?.stop_id, "");
+    const stopName = normalizeText(
+      geometry.properties?.stop_name || geometry.properties?.station_name || stopId,
+      stopId || "Unknown"
+    );
+    if (isPlaceholderStopToken(stopName) || isNumericCode(stopName)) {
+      continue;
+    }
+    const stopSequence = toFiniteNumber(geometry.properties?.stop_sequence) ?? Number.POSITIVE_INFINITY;
+    const lineColor = normalizeText(geometry.properties?.line_color, "");
+    const isTransferStation = Boolean(geometry.properties?.is_transfer_station);
+
+    const key = `${rawRouteId}||${stopId || stopName}||${lat.toFixed(6)}||${lon.toFixed(6)}`;
+    const existing = deduped.get(key);
+    if (!existing || stopSequence < existing.stopSequence) {
+      deduped.set(key, {
+        routeId,
+        rawRouteId: rawRouteId || routeId,
+        lineColor: lineColor || null,
+        stopId,
+        stopName,
+        stopSequence,
+        isTransferStation,
+        coordinates: [lat, lon],
+      });
+    }
+  }
+
+  return Array.from(deduped.values()).sort((left, right) => {
+    if (left.routeId !== right.routeId) {
+      return left.routeId.localeCompare(right.routeId);
+    }
+    if (left.rawRouteId !== right.rawRouteId) {
+      return left.rawRouteId.localeCompare(right.rawRouteId);
+    }
+    if (left.stopSequence !== right.stopSequence) {
+      return left.stopSequence - right.stopSequence;
+    }
+    return left.stopName.localeCompare(right.stopName);
+  });
+}
+
+function buildLineSegmentsFromStations(stationPoints) {
+  if (!Array.isArray(stationPoints) || stationPoints.length === 0) {
+    return [];
+  }
+
+  const byRawRoute = new Map();
+  for (const station of stationPoints) {
+    const bucket = byRawRoute.get(station.rawRouteId) || [];
+    bucket.push(station);
+    byRawRoute.set(station.rawRouteId, bucket);
+  }
+
+  const segments = [];
+  const MAX_SEQUENCE_GAP = 10;
+  const MAX_SEGMENT_KM = 3.5;
+
+  for (const [rawRouteId, stations] of byRawRoute.entries()) {
+    const localDeduped = new Map();
+    for (const station of stations) {
+      const key = `${station.stopName}||${station.coordinates[0].toFixed(5)}||${station.coordinates[1].toFixed(5)}`;
+      const existing = localDeduped.get(key);
+      if (!existing || station.stopSequence < existing.stopSequence) {
+        localDeduped.set(key, station);
+      }
+    }
+    const routeStations = Array.from(localDeduped.values()).sort((left, right) => {
+      if (left.stopSequence !== right.stopSequence) {
+        return left.stopSequence - right.stopSequence;
+      }
+      return left.stopName.localeCompare(right.stopName);
+    });
+    const seenEdges = new Set();
+
+    for (const source of routeStations) {
+      if (!Number.isFinite(source.stopSequence)) {
+        continue;
+      }
+      let bestCandidate = null;
+
+      for (const target of routeStations) {
+        if (source.stopId === target.stopId || !Number.isFinite(target.stopSequence)) {
+          continue;
+        }
+        const sequenceGap = target.stopSequence - source.stopSequence;
+        if (sequenceGap <= 0 || sequenceGap > MAX_SEQUENCE_GAP) {
+          continue;
+        }
+
+        const distanceKm = haversineDistanceKm(
+          source.coordinates[0],
+          source.coordinates[1],
+          target.coordinates[0],
+          target.coordinates[1]
+        );
+        if (distanceKm > MAX_SEGMENT_KM) {
+          continue;
+        }
+
+        if (
+          !bestCandidate ||
+          sequenceGap < bestCandidate.sequenceGap ||
+          (sequenceGap === bestCandidate.sequenceGap && distanceKm < bestCandidate.distanceKm)
+        ) {
+          bestCandidate = { target, distanceKm, sequenceGap };
+        }
+      }
+
+      if (!bestCandidate) {
+        continue;
+      }
+
+      const bestTarget = bestCandidate.target;
+      const edgeKey = [source.stopId, bestTarget.stopId].sort().join("||");
+      if (seenEdges.has(edgeKey)) {
+        continue;
+      }
+      seenEdges.add(edgeKey);
+
+      segments.push({
+        routeId: source.routeId,
+        rawRouteId,
+        lineColor: source.lineColor || bestTarget.lineColor || null,
+        coordinates: [source.coordinates, bestTarget.coordinates],
+      });
+    }
+  }
+
+  return segments;
+}
+
+function extractLinePathsFromTopology(topology, stationPoints = []) {
+  const stationDerivedSegments = buildLineSegmentsFromStations(stationPoints);
+  if (stationDerivedSegments.length > 0) {
+    return stationDerivedSegments;
+  }
+
   const paths = [];
   const lineCollection = topology?.objects?.line_paths;
   if (!lineCollection || !Array.isArray(lineCollection.geometries)) {
@@ -729,8 +907,9 @@ export function useDashboardData({
       overviewGoalPct: OTP_TARGET_PCT,
       reliabilityStationHourHeatmap: [],
       reliabilityCalendarHeatmap: [],
-      reliabilityDelayValues: [],
+      reliabilityOnTimeWindowBreakdown: null,
       reliabilityWorstStations: [],
+      reliabilityRankingMinEvents: RELIABILITY_RANKING_MIN_EVENTS,
       reliabilitySelectedCell: null,
       reliabilityAvailableDates: [],
       otpTrendData: [],
@@ -744,6 +923,7 @@ export function useDashboardData({
       waitTimesExcessTrend: [],
       travelMapSegments: [],
       travelLinePaths: [],
+      travelStationPoints: [],
       travelSlowZoneTable: [],
       travelSegmentIds: [],
       serviceDeliveryBars: [],
@@ -761,6 +941,7 @@ export function useDashboardData({
       historicalYoyOtp: [],
       historicalYoyCoverage: [],
       historicalFrequencyBars: [],
+      historicalPredictionAccuracy: [],
       historicalServiceDeliveryTrend: [],
       historicalTimelineSeries: [],
       historicalTimelineMarkers: [],
@@ -942,7 +1123,7 @@ export function useDashboardData({
       const lineName = normalizeLineId(lineNameCandidate);
       const stopId = normalizeText(stopIdCandidate, "");
       const rawName = normalizeText(nameCandidate || stopIdCandidate, "");
-      if (rawName && !isPlaceholderStopToken(rawName)) {
+      if (rawName && !isPlaceholderStopToken(rawName) && !isNumericCode(rawName) && !isNullLikeToken(rawName)) {
         return rawName;
       }
       const inferredFromSynthetic = inferSyntheticStopName(lineName, stopId);
@@ -950,10 +1131,10 @@ export function useDashboardData({
         return inferredFromSynthetic;
       }
       if (stopId && stopNameByStopId.has(stopId)) {
-        return stopNameByStopId.get(stopId);
-      }
-      if (stopId && !isPlaceholderStopToken(stopId)) {
-        return stopId;
+        const candidate = normalizeText(stopNameByStopId.get(stopId), "");
+        if (candidate && !isPlaceholderStopToken(candidate) && !isNumericCode(candidate) && !isNullLikeToken(candidate)) {
+          return candidate;
+        }
       }
       return "";
     };
@@ -963,7 +1144,7 @@ export function useDashboardData({
         continue;
       }
       const stationName = resolveStationName(row.line_id, row.station_name, row.stop_id);
-      if (stationName) {
+      if (stationName && !isNumericCode(stationName)) {
         stationSet.add(stationName);
       }
     }
@@ -976,7 +1157,7 @@ export function useDashboardData({
         row.stop_name || row.canonical_stop_name,
         row.stop_id
       );
-      if (stationName) {
+      if (stationName && !isNumericCode(stationName)) {
         stationSet.add(stationName);
       }
     }
@@ -1045,12 +1226,15 @@ export function useDashboardData({
           stationMatches(row.station_name || row.stop_id)
       )
       .map((row) => {
-        const lineName = normalizeLineId(row.line_id);
-        const stopId = normalizeText(row.stop_id, "");
-        const stationName = normalizeText(row.station_name || row.stop_id);
-        const displayStation = selectedLine === "All" ? `${lineName} · ${stationName}` : stationName;
-        const timePeriodName = normalizeText(row.time_period, "Other");
-        const hourOfDay = Math.floor(representativeSecondsForPeriod(timePeriodName) / 3600) % 24;
+      const lineName = normalizeLineId(row.line_id);
+      const stopId = normalizeText(row.stop_id, "");
+      const stationName = resolveStationName(row.line_id, row.station_name, row.stop_id);
+      if (!stationName || isNumericCode(stationName) || isNullLikeToken(stationName)) {
+        return null;
+      }
+      const displayStation = selectedLine === "All" ? `${lineName} · ${stationName}` : stationName;
+      const timePeriodName = normalizeText(row.time_period, "Other");
+      const hourOfDay = Math.floor(representativeSecondsForPeriod(timePeriodName) / 3600) % 24;
         const lineRank = lineOrderMap.get(lineName) ?? 99;
         const sequence = stationSequenceMap.get(`${lineName}||${stopId}`) ?? Number.POSITIVE_INFINITY;
         const stationSortOrder = lineRank * 10000 + (Number.isFinite(sequence) ? sequence : 999);
@@ -1077,6 +1261,7 @@ export function useDashboardData({
           timePeriod: timePeriodName,
         };
       })
+      .filter(Boolean)
       .sort((left, right) => {
         if (left.stationSortOrder !== right.stationSortOrder) {
           return left.stationSortOrder - right.stationSortOrder;
@@ -1125,44 +1310,36 @@ export function useDashboardData({
       }))
       .sort((left, right) => left.date.localeCompare(right.date));
 
-    const buildDelaySamplesFromCounts = (counts, maxSamples = 1600) => {
-      const early = Math.max(0, Math.floor(toFiniteNumber(counts?.earlyEvents) ?? 0));
-      const onTime = Math.max(0, Math.floor(toFiniteNumber(counts?.onTimeEvents) ?? 0));
-      const late = Math.max(0, Math.floor(toFiniteNumber(counts?.lateEvents) ?? 0));
-      const total = Math.max(1, early + onTime + late);
-      const scale = Math.min(1, maxSamples / total);
-      const sample = [];
-      const pushSamples = (value, count) => {
-        const scaled = Math.max(1, Math.round(count * scale));
-        for (let index = 0; index < scaled; index += 1) {
-          sample.push(value);
+    const reliabilityOnTimeWindowCounts = selectedHeatCell
+      ? {
+          earlyEvents: toFiniteNumber(selectedHeatCell.earlyEvents) ?? 0,
+          onTimeEvents: toFiniteNumber(selectedHeatCell.onTimeEvents) ?? 0,
+          lateEvents: toFiniteNumber(selectedHeatCell.lateEvents) ?? 0,
         }
-      };
-      if (early > 0) {
-        pushSamples(-120, early);
-      }
-      if (onTime > 0) {
-        pushSamples(0, onTime);
-      }
-      if (late > 0) {
-        pushSamples(420, late);
-      }
-      return sample;
-    };
-
-    const reliabilityDelayValues = selectedHeatCell
-      ? buildDelaySamplesFromCounts(selectedHeatCell, 1200)
-      : buildDelaySamplesFromCounts(
-          reliabilityStationHourHeatmap.reduce(
-            (accumulator, row) => ({
-              earlyEvents: (accumulator.earlyEvents ?? 0) + (toFiniteNumber(row.earlyEvents) ?? 0),
-              onTimeEvents: (accumulator.onTimeEvents ?? 0) + (toFiniteNumber(row.onTimeEvents) ?? 0),
-              lateEvents: (accumulator.lateEvents ?? 0) + (toFiniteNumber(row.lateEvents) ?? 0),
-            }),
-            { earlyEvents: 0, onTimeEvents: 0, lateEvents: 0 }
-          ),
-          2400
+      : reliabilityStationHourHeatmap.reduce(
+          (accumulator, row) => ({
+            earlyEvents: (accumulator.earlyEvents ?? 0) + (toFiniteNumber(row.earlyEvents) ?? 0),
+            onTimeEvents: (accumulator.onTimeEvents ?? 0) + (toFiniteNumber(row.onTimeEvents) ?? 0),
+            lateEvents: (accumulator.lateEvents ?? 0) + (toFiniteNumber(row.lateEvents) ?? 0),
+          }),
+          { earlyEvents: 0, onTimeEvents: 0, lateEvents: 0 }
         );
+    const reliabilityOnTimeTotal =
+      reliabilityOnTimeWindowCounts.earlyEvents +
+      reliabilityOnTimeWindowCounts.onTimeEvents +
+      reliabilityOnTimeWindowCounts.lateEvents;
+    const reliabilityOnTimeWindowBreakdown =
+      reliabilityOnTimeTotal > 0
+        ? {
+            totalEvents: reliabilityOnTimeTotal,
+            earlyEvents: reliabilityOnTimeWindowCounts.earlyEvents,
+            onTimeEvents: reliabilityOnTimeWindowCounts.onTimeEvents,
+            lateEvents: reliabilityOnTimeWindowCounts.lateEvents,
+            earlyPct: (reliabilityOnTimeWindowCounts.earlyEvents / reliabilityOnTimeTotal) * 100,
+            onTimePct: (reliabilityOnTimeWindowCounts.onTimeEvents / reliabilityOnTimeTotal) * 100,
+            latePct: (reliabilityOnTimeWindowCounts.lateEvents / reliabilityOnTimeTotal) * 100,
+          }
+        : null;
 
     const stationRankingBuckets = new Map();
     for (const row of reliabilityStationHourHeatmap) {
@@ -1184,9 +1361,18 @@ export function useDashboardData({
         station: bucket.station,
         line: bucket.line,
         otpPct: bucket.totalEvents > 0 ? (bucket.onTimeEvents / bucket.totalEvents) * 100 : 0,
+        lateRatePct:
+          bucket.totalEvents > 0 ? ((bucket.totalEvents - bucket.onTimeEvents) / bucket.totalEvents) * 100 : 0,
         totalEvents: bucket.totalEvents,
         stationSortOrder: bucket.stationSortOrder,
       }))
+      .filter(
+        (bucket) =>
+          bucket.totalEvents >= RELIABILITY_RANKING_MIN_EVENTS &&
+          bucket.station &&
+          !isNullLikeToken(bucket.station) &&
+          !isNumericCode(bucket.station)
+      )
       .sort((left, right) => {
         if (left.otpPct !== right.otpPct) {
           return left.otpPct - right.otpPct;
@@ -1493,6 +1679,7 @@ export function useDashboardData({
       const otpPct = toFiniteNumber(row.otp_pct);
       const totalEvents = toFiniteNumber(row.total_events);
       const onTimeEvents = toFiniteNumber(row.on_time_events);
+      const lateEvents = toFiniteNumber(row.late_events);
       const derivedOtp =
         otpPct !== null
           ? otpPct
@@ -1503,8 +1690,25 @@ export function useDashboardData({
         continue;
       }
       const existing = lineOtpRecords.get(line) || [];
-      existing.push({ service_date: row.service_date, otp_pct: derivedOtp });
+      existing.push({
+        service_date: row.service_date,
+        otp_pct: derivedOtp,
+        total_events: totalEvents,
+        on_time_events: onTimeEvents,
+        late_events: lateEvents,
+      });
       lineOtpRecords.set(line, existing);
+    }
+
+    const excessWaitByLine = new Map();
+    for (const row of filteredWaitTimesRows) {
+      if (!overviewLines.includes(row.lineName) || row.excessWaitMin === null) {
+        continue;
+      }
+      const bucket = excessWaitByLine.get(row.lineName) || { total: 0, count: 0 };
+      bucket.total += row.excessWaitMin;
+      bucket.count += 1;
+      excessWaitByLine.set(row.lineName, bucket);
     }
 
     const overviewScorecards = overviewLines.map((line) => {
@@ -1518,14 +1722,27 @@ export function useDashboardData({
         );
         const latest = records[records.length - 1] || null;
         const latestOtp = latest ? toFiniteNumber(latest.otp_pct) : null;
+        const latestTotalEvents = latest ? toFiniteNumber(latest.total_events) : null;
+        const latestLateEvents = latest ? toFiniteNumber(latest.late_events) : null;
+        const latestNotLatePct =
+          latestTotalEvents && latestTotalEvents > 0 && latestLateEvents !== null
+            ? ((latestTotalEvents - latestLateEvents) / latestTotalEvents) * 100
+            : null;
         const recentAverage = average(sparkline.slice(-30).map((point) => point.value));
         const baselineAverage = average(sparkline.slice(0, 30).map((point) => point.value));
         const delta90 =
           recentAverage !== null && baselineAverage !== null ? recentAverage - baselineAverage : null;
+        const excessWaitBucket = excessWaitByLine.get(line);
+        const avgExcessWaitMin =
+          excessWaitBucket && excessWaitBucket.count > 0
+            ? excessWaitBucket.total / excessWaitBucket.count
+            : null;
 
         return {
           line,
           latestOtpPct: latestOtp,
+          latestNotLatePct,
+          avgExcessWaitMin,
           latestDate: latest?.service_date || null,
           sparkline90d: sparkline,
           delta90dPct: delta90,
@@ -1536,6 +1753,8 @@ export function useDashboardData({
       return {
         line,
         latestOtpPct: null,
+        latestNotLatePct: null,
+        avgExcessWaitMin: null,
         latestDate: null,
         sparkline90d: [],
         delta90dPct: null,
@@ -1688,9 +1907,21 @@ export function useDashboardData({
 
     const radarRawMetrics = overviewLines.map((line) => {
       const otpRecords = lineOtpRecords.get(line) || [];
+      let otpTotalEvents = 0;
+      let otpOnTimeEvents = 0;
+      for (const record of otpRecords) {
+        const total = toFiniteNumber(record.total_events);
+        const onTime = toFiniteNumber(record.on_time_events);
+        if (total && total > 0 && onTime !== null) {
+          otpTotalEvents += total;
+          otpOnTimeEvents += onTime;
+        }
+      }
+      const periodAvgOtpPct =
+        otpTotalEvents > 0 ? (otpOnTimeEvents / otpTotalEvents) * 100 : average(otpRecords.map((record) => record.otp_pct));
       return {
         line,
-        otp_pct: average(otpRecords.map((record) => record.otp_pct)),
+        otp_pct: periodAvgOtpPct,
         avg_headway_min: average((headwayByLine.get(line) || {}).headway || []),
         travel_time_index: average(travelByLine.get(line) || []),
         headway_cv_pct: (() => {
@@ -1763,7 +1994,7 @@ export function useDashboardData({
         ? {
             id: "best-otp",
             title: `${bestOtp.line} leads on-time performance`,
-            body: `Latest OTP trend is around ${bestOtp.otp_pct.toFixed(1)}%.`,
+            body: `Avg OTP across the selected period is ${bestOtp.otp_pct.toFixed(1)}%.`,
             tone: "positive",
           }
         : null,
@@ -1929,7 +2160,11 @@ export function useDashboardData({
         )
     );
 
-    const travelLinePaths = extractLinePathsFromTopology(geographyTopology).filter((path) =>
+    const travelStationPoints = extractStationPointsFromTopology(geographyTopology).filter((station) =>
+      selectedLine === "All" ? true : station.routeId === selectedLine
+    );
+
+    const travelLinePaths = extractLinePathsFromTopology(geographyTopology, travelStationPoints).filter((path) =>
       selectedLine === "All" ? true : path.routeId === selectedLine
     );
 
@@ -2780,6 +3015,66 @@ export function useDashboardData({
         return left.seasonLine.localeCompare(right.seasonLine);
       });
 
+    const predictionBuckets = new Map();
+    for (const row of scheduledVsActualRecords) {
+      const season = normalizeText(row.season, "");
+      const line = normalizeLineId(row.line_id || row.route_id);
+      if (!season || !line || !lineMatches(line)) {
+        continue;
+      }
+      const scheduledFrequency = toFiniteNumber(row.scheduled_frequency_tph);
+      const actualFrequency = toFiniteNumber(row.actual_frequency_tph);
+      if (scheduledFrequency === null || scheduledFrequency <= 0 || actualFrequency === null) {
+        continue;
+      }
+      const absPercentError = Math.abs(actualFrequency - scheduledFrequency) / scheduledFrequency * 100;
+      if (!Number.isFinite(absPercentError)) {
+        continue;
+      }
+      const sampleWeight = Math.max(1, toFiniteNumber(row.actual_sample_count) ?? 1);
+      const key = `${season}||${line}`;
+      const bucket = predictionBuckets.get(key) || {
+        season,
+        line,
+        weightedErrorTotal: 0,
+        weightTotal: 0,
+        rows: 0,
+      };
+      bucket.weightedErrorTotal += absPercentError * sampleWeight;
+      bucket.weightTotal += sampleWeight;
+      bucket.rows += 1;
+      predictionBuckets.set(key, bucket);
+    }
+
+    const historicalPredictionAccuracy = Array.from(predictionBuckets.values())
+      .map((bucket) => {
+        const weightedErrorPct =
+          bucket.weightTotal > 0 ? bucket.weightedErrorTotal / bucket.weightTotal : null;
+        const accuracyPct =
+          weightedErrorPct !== null ? Math.max(0, Math.min(100, 100 - weightedErrorPct)) : null;
+        return {
+          season: bucket.season,
+          line: bucket.line,
+          value: accuracyPct,
+          errorPct: weightedErrorPct,
+          contributingRows: bucket.rows,
+        };
+      })
+      .filter((row) => row.value !== null)
+      .sort((left, right) => {
+        const leftYear = seasonYear(left.season) || 0;
+        const rightYear = seasonYear(right.season) || 0;
+        if (leftYear !== rightYear) {
+          return leftYear - rightYear;
+        }
+        const leftSeasonOrder = seasonOrdinal(left.season);
+        const rightSeasonOrder = seasonOrdinal(right.season);
+        if (leftSeasonOrder !== rightSeasonOrder) {
+          return leftSeasonOrder - rightSeasonOrder;
+        }
+        return left.line.localeCompare(right.line);
+      });
+
     const historicalServiceDeliveryTrend = serviceDeliveryRecords
       .map((row) => ({
         season: normalizeText(row.season, ""),
@@ -2808,6 +3103,7 @@ export function useDashboardData({
       new Set([
         ...historicalServiceDeliveryTrend.map((row) => row.season),
         ...historicalFrequencyBars.map((row) => row.season),
+        ...historicalPredictionAccuracy.map((row) => row.season),
       ])
     ).sort((left, right) => {
       const leftYear = seasonYear(left) || 0;
@@ -2936,8 +3232,9 @@ export function useDashboardData({
       overviewGoalPct: OTP_TARGET_PCT,
       reliabilityStationHourHeatmap,
       reliabilityCalendarHeatmap,
-      reliabilityDelayValues,
+      reliabilityOnTimeWindowBreakdown,
       reliabilityWorstStations,
+      reliabilityRankingMinEvents: RELIABILITY_RANKING_MIN_EVENTS,
       reliabilitySelectedCell: selectedHeatCell
         ? {
             row: selectedHeatCell.station,
@@ -2958,6 +3255,7 @@ export function useDashboardData({
       waitTimesExcessTrend,
       travelMapSegments,
       travelLinePaths,
+      travelStationPoints,
       travelSlowZoneTable,
       travelSegmentIds,
       serviceDeliveryBars,
@@ -2975,6 +3273,7 @@ export function useDashboardData({
       historicalYoyOtp,
       historicalYoyCoverage,
       historicalFrequencyBars,
+      historicalPredictionAccuracy,
       historicalServiceDeliveryTrend,
       historicalTimelineSeries,
       historicalTimelineMarkers,

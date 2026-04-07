@@ -314,6 +314,50 @@ main {
   accent-color: var(--accent);
 }
 
+.otp-heatmap-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: -0.2rem 0 0.55rem;
+}
+
+.otp-heatmap-control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.otp-heatmap-controls-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.otp-heatmap-direction {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.otp-heatmap-scroll {
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.otp-target-tick {
+  stroke: color-mix(in srgb, var(--ink) 80%, transparent);
+  stroke-width: 1.3;
+}
+
+.otp-summary-line {
+  stroke: var(--accent);
+  stroke-width: 1.9;
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -338,6 +382,12 @@ main {
 
 .card-subtitle {
   margin: 0.45rem 0 0.7rem;
+}
+
+.card-footnote {
+  margin: -0.35rem 0 0.72rem;
+  font-size: 0.78rem;
+  color: var(--muted);
 }
 
 .chart-frame {
@@ -711,11 +761,7 @@ main {
   border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
   border-radius: 12px;
   padding: 0.65rem;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--surface-muted) 88%, transparent),
-    color-mix(in srgb, var(--surface) 95%, transparent)
-  );
+  background: var(--surface);
   color: var(--ink);
   border-left: 4px solid var(--line-color);
 }
@@ -737,16 +783,37 @@ main {
   font-size: 0.7rem;
 }
 
-.line-scorecard-main {
+.line-scorecard-metrics {
   margin-top: 0.28rem;
+  display: grid;
+  gap: 0.18rem;
 }
 
-.line-scorecard-main strong {
-  font-size: 1.2rem;
+.line-scorecard-metric-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.42rem;
+}
+
+.line-scorecard-metric-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.line-scorecard-metric-value {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.line-scorecard-metric-row:first-child .line-scorecard-metric-value {
+  font-size: 1.05rem;
 }
 
 .line-scorecard-delta {
-  margin-top: 0.2rem;
+  margin-top: 0.26rem;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -824,6 +891,127 @@ main {
   stroke-width: 1.4;
 }
 
+.composition-bar {
+  display: flex;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  background: color-mix(in srgb, var(--surface-muted) 85%, transparent);
+}
+
+.composition-segment {
+  min-width: 1px;
+}
+
+.composition-early {
+  background: color-mix(in srgb, #38bdf8 88%, transparent);
+}
+
+.composition-on-time {
+  background: color-mix(in srgb, #22c55e 88%, transparent);
+}
+
+.composition-late {
+  background: color-mix(in srgb, #f97316 90%, transparent);
+}
+
+.composition-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.65rem;
+  font-size: 0.8rem;
+}
+
+.composition-table th,
+.composition-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.45rem 0.3rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.composition-table thead th {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.composition-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  margin-right: 0.45rem;
+}
+
+.station-ranking-wrap {
+  overflow: auto;
+}
+
+.station-ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.station-ranking-table th,
+.station-ranking-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.45rem 0.35rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.station-ranking-table thead th {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.station-ranking-line {
+  display: inline-block;
+  border-left: 4px solid var(--line-color);
+  padding-left: 0.4rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.station-ranking-otp-cell {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.station-ranking-otp-value {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.station-ranking-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-muted) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+}
+
+.station-ranking-target {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: color-mix(in srgb, var(--ink) 82%, transparent);
+}
+
+.station-ranking-dot {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
 .boxplot-whisker,
 .boxplot-cap {
   stroke: color-mix(in srgb, var(--ink) 72%, transparent);
@@ -872,6 +1060,98 @@ main {
 .radar-line-label {
   font-size: 0.69rem;
   font-weight: 700;
+}
+
+.metric-matrix-wrap {
+  overflow-x: auto;
+}
+
+.metric-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.metric-matrix th,
+.metric-matrix td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.45rem;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.metric-matrix thead th {
+  font-size: 0.72rem;
+}
+
+.metric-header-label {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.metric-header-direction {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 600;
+}
+
+.metric-header-range {
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.metric-line-button,
+.metric-line-label {
+  display: inline-block;
+  color: var(--ink);
+  font-weight: 700;
+  border-left: 4px solid var(--line-color);
+  padding-left: 0.38rem;
+}
+
+.metric-line-button {
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.metric-cell {
+  display: grid;
+  grid-template-columns: auto 120px;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.metric-cell-value {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.metric-cell-plot {
+  width: 120px;
+  height: 14px;
+}
+
+.metric-cell-track {
+  stroke: color-mix(in srgb, var(--line) 88%, transparent);
+  stroke-width: 1.3;
+}
+
+.metric-cell-empty {
+  width: 120px;
+  height: 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+}
+
+.metric-score-cell {
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .highlights-grid {
@@ -980,6 +1260,28 @@ main {
   height: 11px;
   border-radius: 3px;
   display: inline-block;
+}
+
+.leaflet-tooltip.station-label-tooltip {
+  border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  color: var(--ink);
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 2px 5px;
+}
+
+.leaflet-tooltip.station-hover-tooltip {
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  color: var(--ink);
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 5px;
 }
 
 .segment-detail-card {
@@ -1207,6 +1509,11 @@ p {
 
   .scorecard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .otp-heatmap-direction {
+    margin-left: 0;
+    width: 100%;
   }
 
   .segment-profile-grid {
