@@ -37,14 +37,80 @@ What this does:
 
 Use this when you want full ArcGIS MBTA data instead of samples.
 
+### Reproducible From Fresh Clone (Recommended)
+
+This path is the most reproducible for someone pulling the repo for the first time.
+It explicitly force-downloads all source datasets, then runs clean/transform/export.
+
 ```bash
-make all USE_SAMPLE=0 YEAR=2025
+make setup
+make web-install
+
+# Force a fresh download of every raw source dataset for the target year
+cd pipeline
+.venv/bin/python src/ingest.py \
+  --year 2025 \
+  --raw-dir ../data/raw \
+  --sample-dir ../data/samples \
+  --force-download \
+  --timeout-sec 900
+cd ..
+
+# Build all downstream artifacts used by the dashboard
+make clean YEAR=2025
+make transform YEAR=2025
+make export YEAR=2025
 ```
 
 Notes:
 - This is large and slower (can use tens of GB in `data/raw`).
 - Network access is required.
-- Default in `pipeline/Makefile` is `USE_SAMPLE=0`.
+- ArcGIS metadata and checksums are persisted in `data/raw/download_manifest.json`.
+- Per-run ingest details are written to `data/raw/ingest_manifest_{year}.json`.
+
+### Datasets Downloaded by Ingest
+
+`pipeline/src/ingest.py` downloads all of the following by default:
+
+1. `rapid_transit_events_{year}.csv`
+2. `rapid_transit_headways_{year}.csv`
+3. `rapid_transit_travel_times_{year}.csv`
+4. `gtfs_schedules_{year}.csv` (plus extracted GTFS recap files under `data/raw/gtfs_recaps/`)
+5. `silver_line_bus_observations_{year}.csv`
+
+### Verify Raw Downloads (Required Files Present)
+
+Run after ingest:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+
+year = 2025
+required = [
+    "rapid_transit_events",
+    "rapid_transit_headways",
+    "rapid_transit_travel_times",
+    "gtfs_schedules",
+    "silver_line_bus_observations",
+]
+
+missing = []
+for key in required:
+    path = Path("data/raw") / f"{key}_{year}.csv"
+    if not path.exists() or path.stat().st_size == 0:
+        missing.append(str(path))
+
+gtfs_stop_times = list(Path("data/raw").rglob("stop_times.txt"))
+if not gtfs_stop_times:
+    missing.append("data/raw/**/stop_times.txt (GTFS recap extraction)")
+
+if missing:
+    raise SystemExit("Missing required ingest outputs:\\n- " + "\\n- ".join(missing))
+
+print("All required raw datasets are present.")
+PY
+```
 
 You can also run step-by-step:
 
@@ -53,6 +119,37 @@ make ingest USE_SAMPLE=0 YEAR=2025
 make clean YEAR=2025
 make transform YEAR=2025
 make export YEAR=2025
+```
+
+### Verify Frontend Data Assets (What the UI Actually Loads)
+
+After export, verify every file listed in the export manifest exists:
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+year = 2025
+root = Path("web/src/data")
+manifest_path = root / f"data_manifest_{year}.json"
+manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+missing = []
+for entry in manifest.get("files", []):
+    rel = entry.get("path")
+    if not rel:
+        continue
+    full = root / rel
+    if not full.exists():
+        missing.append(str(full))
+
+if missing:
+    raise SystemExit("Missing exported frontend assets:\\n- " + "\\n- ".join(missing))
+
+print(f"Manifest OK: {manifest_path}")
+print(f"Files listed: {len(manifest.get('files', []))}")
+PY
 ```
 
 ## Pipeline Flow
@@ -129,10 +226,17 @@ VITE_DASHBOARD_YEAR=2024 npm run dev
 To populate year-over-year views, generate multiple years:
 
 ```bash
-make all USE_SAMPLE=0 YEAR=2022
-make all USE_SAMPLE=0 YEAR=2023
-make all USE_SAMPLE=0 YEAR=2024
-make all USE_SAMPLE=0 YEAR=2025
+cd pipeline
+.venv/bin/python src/ingest.py --year 2022 --raw-dir ../data/raw --sample-dir ../data/samples --force-download --timeout-sec 900
+.venv/bin/python src/ingest.py --year 2023 --raw-dir ../data/raw --sample-dir ../data/samples --force-download --timeout-sec 900
+.venv/bin/python src/ingest.py --year 2024 --raw-dir ../data/raw --sample-dir ../data/samples --force-download --timeout-sec 900
+.venv/bin/python src/ingest.py --year 2025 --raw-dir ../data/raw --sample-dir ../data/samples --force-download --timeout-sec 900
+cd ..
+
+make clean YEAR=2022 && make transform YEAR=2022 && make export YEAR=2022
+make clean YEAR=2023 && make transform YEAR=2023 && make export YEAR=2023
+make clean YEAR=2024 && make transform YEAR=2024 && make export YEAR=2024
+make clean YEAR=2025 && make transform YEAR=2025 && make export YEAR=2025
 ```
 
 ## Validation and Tests
