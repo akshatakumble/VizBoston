@@ -1,4 +1,11 @@
-const SORTABLE_COLUMNS = new Set(["travelTimeIndex", "bufferMin", "planningTimeIndex", "slowZoneMonths"]);
+const SORTABLE_COLUMNS = new Set([
+  "travelTimeIndex",
+  "bufferMin",
+  "planningTimeIndex",
+  "slowZoneMonths",
+  "longestConsecutiveSlowZoneMonths",
+  "observedMonths",
+]);
 
 function arrow(sortBy, column, direction) {
   if (sortBy !== column) {
@@ -12,13 +19,17 @@ function SlowZoneTable({
   sortBy = "travelTimeIndex",
   sortDirection = "desc",
   onSortChange,
+  selectedSegmentId = null,
+  onSegmentSelect,
 }) {
   return (
     <section className="chart-card slow-zone-table-card">
       <div className="card-header">
-        <h2>Slow Zone Table</h2>
+        <h2>Slow Zones & Segment Risk</h2>
       </div>
-      <p className="card-subtitle">Segments ranked by travel time index and trend direction</p>
+      <p className="card-subtitle">
+        Real segment-level travel data ranked by Travel Time Index (TTI). Click any row to inspect it on the map.
+      </p>
 
       <div className="slow-zone-table-wrap">
         <table className="slow-zone-table">
@@ -53,6 +64,7 @@ function SlowZoneTable({
                   Planning Index{arrow(sortBy, "planningTimeIndex", sortDirection)}
                 </button>
               </th>
+              <th>Worst Period</th>
               <th>Trend</th>
               <th>
                 <button
@@ -63,19 +75,64 @@ function SlowZoneTable({
                   Months {'>'} Threshold{arrow(sortBy, "slowZoneMonths", sortDirection)}
                 </button>
               </th>
+              <th>
+                <button
+                  type="button"
+                  className="table-sort-btn"
+                  onClick={() => onSortChange?.("longestConsecutiveSlowZoneMonths")}
+                >
+                  Longest Streak{arrow(sortBy, "longestConsecutiveSlowZoneMonths", sortDirection)}
+                </button>
+              </th>
+              <th>
+                <button
+                  type="button"
+                  className="table-sort-btn"
+                  onClick={() => onSortChange?.("observedMonths")}
+                >
+                  Observed Months{arrow(sortBy, "observedMonths", sortDirection)}
+                </button>
+              </th>
               <th>Candidate</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.segmentId}>
-                <td>{row.segmentName}</td>
+              <tr
+                key={row.segmentId}
+                className={row.segmentId === selectedSegmentId ? "slow-zone-row-selected" : ""}
+                onClick={() => onSegmentSelect?.(row.segmentId)}
+              >
+                <td>
+                  <button
+                    type="button"
+                    className="slow-zone-segment-btn"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSegmentSelect?.(row.segmentId);
+                    }}
+                  >
+                    {row.segmentName}
+                  </button>
+                </td>
                 <td>{row.line}</td>
                 <td>{row.travelTimeIndex?.toFixed(2)}x</td>
                 <td>{row.bufferMin !== null ? row.bufferMin.toFixed(1) : "NA"}</td>
                 <td>{row.planningTimeIndex !== null ? `${row.planningTimeIndex.toFixed(2)}x` : "NA"}</td>
+                <td>
+                  {row.worstPeriod ? (
+                    <span>
+                      {row.worstPeriod}
+                      {Number.isFinite(row.worstPeriodIndex) ? ` (${row.worstPeriodIndex.toFixed(2)}x)` : ""}
+                    </span>
+                  ) : (
+                    "NA"
+                  )}
+                </td>
                 <td className={`trend-${row.trendDirection}`}>{row.trendDirection}</td>
                 <td>{row.slowZoneMonths}</td>
+                <td>{row.longestConsecutiveSlowZoneMonths ?? 0}</td>
+                <td>{row.observedMonths ?? 0}</td>
                 <td>{row.slowZoneCandidate ? "Yes" : "No"}</td>
               </tr>
             ))}

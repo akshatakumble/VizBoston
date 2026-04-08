@@ -171,6 +171,15 @@ def test_transform_computes_epic4_metrics_aggregates(tmp_path: Path) -> None:
             {
                 "service_date": "2025-01-10",
                 "route_id": "Red",
+                "from_stop_id": "s1",
+                "to_stop_id": "s3",
+                "travel_time_sec": 900,
+                "benchmark_travel_time_sec": 200,
+                "time_period": "AM Peak",
+            },
+            {
+                "service_date": "2025-01-10",
+                "route_id": "Red",
                 "from_stop_id": "s2",
                 "to_stop_id": "s3",
                 "travel_time_sec": 180,
@@ -191,11 +200,32 @@ def test_transform_computes_epic4_metrics_aggregates(tmp_path: Path) -> None:
 
     station_ref = pd.DataFrame(
         [
-            {"stop_id": "s1", "stop_name": "Stop One", "latitude": 42.1, "longitude": -71.1},
-            {"stop_id": "s2", "stop_name": "Stop Two", "latitude": 42.2, "longitude": -71.2},
-            {"stop_id": "s3", "stop_name": "Stop Three", "latitude": 42.3, "longitude": -71.3},
-        ]
-    )
+            {
+                "stop_id": "s1",
+                "stop_name": "Stop One",
+                    "route_id": "Red",
+                    "stop_sequence": 1,
+                    "latitude": 42.3000,
+                    "longitude": -71.1000,
+                },
+                {
+                    "stop_id": "s2",
+                    "stop_name": "Stop Two",
+                    "route_id": "Red",
+                    "stop_sequence": 2,
+                    "latitude": 42.3050,
+                    "longitude": -71.1050,
+                },
+                {
+                    "stop_id": "s3",
+                    "stop_name": "Stop Three",
+                    "route_id": "Red",
+                    "stop_sequence": 3,
+                    "latitude": 42.3100,
+                    "longitude": -71.1100,
+                },
+            ]
+        )
     station_ref.to_parquet(processed_dir / f"station_reference_{year}.parquet", index=False)
 
     schedule_reference = pd.DataFrame(
@@ -312,6 +342,7 @@ def test_transform_computes_epic4_metrics_aggregates(tmp_path: Path) -> None:
     assert slow_segment_month["buffer_time_sec"] >= 0
     assert slow_segment_month["from_latitude"] is not None
     assert slow_segment_month["to_longitude"] is not None
+    assert not any(r["segment_id"] == "s1-s3" for r in travel_payload["records"])
 
     slow_zone_payload = json.loads(
         Path(artifacts["travel_time_slow_zones"]["path"]).read_text(encoding="utf-8")

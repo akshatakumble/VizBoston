@@ -7,7 +7,7 @@ function BunchingScatterChart({
   width = 760,
   height = 330,
 }) {
-  const margin = { top: 24, right: 22, bottom: 52, left: 56 };
+  const margin = { top: 24, right: 20, bottom: 48, left: 70 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
@@ -36,7 +36,7 @@ function BunchingScatterChart({
   const maxSampleCount = max(points, (point) => point.sampleCount) ?? 1;
   const xScale = scaleLinear().domain([0, axisMax]).range([0, innerWidth]).nice();
   const yScale = scaleLinear().domain([0, axisMax]).range([innerHeight, 0]).nice();
-  const ticks = xScale.ticks(6);
+  const ticks = xScale.ticks(5);
 
   return (
     <section className="chart-card">
@@ -60,7 +60,7 @@ function BunchingScatterChart({
             {ticks.map((tick) => (
               <g key={`y-${tick}`} transform={`translate(0,${yScale(tick)})`}>
                 <line x1={0} x2={innerWidth} className="axis-grid-line" />
-                <text x={-10} y={4} className="axis-tick-label axis-tick-label-y" textAnchor="end">
+                <text x={-8} y={4} className="axis-tick-label axis-tick-label-y" textAnchor="end">
                   {tick.toFixed(1)} min
                 </text>
               </g>
@@ -70,17 +70,11 @@ function BunchingScatterChart({
             <text x={innerWidth - 4} y={14} className="goal-line-label" textAnchor="end">
               Perfectly even spacing
             </text>
+            <text x={0} y={-8} className="axis-tick-label" textAnchor="start">
+              P90 headway (min)
+            </text>
             <text x={innerWidth / 2} y={innerHeight + 38} className="axis-tick-label" textAnchor="middle">
               Average observed headway (min)
-            </text>
-            <text
-              x={-innerHeight / 2}
-              y={-38}
-              transform="rotate(-90)"
-              className="axis-tick-label"
-              textAnchor="middle"
-            >
-              P90 headway (min)
             </text>
 
             {points.map((point, index) => (

@@ -12,6 +12,12 @@ const OVERVIEW_LINE_ORDER = ["Red", "Orange", "Blue", "Green", "Silver"];
 const WEEKDAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MAX_COMMUTER_CHAIN_HOPS = 8;
+const WAIT_BUNCHING_MIN_OBSERVATIONS = Number(import.meta.env.VITE_WAIT_BUNCHING_MIN_OBSERVATIONS || 200);
+const WAIT_BUNCHING_MAX_HEADWAY_MIN = Number(import.meta.env.VITE_WAIT_BUNCHING_MAX_HEADWAY_MIN || 60);
+const WAIT_BUNCHING_MAX_P90_MIN = Number(import.meta.env.VITE_WAIT_BUNCHING_MAX_P90_MIN || 90);
+const WAIT_EXCESS_MIN_MONTHLY_SAMPLES = Number(import.meta.env.VITE_WAIT_EXCESS_MIN_MONTHLY_SAMPLES || 300);
+const TRAVEL_FRONTEND_MAX_SEQUENCE_GAP = Number(import.meta.env.VITE_TRAVEL_FRONTEND_MAX_SEQUENCE_GAP || 25);
+const TRAVEL_FRONTEND_MAX_DISTANCE_KM = Number(import.meta.env.VITE_TRAVEL_FRONTEND_MAX_DISTANCE_KM || 4.0);
 
 const DATASET_FILES = {
   otpLineDaily: `otp_line_daily_${DASHBOARD_YEAR}.json.gz`,
@@ -1191,6 +1197,47 @@ export function useDashboardData({
       stationSequenceMap.set(`${lineName}||${stopId}`, sequence ?? Number.POSITIVE_INFINITY);
     }
 
+    const isLikelyAdjacentTravelLink = (
+      lineName,
+      fromStopId,
+      toStopId,
+      fromLatitude,
+      fromLongitude,
+      toLatitude,
+      toLongitude
+    ) => {
+      if (!lineName || !fromStopId || !toStopId || fromStopId === toStopId) {
+        return false;
+      }
+
+      const fromSequence = stationSequenceMap.get(`${lineName}||${fromStopId}`);
+      const toSequence = stationSequenceMap.get(`${lineName}||${toStopId}`);
+      const hasFiniteSequence = Number.isFinite(fromSequence) && Number.isFinite(toSequence);
+      if (hasFiniteSequence && Math.abs(fromSequence - toSequence) > TRAVEL_FRONTEND_MAX_SEQUENCE_GAP) {
+        return false;
+      }
+
+      const hasFiniteCoords =
+        Number.isFinite(fromLatitude) &&
+        Number.isFinite(fromLongitude) &&
+        Number.isFinite(toLatitude) &&
+        Number.isFinite(toLongitude);
+      if (
+        hasFiniteCoords &&
+        haversineDistanceKm(fromLatitude, fromLongitude, toLatitude, toLongitude) >
+          TRAVEL_FRONTEND_MAX_DISTANCE_KM
+      ) {
+        return false;
+      }
+
+      // Reject links when neither topology signal is available.
+      if (!hasFiniteSequence && !hasFiniteCoords) {
+        return false;
+      }
+
+      return true;
+    };
+
     const representativeSecondsByPeriod = {
       "AM Peak": Math.round(7.5 * 3600),
       Midday: Math.round(12.0 * 3600),
@@ -1402,6 +1449,8 @@ export function useDashboardData({
         const dayType = normalizeText(row.day_type, "All");
         const stationSequence =
           stationSequenceMap.get(`${lineName}||${stopId}`) ?? Number.POSITIVE_INFINITY;
+        const sampleCount = Math.max(0, Math.round(toFiniteNumber(row.sample_count) ?? 0));
+        const scheduledSampleCount = Math.max(0, Math.round(toFiniteNumber(row.scheduled_sample_count) ?? 0));
         return {
           serviceDate,
           lineName,
@@ -1424,6 +1473,8 @@ export function useDashboardData({
           })(),
           headwayCv: toFiniteNumber(row.headway_cv),
           bunchingRatePct: toFiniteNumber(row.bunching_rate_pct),
+          sampleCount,
+          scheduledSampleCount,
         };
       })
       .filter((row) => row.serviceDate && row.lineName && row.stopId);
@@ -1435,6 +1486,10 @@ export function useDashboardData({
         const lineName = normalizeLineId(row.route_id || row.line_id);
         const fromStopId = normalizeText(row.from_stop_id, "");
         const toStopId = normalizeText(row.to_stop_id, "");
+        const fromLatitude = toFiniteNumber(row.from_latitude);
+        const fromLongitude = toFiniteNumber(row.from_longitude);
+        const toLatitude = toFiniteNumber(row.to_latitude);
+        const toLongitude = toFiniteNumber(row.to_longitude);
         const fromStopName = resolveStationName(lineName, row.from_stop_name, fromStopId);
         const toStopName = resolveStationName(lineName, row.to_stop_name, toStopId);
         const inferredFromIndex = parseSyntheticStopIndex(fromStopId);
@@ -1469,6 +1524,10 @@ export function useDashboardData({
           toStopId,
           fromStopName,
           toStopName,
+          fromLatitude,
+          fromLongitude,
+          toLatitude,
+          toLongitude,
           directionId,
           directionName: directionLabel(directionId),
           eventTimeSec,
@@ -1491,6 +1550,15 @@ export function useDashboardData({
           row.fromStopId !== row.toStopId &&
           row.fromStopName &&
           row.toStopName &&
+          isLikelyAdjacentTravelLink(
+            row.lineName,
+            row.fromStopId,
+            row.toStopId,
+            row.fromLatitude,
+            row.fromLongitude,
+            row.toLatitude,
+            row.toLongitude
+          ) &&
           row.travelTimeSec !== null
       );
 
@@ -1614,103 +1682,163 @@ export function useDashboardData({
         return left.line.localeCompare(right.line);
       });
 
-    const bunchingBuckets = new Map();
-    for (const row of filteredWaitTimesRows) {
-      if (row.headwayTrunkMin === null || row.p90HeadwayMin === null) {
-        continue;
+    const coreBunchingPeriods = new Set(["AM Peak", "Midday", "PM Peak", "Evening"]);
+    const bunchingSourceRows = filteredWaitTimesRows.filter((row) => {
+      if (selectedPeriod === "All" && !coreBunchingPeriods.has(row.timePeriodName)) {
+        return false;
       }
+      if (row.headwayTrunkMin === null || row.p90HeadwayMin === null) {
+        return false;
+      }
+      if (row.sampleCount <= 0 || row.scheduledSampleCount <= 0) {
+        return false;
+      }
+      if (row.headwayTrunkMin > WAIT_BUNCHING_MAX_HEADWAY_MIN || row.p90HeadwayMin > WAIT_BUNCHING_MAX_P90_MIN) {
+        return false;
+      }
+      return true;
+    });
+
+    const bunchingBuckets = new Map();
+    for (const row of bunchingSourceRows) {
       const key = `${row.lineName}||${row.stationName}`;
+      const weight = Math.max(1, row.sampleCount);
       const bucket = bunchingBuckets.get(key) || {
         line: row.lineName,
         station: row.stationName,
-        headwayTotal: 0,
-        p90Total: 0,
-        cvTotal: 0,
-        cvCount: 0,
-        bunchingTotal: 0,
-        bunchingCount: 0,
+        headwayWeightedTotal: 0,
+        p90WeightedTotal: 0,
+        cvWeightedTotal: 0,
+        cvWeightTotal: 0,
+        bunchingWeightedTotal: 0,
+        bunchingWeightTotal: 0,
         sampleCount: 0,
       };
-      bucket.headwayTotal += row.headwayTrunkMin;
-      bucket.p90Total += row.p90HeadwayMin;
-      bucket.sampleCount += 1;
+      bucket.headwayWeightedTotal += row.headwayTrunkMin * weight;
+      bucket.p90WeightedTotal += row.p90HeadwayMin * weight;
+      bucket.sampleCount += weight;
       if (row.headwayCv !== null) {
-        bucket.cvTotal += row.headwayCv;
-        bucket.cvCount += 1;
+        bucket.cvWeightedTotal += row.headwayCv * weight;
+        bucket.cvWeightTotal += weight;
       }
       if (row.bunchingRatePct !== null) {
-        bucket.bunchingTotal += row.bunchingRatePct;
-        bucket.bunchingCount += 1;
+        bucket.bunchingWeightedTotal += row.bunchingRatePct * weight;
+        bucket.bunchingWeightTotal += weight;
       }
       bunchingBuckets.set(key, bucket);
     }
 
     const waitTimesBunchingScatter = Array.from(bunchingBuckets.values())
       .map((bucket) => {
-        const avgCv = bucket.cvCount > 0 ? bucket.cvTotal / bucket.cvCount : 0;
-        const avgBunching = bucket.bunchingCount > 0 ? bucket.bunchingTotal / bucket.bunchingCount : 0;
+        const avgCv = bucket.cvWeightTotal > 0 ? bucket.cvWeightedTotal / bucket.cvWeightTotal : 0;
+        const avgBunching = bucket.bunchingWeightTotal > 0 ? bucket.bunchingWeightedTotal / bucket.bunchingWeightTotal : 0;
+        const avgHeadway = bucket.sampleCount > 0 ? bucket.headwayWeightedTotal / bucket.sampleCount : null;
+        const avgP90 = bucket.sampleCount > 0 ? bucket.p90WeightedTotal / bucket.sampleCount : null;
         return {
-          x: bucket.headwayTotal / Math.max(1, bucket.sampleCount),
-          y: bucket.p90Total / Math.max(1, bucket.sampleCount),
+          x: avgHeadway,
+          y: avgP90,
           line: bucket.line,
           station: bucket.station,
           regularity: Math.max(0, 1 - avgCv),
           bunchingRatePct: avgBunching,
-          bunched: avgBunching > 5,
+          bunched: avgBunching >= 10,
           sampleCount: bucket.sampleCount,
         };
       })
+      .filter(
+        (bucket) =>
+          bucket.x !== null &&
+          bucket.y !== null &&
+          bucket.sampleCount >= WAIT_BUNCHING_MIN_OBSERVATIONS
+      )
       .sort((left, right) => right.sampleCount - left.sampleCount || left.line.localeCompare(right.line));
 
-    const greenBranchSource =
+    const shouldShowGreenBranchComparison = selectedLine === "All" || selectedLine === "Green";
+    const greenBranchSourceRows =
       (greenBranchRecords || []).length > 0
-        ? greenBranchRecords.map((row) => ({
-            branch: normalizeText(row.branch_id || row.branch || row.route_id || row.line_id, ""),
-            station: normalizeText(row.stop_name || row.station_name || row.stop_id, ""),
-            headwayMin:
-              toFiniteNumber(row.avg_headway_sec) !== null
-                ? toFiniteNumber(row.avg_headway_sec) / 60
-                : toFiniteNumber(row.p90_headway_sec) !== null
-                  ? toFiniteNumber(row.p90_headway_sec) / 60
-                  : null,
-          }))
+        ? greenBranchRecords
+            .filter((row) => dateInRange(row.month) && periodMatches(row.time_period))
+            .map((row) => {
+              const branch = normalizeText(row.branch_id || row.branch || row.route_id || row.line_id, "");
+              const avgHeadwaySec = toFiniteNumber(row.avg_headway_sec);
+              const p90HeadwaySec = toFiniteNumber(row.p90_headway_sec);
+              const sampleCount = Math.max(0, Math.round(toFiniteNumber(row.sample_count) ?? 0));
+              return {
+                branch,
+                headwayMin:
+                  avgHeadwaySec !== null
+                    ? avgHeadwaySec / 60
+                    : p90HeadwaySec !== null
+                      ? p90HeadwaySec / 60
+                      : null,
+                sampleCount,
+              };
+            })
         : normalizedHeadwayRows
-            .filter((row) => row.routeId.startsWith("Green-"))
+            .filter(
+              (row) =>
+                row.routeId.startsWith("Green-") &&
+                dateInRange(row.serviceDate) &&
+                periodMatches(row.timePeriodName)
+            )
             .map((row) => ({
               branch: row.routeId,
-              station: row.stationName,
               headwayMin: row.headwayTrunkMin,
+              sampleCount: row.sampleCount,
             }));
 
     const greenBranchBuckets = new Map();
-    for (const row of greenBranchSource) {
-      if (!row.branch.startsWith("Green-") || !row.station || row.headwayMin === null) {
+    for (const row of greenBranchSourceRows) {
+      if (!shouldShowGreenBranchComparison) {
         continue;
       }
-      const key = `${row.station}||${row.branch}`;
-      const bucket = greenBranchBuckets.get(key) || { station: row.station, branch: row.branch, total: 0, count: 0 };
-      bucket.total += row.headwayMin;
-      bucket.count += 1;
-      greenBranchBuckets.set(key, bucket);
+      if (!row.branch.startsWith("Green-") || row.headwayMin === null || row.sampleCount <= 0) {
+        continue;
+      }
+      const weight = Math.max(1, row.sampleCount);
+      const bucket = greenBranchBuckets.get(row.branch) || {
+        branch: row.branch,
+        headwayWeightedTotal: 0,
+        sampleTotal: 0,
+      };
+      bucket.headwayWeightedTotal += row.headwayMin * weight;
+      bucket.sampleTotal += weight;
+      greenBranchBuckets.set(row.branch, bucket);
     }
 
-    const initialGreenBranchComparison = Array.from(greenBranchBuckets.values()).map((bucket) => ({
-      station: bucket.station,
-      branch: bucket.branch,
-      headwayMin: bucket.total / Math.max(1, bucket.count),
-    }));
-    const branchCountByStation = new Map();
-    for (const row of initialGreenBranchComparison) {
-      const branches = branchCountByStation.get(row.station) || new Set();
-      branches.add(row.branch);
-      branchCountByStation.set(row.station, branches);
-    }
-    const waitTimesGreenBranchComparison = initialGreenBranchComparison
-      .filter((row) => (branchCountByStation.get(row.station)?.size || 0) >= 2)
-      .sort((left, right) => left.station.localeCompare(right.station) || left.branch.localeCompare(right.branch));
+    const greenBranchOrder = new Map([
+      ["Green-B", 0],
+      ["Green-C", 1],
+      ["Green-D", 2],
+      ["Green-E", 3],
+    ]);
+    const waitTimesGreenBranchComparison = Array.from(greenBranchBuckets.values())
+      .map((bucket) => ({
+        branch: bucket.branch,
+        headwayMin: bucket.sampleTotal > 0 ? bucket.headwayWeightedTotal / bucket.sampleTotal : null,
+        sampleCount: bucket.sampleTotal,
+      }))
+      .filter((row) => row.headwayMin !== null)
+      .sort(
+        (left, right) =>
+          (greenBranchOrder.get(left.branch) ?? 99) - (greenBranchOrder.get(right.branch) ?? 99)
+      );
+
+    const excessSourceRows = filteredWaitTimesRows.filter((row) => {
+      if (row.excessWaitMin === null) {
+        return false;
+      }
+      if (selectedPeriod === "All" && !coreBunchingPeriods.has(row.timePeriodName)) {
+        return false;
+      }
+      if (row.sampleCount <= 0 || row.scheduledSampleCount <= 0) {
+        return false;
+      }
+      return true;
+    });
 
     const excessBuckets = new Map();
-    for (const row of filteredWaitTimesRows) {
+    for (const row of excessSourceRows) {
       if (row.excessWaitMin === null) {
         continue;
       }
@@ -1718,10 +1846,11 @@ export function useDashboardData({
       if (!month) {
         continue;
       }
+      const weight = Math.max(1, row.sampleCount);
       const key = `${month}||${row.lineName}`;
-      const bucket = excessBuckets.get(key) || { month, line: row.lineName, total: 0, count: 0 };
-      bucket.total += row.excessWaitMin;
-      bucket.count += 1;
+      const bucket = excessBuckets.get(key) || { month, line: row.lineName, weightedTotal: 0, sampleTotal: 0 };
+      bucket.weightedTotal += row.excessWaitMin * weight;
+      bucket.sampleTotal += weight;
       excessBuckets.set(key, bucket);
     }
 
@@ -1729,8 +1858,10 @@ export function useDashboardData({
       .map((bucket) => ({
         month: `${bucket.month}-01`,
         line: bucket.line,
-        value: bucket.total / Math.max(1, bucket.count),
+        value: bucket.sampleTotal > 0 ? bucket.weightedTotal / bucket.sampleTotal : null,
+        sampleCount: bucket.sampleTotal,
       }))
+      .filter((bucket) => bucket.value !== null && bucket.sampleCount >= WAIT_EXCESS_MIN_MONTHLY_SAMPLES)
       .sort((left, right) => left.month.localeCompare(right.month) || left.line.localeCompare(right.line));
 
     const overviewLines =
@@ -2220,7 +2351,19 @@ export function useDashboardData({
 
     const filteredTravel = travelRecords.filter(
       (row) =>
-        lineMatches(row.line_id || row.route_id) &&
+        (() => {
+          const lineName = normalizeLineId(row.line_id || row.route_id);
+          const fromStopId = normalizeText(row.from_stop_id, "");
+          const toStopId = normalizeText(row.to_stop_id, "");
+          const fromLat = toFiniteNumber(row.from_latitude);
+          const fromLon = toFiniteNumber(row.from_longitude);
+          const toLat = toFiniteNumber(row.to_latitude);
+          const toLon = toFiniteNumber(row.to_longitude);
+          return (
+            lineMatches(lineName) &&
+            isLikelyAdjacentTravelLink(lineName, fromStopId, toStopId, fromLat, fromLon, toLat, toLon)
+          );
+        })() &&
         dateInRange(row.month) &&
         periodMatches(row.time_period) &&
         stationMatches(
@@ -2239,7 +2382,12 @@ export function useDashboardData({
 
     const slowZoneBySegment = new Map();
     for (const row of travelSlowZoneRecords) {
-      slowZoneBySegment.set(normalizeText(row.segment_id, ""), row);
+      const line = normalizeLineId(row.line_id || row.route_id);
+      const segmentId = normalizeText(row.segment_id, "");
+      if (!line || !segmentId) {
+        continue;
+      }
+      slowZoneBySegment.set(`${line}||${segmentId}`, row);
     }
 
     const segmentBuckets = new Map();
@@ -2336,7 +2484,13 @@ export function useDashboardData({
           .filter((item) => item.value !== null)
           .sort((left, right) => left.month.localeCompare(right.month));
 
-        const slowZoneMeta = slowZoneBySegment.get(bucket.segmentId);
+        const slowZoneMeta = slowZoneBySegment.get(`${bucket.line}||${bucket.segmentId}`);
+        const worstPeriodRow =
+          timeProfile.length > 0
+            ? timeProfile
+                .slice()
+                .sort((left, right) => (right.value ?? Number.NEGATIVE_INFINITY) - (left.value ?? Number.NEGATIVE_INFINITY))[0]
+            : null;
         const trend = trendDirection(monthSeries);
         return {
           segmentId: bucket.segmentId,
@@ -2361,9 +2515,13 @@ export function useDashboardData({
           planningTimeIndex: avgPlanningIndex,
           timeProfile,
           monthSeries,
+          observedMonths: monthSeries.length,
+          worstPeriod: worstPeriodRow?.period || null,
+          worstPeriodIndex: worstPeriodRow?.value ?? null,
           trendDirection: trend,
           slowZoneCandidate: Boolean(slowZoneMeta?.slow_zone_candidate),
           slowZoneMonths: toFiniteNumber(slowZoneMeta?.months_over_threshold) ?? 0,
+          longestConsecutiveSlowZoneMonths: toFiniteNumber(slowZoneMeta?.longest_consecutive_months) ?? 0,
         };
       })
       .filter((segment) => segment.travelTimeIndex !== null)
@@ -2377,9 +2535,13 @@ export function useDashboardData({
       bufferMin:
         segment.bufferTimeSec !== null ? segment.bufferTimeSec / 60 : null,
       planningTimeIndex: segment.planningTimeIndex,
+      worstPeriod: segment.worstPeriod,
+      worstPeriodIndex: segment.worstPeriodIndex,
+      observedMonths: segment.observedMonths,
       trendDirection: segment.trendDirection,
       slowZoneCandidate: segment.slowZoneCandidate,
       slowZoneMonths: segment.slowZoneMonths,
+      longestConsecutiveSlowZoneMonths: segment.longestConsecutiveSlowZoneMonths,
     }));
 
     const travelSegmentIds = travelMapSegments.map((segment) => segment.segmentId);

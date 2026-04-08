@@ -223,6 +223,15 @@ main {
   grid-column: span 6;
 }
 
+.wait-heatmap-card {
+  grid-column: 1 / -1;
+}
+
+.travel-map-card,
+.travel-summary-card {
+  grid-column: 1 / -1;
+}
+
 .scorecard-card,
 .highlights-card {
   grid-column: 1 / -1;
@@ -1292,6 +1301,131 @@ main {
   grid-column: span 6;
 }
 
+.travel-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.travel-summary-grid article {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.55rem;
+  background: var(--surface-muted);
+}
+
+.travel-summary-grid h3 {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.travel-summary-grid strong {
+  display: block;
+  margin-top: 0.22rem;
+  font-size: 0.98rem;
+}
+
+.travel-bottleneck-list {
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.travel-bottleneck-list li {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.45rem;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.travel-bottleneck-list span {
+  font-size: 0.74rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.travel-bottleneck-btn,
+.slow-zone-segment-btn {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+}
+
+.segment-delay-ladder-card {
+  grid-column: span 6;
+}
+
+.segment-delay-table-wrap {
+  margin-top: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: auto;
+}
+
+.segment-delay-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.segment-delay-table th,
+.segment-delay-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.55rem;
+  text-align: left;
+  font-size: 0.78rem;
+  vertical-align: middle;
+}
+
+.segment-delay-table th {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.segment-delay-table tbody tr:hover {
+  background: color-mix(in srgb, var(--surface-muted) 92%, transparent);
+}
+
+.segment-delay-row-selected {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.segment-delay-tti-cell {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 6.4rem;
+}
+
+.segment-delay-tti-track {
+  width: 100%;
+  height: 0.32rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 92%, transparent);
+  overflow: hidden;
+}
+
+.segment-delay-tti-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, #D73027 72%, #FDAE61);
+}
+
 .segment-metric-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1369,6 +1503,12 @@ main {
   font-weight: 700;
 }
 
+.segment-trend-range {
+  margin: 0.28rem 0 0;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
 .detail-clear-btn {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1400,6 +1540,18 @@ main {
   padding: 0.45rem 0.42rem;
   text-align: left;
   vertical-align: middle;
+}
+
+.slow-zone-table tbody tr {
+  cursor: pointer;
+}
+
+.slow-zone-table tbody tr:hover {
+  background: color-mix(in srgb, var(--surface-muted) 82%, transparent);
+}
+
+.slow-zone-row-selected {
+  background: color-mix(in srgb, var(--chip-bg) 60%, transparent);
 }
 
 .table-sort-btn {
@@ -1473,6 +1625,18 @@ p {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .travel-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .travel-bottleneck-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .segment-delay-table {
+    min-width: 44rem;
+  }
+
   .commuter-controls-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1521,6 +1685,10 @@ p {
   }
 
   .segment-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .travel-bottleneck-list {
     grid-template-columns: 1fr;
   }
 

@@ -12,6 +12,7 @@ import StationOtpRanking from "../charts/StationOtpRanking";
 import WaitTimeStationHeatmap from "../charts/WaitTimeStationHeatmap";
 import HeadwayBoxPlot from "../charts/HeadwayBoxPlot";
 import BunchingScatterChart from "../charts/BunchingScatterChart";
+import GreenBranchComparisonChart from "../charts/GreenBranchComparisonChart";
 import AnnotatedTimelineChart from "../charts/AnnotatedTimelineChart";
 import Legend from "../charts/components/Legend";
 import LoadingState from "../charts/components/LoadingState";
@@ -165,6 +166,7 @@ function DashboardPage() {
     travelStationPoints,
     travelSlowZoneTable,
     travelSegmentIds,
+    travelTimeTrendData,
     commuterOriginOptions,
     commuterDestinationOptions,
     commuterSelectedPair,
@@ -286,6 +288,19 @@ function DashboardPage() {
     slowZoneSortBy,
     slowZoneSortDirection
   );
+  const travelTrendSeries = travelTimeTrendData.map((row) => ({
+    month: row.month,
+    line: row.line,
+    value: row.index,
+  }));
+  const travelSegmentsWithIndex = travelMapSegments.filter((segment) => Number.isFinite(segment.travelTimeIndex));
+  const severeTravelSegments = travelSegmentsWithIndex.filter((segment) => segment.travelTimeIndex >= 1.3);
+  const travelMeanIndex =
+    travelSegmentsWithIndex.length > 0
+      ? travelSegmentsWithIndex.reduce((accumulator, segment) => accumulator + segment.travelTimeIndex, 0) /
+        travelSegmentsWithIndex.length
+      : null;
+  const topTravelBottlenecks = sortedSlowZoneRows.slice(0, 5);
 
   if (activeSection === "reliability") {
     return (
@@ -419,27 +434,23 @@ function DashboardPage() {
         {!error && !loading ? (
           <BunchingScatterChart
             title="Train Bunching Indicator"
-            subtitle="Station-level average headway vs P90 headway; diagonal represents perfectly even spacing"
+            subtitle="Sample-weighted station averages (core service periods); sparse and extreme outliers are excluded to preserve comparability."
             data={waitTimesBunchingScatter}
           />
         ) : null}
 
         {!error && !loading ? (
-          <BarChart
+          <GreenBranchComparisonChart
             title="Green Line Branch Comparison"
-            subtitle="Grouped branch headways at shared trunk stations (B/C/D/E). Source: headway_green_branch_month (fallback: headway_station_time_month)."
+            subtitle="Sample-weighted observed headway by branch (B/C/D/E). Source: headway_green_branch_month."
             data={waitTimesGreenBranchComparison}
-            categoryKey="station"
-            valueKey="headwayMin"
-            groupKey="branch"
-            metricFormatter={(value) => `${value.toFixed(1)} min`}
           />
         ) : null}
 
         {!error && !loading ? (
           <LineChart
             title="Excess Wait Time Trend"
-            subtitle="Monthly average excess wait time by line"
+            subtitle="Sample-weighted monthly excess wait by line (core service periods, sparse buckets excluded)"
             data={waitTimesExcessTrend}
             xKey="month"
             yKey="value"
@@ -471,19 +482,128 @@ function DashboardPage() {
         />
 
         {error ? <DataErrorState message={error} onRetry={retry} /> : null}
-        {!error && loading ? <LoadingState title="Interactive System Map" rows={6} /> : null}
+        {!error && loading ? <LoadingState title="Travel Snapshot" rows={4} /> : null}
+        {!error && loading ? <LoadingState title="Segment Delay Ladder" rows={8} /> : null}
+        {!error && loading ? <LoadingState title="Monthly Travel Time Trend" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Segment Detail Panel" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Slow Zone Table" rows={6} /> : null}
 
         {!error && !loading ? (
-          <BostonMap
-            selectedLine={selectedLine}
-            mapMode="travel"
-            linePaths={travelLinePaths}
-            stationPoints={travelStationPoints}
-            segmentData={travelMapSegments}
-            selectedSegmentId={selectedTravelSegmentId}
-            onSegmentSelect={setSelectedTravelSegmentId}
+          <section className="chart-card travel-summary-card">
+            <div className="card-header">
+              <h2>Travel Snapshot</h2>
+            </div>
+            <p className="card-subtitle">
+              Based on cleaned observed segment travel-time exports (`travel_time_segment_time_period_month`) under current filters.
+            </p>
+            <div className="travel-summary-grid">
+              <article>
+                <h3>Segments in View</h3>
+                <strong>{travelSegmentsWithIndex.length.toLocaleString()}</strong>
+              </article>
+              <article>
+                <h3>Mean Segment TTI</h3>
+                <strong>{travelMeanIndex !== null ? `${travelMeanIndex.toFixed(2)}x` : "NA"}</strong>
+              </article>
+              <article>
+                <h3>High-Delay Segments (TTI ≥ 1.30)</h3>
+                <strong>{severeTravelSegments.length.toLocaleString()}</strong>
+              </article>
+              <article>
+                <h3>Flagged Slow-Zone Candidates</h3>
+                <strong>
+                  {travelSlowZoneTable.filter((row) => row.slowZoneCandidate).length.toLocaleString()}
+                </strong>
+              </article>
+            </div>
+            {topTravelBottlenecks.length > 0 ? (
+              <ol className="travel-bottleneck-list">
+                {topTravelBottlenecks.map((row) => (
+                  <li key={row.segmentId}>
+                    <button
+                      type="button"
+                      className="travel-bottleneck-btn"
+                      onClick={() => setSelectedTravelSegmentId(row.segmentId)}
+                    >
+                      {row.segmentName}
+                    </button>
+                    <span>{row.travelTimeIndex?.toFixed(2)}x</span>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </section>
+        ) : null}
+
+        {!error && !loading ? (
+          <section className="chart-card segment-delay-ladder-card">
+            <div className="card-header">
+              <h2>Segment Delay Ladder</h2>
+            </div>
+            <p className="card-subtitle">
+              Dense ranking of slowest segments under current filters. Click any segment to inspect detailed period and month behavior.
+            </p>
+            <div className="segment-delay-table-wrap">
+              <table className="segment-delay-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Segment</th>
+                    <th scope="col">TTI</th>
+                    <th scope="col">Buffer</th>
+                    <th scope="col">Worst Period</th>
+                    <th scope="col">Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedSlowZoneRows.slice(0, 20).map((row) => {
+                    const selected = row.segmentId === selectedTravelSegmentId;
+                    const tti = Number.isFinite(row.travelTimeIndex) ? row.travelTimeIndex : null;
+                    const cappedTti = tti !== null ? Math.min(2.5, tti) : 0;
+                    const ttiPct = Math.max(0, Math.min(100, (cappedTti / 2.5) * 100));
+                    return (
+                      <tr key={row.segmentId} className={selected ? "segment-delay-row-selected" : ""}>
+                        <td>
+                          <button
+                            type="button"
+                            className="slow-zone-segment-btn"
+                            onClick={() => setSelectedTravelSegmentId(row.segmentId)}
+                          >
+                            {row.segmentName}
+                          </button>
+                        </td>
+                        <td>
+                          <div className="segment-delay-tti-cell">
+                            <span>{tti !== null ? `${tti.toFixed(2)}x` : "NA"}</span>
+                            <div className="segment-delay-tti-track" aria-hidden="true">
+                              <div className="segment-delay-tti-fill" style={{ width: `${ttiPct}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td>{Number.isFinite(row.bufferMin) ? `${row.bufferMin.toFixed(1)} min` : "NA"}</td>
+                        <td>{row.worstPeriod || "NA"}</td>
+                        <td className={`trend-${row.trendDirection || "stable"}`}>{row.trendDirection || "stable"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
+
+        {!error && !loading ? (
+          <LineChart
+            title="Monthly Travel Time Trend"
+            subtitle="Line-level monthly Travel Time Index (TTI) from observed segment travel records"
+            data={travelTrendSeries}
+            xKey="month"
+            yKey="value"
+            seriesKey="line"
+            yLabel="Travel Time Index"
+            metricFormatter={(value) => `${value.toFixed(2)}x`}
+            xTickFormatter={(tick) =>
+              tick instanceof Date ? tick.toLocaleDateString(undefined, { month: "short" }) : String(tick)
+            }
           />
         ) : null}
 
@@ -499,6 +619,8 @@ function DashboardPage() {
             rows={sortedSlowZoneRows}
             sortBy={slowZoneSortBy}
             sortDirection={slowZoneSortDirection}
+            selectedSegmentId={selectedTravelSegmentId}
+            onSegmentSelect={setSelectedTravelSegmentId}
             onSortChange={(column) => {
               if (column === slowZoneSortBy) {
                 setSlowZoneSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));

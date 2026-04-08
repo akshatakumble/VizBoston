@@ -108,7 +108,7 @@ function WaitTimeStationHeatmap({
   const metricRows = rowsWithMetric.filter((row) => row.metricValue !== null);
   if (metricRows.length === 0) {
     return (
-      <section className="chart-card">
+      <section className="chart-card wait-heatmap-card">
         <h2>{title}</h2>
         <p>No heatmap values available for {activeMetric.label}.</p>
       </section>
@@ -245,7 +245,7 @@ function WaitTimeStationHeatmap({
   const highLabel = activeMetric.legendTicks?.[2] || activeMetric.formatter(domainMax);
 
   return (
-    <section className="chart-card">
+    <section className="chart-card wait-heatmap-card">
       <div className="card-header">
         <h2>{title}</h2>
       </div>

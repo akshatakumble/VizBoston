@@ -39,6 +39,7 @@ function BostonMap({
   segmentData = [],
   selectedSegmentId = null,
   onSegmentSelect,
+  cardClassName = "",
 }) {
   const mapRef = useRef(null);
   const containerRef = useRef(null);
@@ -135,16 +136,28 @@ function BostonMap({
         selectedLine === "All" ? true : segment.line === selectedLine
       );
       for (const segment of filteredSegments) {
+        const medianMin = Number.isFinite(segment.medianTravelTimeSec)
+          ? segment.medianTravelTimeSec / 60
+          : null;
+        const benchmarkMin = Number.isFinite(segment.benchmarkMedianSec)
+          ? segment.benchmarkMedianSec / 60
+          : null;
+        const addedMin =
+          medianMin !== null && benchmarkMin !== null
+            ? Math.max(0, medianMin - benchmarkMin)
+            : null;
         const polyline = L.polyline(segment.coordinates, {
           color: colorForTravelIndex(segment.travelTimeIndex),
           weight: selectedSegmentId === segment.segmentId ? 8 : 5,
-          opacity: 0.95,
+          opacity: selectedSegmentId && selectedSegmentId !== segment.segmentId ? 0.45 : 0.95,
           lineCap: "round",
         }).addTo(segmentLayerRef.current);
 
         polyline.on("click", () => onSegmentSelect?.(segment.segmentId));
         polyline.bindTooltip(
-          `${segment.segmentName}<br/>TTI: ${segment.travelTimeIndex.toFixed(2)}x`,
+          `${segment.segmentName}<br/>TTI: ${segment.travelTimeIndex.toFixed(2)}x${
+            addedMin !== null ? `<br/>Added vs benchmark: ${addedMin.toFixed(1)} min` : ""
+          }`,
           { direction: "top", sticky: true }
         );
       }
@@ -187,14 +200,14 @@ function BostonMap({
   ]);
 
   return (
-    <section className="map-card">
+    <section className={`map-card${cardClassName ? ` ${cardClassName}` : ""}`}>
       <div className="card-header">
         <h2>{mapMode === "travel" ? "Interactive System Map" : "System Map"}</h2>
         <span className="line-chip">{selectedLine}</span>
       </div>
       <p className="card-subtitle">
         {mapMode === "travel"
-          ? "Segments are colored by travel time index and selectable for detail analysis."
+          ? "Real segment travel times are encoded by Travel Time Index; click a segment to inspect where and when it slows."
           : "Simplified MBTA line topology with station markers. Transfer labels are always shown; choose one line to label every stop."}
       </p>
       <div ref={containerRef} className="map-container" aria-label="Boston area map" />

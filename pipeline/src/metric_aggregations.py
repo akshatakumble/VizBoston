@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Set, Tuple
 
 import pandas as pd
 
@@ -17,6 +18,11 @@ GREEN_BRANCHES = {"Green-B", "Green-C", "Green-D", "Green-E"}
 TIME_PERIOD_ORDER = ["AM Peak", "Midday", "PM Peak", "Evening", "Late Night", "Other", "Unknown"]
 # Transform-stage payloads can be larger; export stage still enforces frontend gzip budgets.
 MAX_JSON_BYTES = int(os.getenv("MBTA_MAX_METRIC_JSON_BYTES", str(64 * 1024 * 1024)))
+TRAVEL_MAX_ROWS_PER_LINE_MONTH = int(
+    os.getenv("MBTA_TRAVEL_MAX_ROWS_PER_LINE_MONTH", "400")
+)
+TRAVEL_ADJ_MAX_SEQUENCE_GAP = float(os.getenv("MBTA_TRAVEL_ADJ_MAX_SEQUENCE_GAP", "25"))
+TRAVEL_ADJ_MAX_DISTANCE_KM = float(os.getenv("MBTA_TRAVEL_ADJ_MAX_DISTANCE_KM", "4.0"))
 
 METRIC_FILENAMES = {
     "otp_line_daily": "otp_line_daily_{year}.json",
@@ -116,14 +122,15 @@ def _records(df: pd.DataFrame, *, numeric_round: Dict[str, int] | None = None) -
         if pd.api.types.is_datetime64_any_dtype(out[col]):
             out[col] = out[col].dt.strftime("%Y-%m-%d")
 
-    out = out.where(pd.notna(out), None)
+    # Cast to object first so null replacement does not coerce None back to NaN in float columns.
+    out = out.astype(object).where(pd.notna(out), None)
     return out.to_dict(orient="records")
 
 
 def _write_compact_json(path: Path, payload: Dict[str, object], max_bytes: int = MAX_JSON_BYTES) -> int:
     ensure_dir(path.parent)
     with path.open("w", encoding="utf-8") as f:
-        json.dump(payload, f, separators=(",", ":"), ensure_ascii=False)
+        json.dump(payload, f, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
 
     size_bytes = path.stat().st_size
     if size_bytes > max_bytes:
@@ -291,7 +298,105 @@ def _load_stop_dimensions(processed_dir: Path, year: int) -> pd.DataFrame:
     return dim
 
 
-def _enrich_travel_times(travel: pd.DataFrame, stop_dim: pd.DataFrame) -> pd.DataFrame:
+def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    radius_km = 6371.0
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    d_phi = math.radians(lat2 - lat1)
+    d_lambda = math.radians(lon2 - lon1)
+    a = (
+        math.sin(d_phi / 2.0) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2.0) ** 2
+    )
+    return 2.0 * radius_km * math.asin(math.sqrt(a))
+
+
+def _load_adjacent_stop_pairs(processed_dir: Path, year: int) -> Set[Tuple[str, str, str]]:
+    station_ref_path = processed_dir / f"station_reference_{year}.parquet"
+    if not station_ref_path.exists():
+        return set()
+
+    station = pd.read_parquet(station_ref_path)
+    required = {"stop_id", "route_id", "stop_sequence"}
+    if not required.issubset(set(station.columns)):
+        return set()
+
+    station = station.copy()
+    station["stop_id"] = station["stop_id"].astype(str).str.strip()
+    station["route_id"] = station["route_id"].astype(str).str.strip()
+    station["stop_sequence"] = pd.to_numeric(station["stop_sequence"], errors="coerce")
+    if "latitude" not in station.columns:
+        station["latitude"] = pd.NA
+    if "longitude" not in station.columns:
+        station["longitude"] = pd.NA
+    station["latitude"] = pd.to_numeric(station["latitude"], errors="coerce")
+    station["longitude"] = pd.to_numeric(station["longitude"], errors="coerce")
+    station = station[
+        station["stop_id"].ne("")
+        & station["route_id"].ne("")
+        & station["stop_sequence"].notna()
+    ].copy()
+    if station.empty:
+        return set()
+
+    pairs: Set[Tuple[str, str, str]] = set()
+
+    for route_id, route_group in station.groupby("route_id", sort=False):
+        route_group = (
+            route_group.sort_values(["stop_sequence", "stop_id"])
+            .drop_duplicates(subset=["stop_id"], keep="first")
+            .reset_index(drop=True)
+        )
+        if route_group.shape[0] < 2:
+            continue
+
+        line_id = _line_id_from_route(pd.Series([route_id])).iloc[0]
+        if line_id not in LINE_IDS:
+            continue
+
+        prior = None
+        for row in route_group.itertuples(index=False):
+            if prior is None:
+                prior = row
+                continue
+
+            seq_gap = abs(float(row.stop_sequence) - float(prior.stop_sequence))
+            if seq_gap > TRAVEL_ADJ_MAX_SEQUENCE_GAP:
+                prior = row
+                continue
+
+            if (
+                pd.notna(prior.latitude)
+                and pd.notna(prior.longitude)
+                and pd.notna(row.latitude)
+                and pd.notna(row.longitude)
+            ):
+                km = _haversine_km(
+                    float(prior.latitude),
+                    float(prior.longitude),
+                    float(row.latitude),
+                    float(row.longitude),
+                )
+                if km > TRAVEL_ADJ_MAX_DISTANCE_KM:
+                    prior = row
+                    continue
+
+            left = str(prior.stop_id).strip()
+            right = str(row.stop_id).strip()
+            if left and right and left != right:
+                pairs.add((line_id, left, right))
+                pairs.add((line_id, right, left))
+
+            prior = row
+
+    return pairs
+
+
+def _enrich_travel_times(
+    travel: pd.DataFrame,
+    stop_dim: pd.DataFrame,
+    adjacent_stop_pairs: Set[Tuple[str, str, str]] | None = None,
+) -> pd.DataFrame:
     df = travel.copy()
     for col in [
         "service_date",
@@ -334,6 +439,9 @@ def _enrich_travel_times(travel: pd.DataFrame, stop_dim: pd.DataFrame) -> pd.Dat
             df = df.drop(columns=[col])
 
     if not stop_dim.empty:
+        known_stop_ids = set(stop_dim["stop_id"].astype(str).tolist())
+        df = df[df["from_stop_id"].isin(known_stop_ids) & df["to_stop_id"].isin(known_stop_ids)].copy()
+
         from_dim = stop_dim.rename(
             columns={
                 "stop_id": "from_stop_id",
@@ -361,6 +469,36 @@ def _enrich_travel_times(travel: pd.DataFrame, stop_dim: pd.DataFrame) -> pd.Dat
 
     df["from_stop_name"] = df["from_stop_name"].fillna(df["from_stop_id"])
     df["to_stop_name"] = df["to_stop_name"].fillna(df["to_stop_id"])
+    placeholder_mask = (
+        df["from_stop_name"].astype(str).str.match(r"^stop_\d+$", na=False)
+        | df["to_stop_name"].astype(str).str.match(r"^stop_\d+$", na=False)
+    )
+    if placeholder_mask.any():
+        df = df[~placeholder_mask].copy()
+
+    if "from_latitude" in df.columns:
+        df["from_latitude"] = pd.to_numeric(df["from_latitude"], errors="coerce")
+    if "from_longitude" in df.columns:
+        df["from_longitude"] = pd.to_numeric(df["from_longitude"], errors="coerce")
+    if "to_latitude" in df.columns:
+        df["to_latitude"] = pd.to_numeric(df["to_latitude"], errors="coerce")
+    if "to_longitude" in df.columns:
+        df["to_longitude"] = pd.to_numeric(df["to_longitude"], errors="coerce")
+
+    if adjacent_stop_pairs:
+        keep_mask = pd.Series(
+            [
+                (line, source, target) in adjacent_stop_pairs
+                for line, source, target in zip(
+                    df["line_id"].astype(str),
+                    df["from_stop_id"].astype(str),
+                    df["to_stop_id"].astype(str),
+                )
+            ],
+            index=df.index,
+        )
+        df = df[keep_mask].copy()
+
     return df
 
 
@@ -400,6 +538,18 @@ def _travel_time_segment_time_period_month(df: pd.DataFrame) -> pd.DataFrame:
             benchmark_median_sec=("benchmark_travel_time_sec", "median"),
         )
     )
+
+    if TRAVEL_MAX_ROWS_PER_LINE_MONTH > 0:
+        agg = (
+            agg.sort_values(
+                ["month", "line_id", "sample_count", "segment_id", "time_period"],
+                ascending=[True, True, False, True, True],
+            )
+            .groupby(["month", "line_id"], as_index=False, group_keys=False)
+            .head(TRAVEL_MAX_ROWS_PER_LINE_MONTH)
+            .copy()
+        )
+
     agg["travel_time_index"] = agg["median_travel_time_sec"] / agg["benchmark_median_sec"].replace(0, pd.NA)
     agg["buffer_time_sec"] = agg["p95_travel_time_sec"] - agg["median_travel_time_sec"]
     agg["planning_time_index"] = agg["p95_travel_time_sec"] / agg["benchmark_median_sec"].replace(0, pd.NA)
@@ -846,6 +996,7 @@ def compute_metric_aggregations(year: int, processed_dir: Path) -> Dict[str, Dic
     }
 
     stop_dim = _load_stop_dimensions(processed_dir=processed_dir, year=year)
+    adjacent_stop_pairs = _load_adjacent_stop_pairs(processed_dir=processed_dir, year=year)
     stop_name_map: Dict[str, str] = {}
     if not stop_dim.empty:
         stop_name_map = dict(zip(stop_dim["stop_id"], stop_dim["stop_name"]))
@@ -893,7 +1044,11 @@ def compute_metric_aggregations(year: int, processed_dir: Path) -> Dict[str, Dic
     travel_path = processed_dir / f"clean_rapid_transit_travel_times_{year}.parquet"
     if travel_path.exists():
         travel_raw = pd.read_parquet(travel_path)
-        travel_base = _enrich_travel_times(travel_raw, stop_dim=stop_dim)
+        travel_base = _enrich_travel_times(
+            travel_raw,
+            stop_dim=stop_dim,
+            adjacent_stop_pairs=adjacent_stop_pairs,
+        )
     else:
         travel_base = pd.DataFrame()
 
