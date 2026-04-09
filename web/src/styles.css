@@ -2422,7 +2422,7 @@ main {
 }
 
 .segment-delay-ladder-card {
-  grid-column: span 6;
+  grid-column: 1 / -1;
 }
 
 .segment-delay-table-wrap {

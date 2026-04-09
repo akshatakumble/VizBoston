@@ -16,7 +16,6 @@ import ExcessWaitTrendChart from "../charts/ExcessWaitTrendChart";
 import LoadingState from "../charts/components/LoadingState";
 import TimeFilter from "../filters/TimeFilter";
 import HighlightsPanel from "../components/HighlightsPanel";
-import TravelSegmentDetailPanel from "../components/TravelSegmentDetailPanel";
 import { useDashboard } from "../context/DashboardContext";
 import useDashboardData from "../data/useDashboardData";
 
@@ -200,7 +199,6 @@ function DashboardPage() {
     travelLinePaths,
     travelStationPoints,
     travelSegmentIds,
-    travelTimeTrendData,
     commuterOriginOptions,
     commuterDestinationOptions,
     commuterSelectedPair,
@@ -315,21 +313,7 @@ function DashboardPage() {
   ]);
 
   const lineLabel = selectedLine === "All" ? "all lines" : `${selectedLine} line`;
-  const selectedTravelSegment =
-    travelMapSegments.find((segment) => segment.segmentId === selectedTravelSegmentId) || null;
-  const travelTrendSeries = travelTimeTrendData.map((row) => ({
-    month: row.month,
-    line: row.line,
-    value: row.index,
-  }));
   const travelSegmentsWithIndex = travelMapSegments.filter((segment) => Number.isFinite(segment.travelTimeIndex));
-  const severeTravelSegments = travelSegmentsWithIndex.filter((segment) => segment.travelTimeIndex >= 1.3);
-  const travelMeanIndex =
-    travelSegmentsWithIndex.length > 0
-      ? travelSegmentsWithIndex.reduce((accumulator, segment) => accumulator + segment.travelTimeIndex, 0) /
-        travelSegmentsWithIndex.length
-      : null;
-  const topTravelBottlenecks = travelSegmentsWithIndex.slice(0, 5);
   const ladderRows = travelSegmentsWithIndex.slice(0, 20).map((row) => {
     const severity = classifySeverity(row.travelTimeIndex);
     return { ...row, severity, priority: derivePriority(severity, row.trendDirection) };
@@ -446,7 +430,7 @@ function DashboardPage() {
         {!error && !loading ? (
           <BunchingScatterChart
             title="Train Bunching Indicator"
-            subtitle="Sample-weighted station averages (core service periods); sparse and extreme outliers are excluded to preserve comparability."
+            subtitle="Sample-weighted station averages (core service periods)"
             data={waitTimesBunchingScatter}
             cardClassName="wait-times-full-width-card"
           />
@@ -516,57 +500,7 @@ function DashboardPage() {
         />
 
         {error ? <DataErrorState message={error} onRetry={retry} /> : null}
-        {!error && loading ? <LoadingState title="Travel Snapshot" rows={4} /> : null}
         {!error && loading ? <LoadingState title="Segment Delay Ladder" rows={8} /> : null}
-        {!error && loading ? <LoadingState title="Monthly Travel Time Trend" rows={6} /> : null}
-        {!error && loading ? <LoadingState title="Segment Detail Panel" rows={6} /> : null}
-
-        {!error && !loading ? (
-          <section className="chart-card travel-summary-card">
-            <div className="card-header">
-              <h2>Travel Snapshot</h2>
-            </div>
-            <p className="card-subtitle">
-              Based on cleaned observed segment travel-time exports (`travel_time_segment_time_period_month`) under current filters.
-            </p>
-            <div className="travel-summary-grid">
-              <article>
-                <h3>Segments in View</h3>
-                <strong>{travelSegmentsWithIndex.length.toLocaleString()}</strong>
-              </article>
-              <article>
-                <h3>Mean Segment TTI</h3>
-                <strong>{travelMeanIndex !== null ? `${travelMeanIndex.toFixed(2)}x` : "NA"}</strong>
-              </article>
-              <article>
-                <h3>High-Delay Segments (TTI ≥ 1.30)</h3>
-                <strong>{severeTravelSegments.length.toLocaleString()}</strong>
-              </article>
-              <article>
-                <h3>Flagged Slow-Zone Candidates</h3>
-                <strong>
-                  {travelMapSegments.filter((row) => row.slowZoneCandidate).length.toLocaleString()}
-                </strong>
-              </article>
-            </div>
-            {topTravelBottlenecks.length > 0 ? (
-              <ol className="travel-bottleneck-list">
-                {topTravelBottlenecks.map((row) => (
-                  <li key={row.segmentId}>
-                    <button
-                      type="button"
-                      className="travel-bottleneck-btn"
-                      onClick={() => setSelectedTravelSegmentId(row.segmentId)}
-                    >
-                      {row.segmentName}
-                    </button>
-                    <span>{row.travelTimeIndex?.toFixed(2)}x</span>
-                  </li>
-                ))}
-              </ol>
-            ) : null}
-          </section>
-        ) : null}
 
         {!error && !loading ? (
           <section className="chart-card segment-delay-ladder-card">
@@ -651,37 +585,6 @@ function DashboardPage() {
           </section>
         ) : null}
 
-        {!error && !loading ? (
-          <LineChart
-            title="Monthly Travel Time Trend"
-            subtitle="Line-level monthly Travel Time Index (TTI) from observed segment travel records"
-            data={travelTrendSeries}
-            xKey="month"
-            yKey="value"
-            seriesKey="line"
-            yLabel="Travel Time Index"
-            metricFormatter={(value) => `${value.toFixed(2)}x`}
-            xTickFormatter={(tick) =>
-              tick instanceof Date ? tick.toLocaleDateString(undefined, { month: "short" }) : String(tick)
-            }
-          />
-        ) : null}
-
-        {!error && !loading ? (
-          <TravelSegmentDetailPanel
-            segment={selectedTravelSegment}
-            onClear={() => setSelectedTravelSegmentId(null)}
-          />
-        ) : null}
-
-        <section className="chart-card">
-          <div className="card-header">
-            <h2>Marey Diagram (Stretch Goal)</h2>
-          </div>
-          <p className="card-subtitle">
-            Time-space visualization placeholder. Will plot train trajectories over 24h in a follow-up pass.
-          </p>
-        </section>
       </div>
     );
   }
