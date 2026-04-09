@@ -16,6 +16,7 @@ const WAIT_BUNCHING_MIN_OBSERVATIONS = Number(import.meta.env.VITE_WAIT_BUNCHING
 const WAIT_BUNCHING_MAX_HEADWAY_MIN = Number(import.meta.env.VITE_WAIT_BUNCHING_MAX_HEADWAY_MIN || 60);
 const WAIT_BUNCHING_MAX_P90_MIN = Number(import.meta.env.VITE_WAIT_BUNCHING_MAX_P90_MIN || 90);
 const WAIT_EXCESS_MIN_MONTHLY_SAMPLES = Number(import.meta.env.VITE_WAIT_EXCESS_MIN_MONTHLY_SAMPLES || 300);
+const WAIT_HEATMAP_MIN_BUCKET_SAMPLES = Number(import.meta.env.VITE_WAIT_HEATMAP_MIN_BUCKET_SAMPLES || 30);
 const TRAVEL_FRONTEND_MAX_SEQUENCE_GAP = Number(import.meta.env.VITE_TRAVEL_FRONTEND_MAX_SEQUENCE_GAP || 25);
 const TRAVEL_FRONTEND_MAX_DISTANCE_KM = Number(import.meta.env.VITE_TRAVEL_FRONTEND_MAX_DISTANCE_KM || 4.0);
 
@@ -1625,7 +1626,7 @@ export function useDashboardData({
 
     const waitHeatBuckets = new Map();
     for (const row of filteredWaitTimesRows) {
-      if (row.hourOfDay === null || row.headwayTrunkMin === null) {
+      if (row.hourOfDay === null || row.sampleCount <= 0) {
         continue;
       }
       const displayStation =
@@ -1640,46 +1641,70 @@ export function useDashboardData({
         hourValue: row.hourOfDay,
         line: row.lineName,
         stationSortOrder,
-        headwayTotal: 0,
-        headwayCount: 0,
-        p90Total: 0,
-        p90Count: 0,
-        cvTotal: 0,
-        cvCount: 0,
-        bunchingTotal: 0,
-        bunchingCount: 0,
+        sampleTotal: 0,
+        headwayWeightedTotal: 0,
+        headwayWeightTotal: 0,
+        p90WeightedTotal: 0,
+        p90WeightTotal: 0,
+        cvWeightedTotal: 0,
+        cvWeightTotal: 0,
+        bunchingWeightedTotal: 0,
+        bunchingWeightTotal: 0,
       };
-      bucket.headwayTotal += row.headwayTrunkMin;
-      bucket.headwayCount += 1;
+      const weight = row.sampleCount;
+      bucket.sampleTotal += weight;
+      if (row.headwayTrunkMin !== null) {
+        bucket.headwayWeightedTotal += row.headwayTrunkMin * weight;
+        bucket.headwayWeightTotal += weight;
+      }
       if (row.p90HeadwayMin !== null) {
-        bucket.p90Total += row.p90HeadwayMin;
-        bucket.p90Count += 1;
+        bucket.p90WeightedTotal += row.p90HeadwayMin * weight;
+        bucket.p90WeightTotal += weight;
       }
       if (row.headwayCv !== null) {
-        bucket.cvTotal += row.headwayCv;
-        bucket.cvCount += 1;
+        bucket.cvWeightedTotal += row.headwayCv * weight;
+        bucket.cvWeightTotal += weight;
       }
       if (row.bunchingRatePct !== null) {
-        bucket.bunchingTotal += row.bunchingRatePct;
-        bucket.bunchingCount += 1;
+        bucket.bunchingWeightedTotal += row.bunchingRatePct * weight;
+        bucket.bunchingWeightTotal += weight;
       }
       waitHeatBuckets.set(key, bucket);
     }
 
     const waitTimesHeadwayHeatmap = Array.from(waitHeatBuckets.values())
-      .map((bucket) => ({
-        station: bucket.station,
-        hour: bucket.hour,
-        value: bucket.headwayTotal / Math.max(1, bucket.headwayCount),
-        headwayMin: bucket.headwayTotal / Math.max(1, bucket.headwayCount),
-        p90HeadwayMin: bucket.p90Count > 0 ? bucket.p90Total / bucket.p90Count : null,
-        headwayCvPct: bucket.cvCount > 0 ? (bucket.cvTotal / bucket.cvCount) * 100 : null,
-        bunchingRatePct: bucket.bunchingCount > 0 ? bucket.bunchingTotal / bucket.bunchingCount : null,
-        sampleCount: bucket.headwayCount,
-        line: bucket.line,
-        stationSortOrder: bucket.stationSortOrder,
-        hourValue: bucket.hourValue,
-      }))
+      .map((bucket) => {
+        const hasEnoughSamples = bucket.sampleTotal >= WAIT_HEATMAP_MIN_BUCKET_SAMPLES;
+        const headwayMin =
+          hasEnoughSamples && bucket.headwayWeightTotal > 0
+            ? bucket.headwayWeightedTotal / bucket.headwayWeightTotal
+            : null;
+        const p90HeadwayMin =
+          hasEnoughSamples && bucket.p90WeightTotal > 0
+            ? bucket.p90WeightedTotal / bucket.p90WeightTotal
+            : null;
+        const headwayCvPct =
+          hasEnoughSamples && bucket.cvWeightTotal > 0
+            ? (bucket.cvWeightedTotal / bucket.cvWeightTotal) * 100
+            : null;
+        const bunchingRatePct =
+          hasEnoughSamples && bucket.bunchingWeightTotal > 0
+            ? bucket.bunchingWeightedTotal / bucket.bunchingWeightTotal
+            : null;
+        return {
+          station: bucket.station,
+          hour: bucket.hour,
+          value: headwayMin,
+          headwayMin,
+          p90HeadwayMin,
+          headwayCvPct,
+          bunchingRatePct,
+          sampleCount: bucket.sampleTotal,
+          line: bucket.line,
+          stationSortOrder: bucket.stationSortOrder,
+          hourValue: bucket.hourValue,
+        };
+      })
       .sort((left, right) => {
         if (left.stationSortOrder !== right.stationSortOrder) {
           return left.stationSortOrder - right.stationSortOrder;

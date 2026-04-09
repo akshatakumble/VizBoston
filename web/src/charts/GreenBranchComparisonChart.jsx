@@ -1,22 +1,25 @@
-import { max, median, scaleBand, scaleLinear } from "d3";
-import { getLineColor } from "../design/transit";
+import { max, median, min } from "d3";
+
+const BRANCH_LABELS = {
+  "Green-B": "Boston College",
+  "Green-C": "Cleveland Circle",
+  "Green-D": "Riverside",
+  "Green-E": "Heath Street",
+};
 
 function GreenBranchComparisonChart({
-  title = "Green Line Branch Comparison",
-  subtitle = "",
+  title = "Green Line Branch Headway Comparison",
+  subtitle = "Sample-weighted observed headway by branch. Scheduled headway is 6.5 min during peak hours.",
   data = [],
-  width = 760,
-  height = 320,
+  targetMin = 6.5,
 }) {
-  const margin = { top: 24, right: 120, bottom: 44, left: 88 };
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
-
   const rows = data
     .map((row) => ({
       branch: String(row.branch || ""),
       headwayMin: Number(row.headwayMin),
       sampleCount: Math.max(0, Number(row.sampleCount) || 0),
+      ciLowMin: Number.isFinite(Number(row.ciLowMin)) ? Number(row.ciLowMin) : null,
+      ciHighMin: Number.isFinite(Number(row.ciHighMin)) ? Number(row.ciHighMin) : null,
     }))
     .filter((row) => row.branch && Number.isFinite(row.headwayMin))
     .sort((left, right) => left.headwayMin - right.headwayMin);
@@ -30,105 +33,131 @@ function GreenBranchComparisonChart({
     );
   }
 
-  const xMax = max(rows, (row) => row.headwayMin) ?? 1;
-  const xScale = scaleLinear().domain([0, xMax * 1.15]).range([0, innerWidth]).nice();
-  const yScale = scaleBand().domain(rows.map((row) => row.branch)).range([0, innerHeight]).padding(0.3);
-  const ticks = xScale.ticks(5);
+  const maxObserved = max(rows, (row) => Math.max(row.headwayMin, row.ciHighMin ?? row.headwayMin, targetMin)) ?? 1;
+  const minObserved = min(rows, (row) => Math.min(row.headwayMin, row.ciLowMin ?? row.headwayMin, targetMin)) ?? 0;
+  const domainPadding = 0.12;
+  const domainMin = Math.max(0, minObserved - domainPadding);
+  const domainMax = maxObserved + domainPadding;
+  const domainSpan = Math.max(0.01, domainMax - domainMin);
   const medianHeadway = median(rows, (row) => row.headwayMin);
-  const best = rows[0]?.headwayMin ?? null;
+  const systemAverageHeadway =
+    rows.reduce((total, row) => total + row.headwayMin * Math.max(1, row.sampleCount), 0) /
+    rows.reduce((total, row) => total + Math.max(1, row.sampleCount), 0);
+  const minHeadway = rows[0]?.headwayMin ?? null;
+  const maxHeadway = rows[rows.length - 1]?.headwayMin ?? null;
+  const rangeSpan =
+    minHeadway !== null && maxHeadway !== null ? Math.max(0, maxHeadway - minHeadway) : null;
+
+  const branchCode = (branch) => branch.replace("Green-", "Green-");
+  const pctOverScheduled = (value) =>
+    targetMin > 0 ? Math.max(0, ((value - targetMin) / targetMin) * 100) : 0;
+  const markerLeftPct = Math.min(100, Math.max(0, ((targetMin - domainMin) / domainSpan) * 100));
+
+  const keyInsight =
+    rows.length > 0
+      ? `All branches run ${Math.round(pctOverScheduled(rows[0].headwayMin))}-${Math.round(
+          pctOverScheduled(rows[rows.length - 1].headwayMin)
+        )}% slower than scheduled. ${rows[rows.length - 1].branch} has the longest wait at ${rows[
+          rows.length - 1
+        ].headwayMin.toFixed(1)} min, while ${rows[0].branch} performs best at ${rows[0].headwayMin.toFixed(
+          1
+        )} min.`
+      : "";
 
   return (
-    <section className="chart-card">
+    <section className="chart-card green-branch-ref-card">
       <div className="card-header">
         <h2>{title}</h2>
       </div>
       {subtitle ? <p className="card-subtitle">{subtitle}</p> : null}
 
-      <div className="chart-frame">
-        <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
-          <g transform={`translate(${margin.left},${margin.top})`}>
-            {ticks.map((tick) => (
-              <g key={tick} transform={`translate(${xScale(tick)},0)`}>
-                <line y1={0} y2={innerHeight} className="axis-grid-line" />
-                <text y={innerHeight + 20} className="axis-tick-label axis-tick-label-x" textAnchor="middle">
-                  {tick.toFixed(1)} min
-                </text>
-              </g>
-            ))}
+      <div className="green-branch-rows" role="img" aria-label={title}>
+        {rows.map((row) => {
+          const barWidthPct = Math.min(
+            100,
+            Math.max(2, ((row.headwayMin - domainMin) / domainSpan) * 100)
+          );
+          const overMin = row.headwayMin - targetMin;
+          const overPct = pctOverScheduled(row.headwayMin);
+          return (
+            <article key={row.branch} className="green-branch-row">
+              <div className="green-branch-left">
+                <div className="green-branch-name-row">
+                  <span className="green-branch-chip">{branchCode(row.branch)}</span>
+                  <strong>{BRANCH_LABELS[row.branch] || row.branch}</strong>
+                </div>
+                <p>n = {(row.sampleCount / 1_000_000).toFixed(1)}M observations</p>
+              </div>
 
-            {medianHeadway !== undefined && medianHeadway !== null ? (
-              <g transform={`translate(${xScale(medianHeadway)},0)`}>
-                <line y1={0} y2={innerHeight} className="bunching-diagonal" />
-                <text x={4} y={-8} className="goal-line-label" textAnchor="start">
-                  Median {medianHeadway.toFixed(1)} min
-                </text>
-              </g>
-            ) : null}
+              <div className="green-branch-bar-wrap">
+                <div className="green-branch-bar-track">
+                  <span className="green-branch-scheduled-marker" style={{ left: `${markerLeftPct}%` }} />
+                  <span className="green-branch-bar-fill" style={{ width: `${barWidthPct}%` }}>
+                    <title>{`${row.branch}: ${row.headwayMin.toFixed(2)} min`}</title>
+                  </span>
+                  {row.ciLowMin !== null && row.ciHighMin !== null ? (
+                    <span
+                      className="green-branch-ci-line"
+                      style={{
+                        left: `${((row.ciLowMin - domainMin) / domainSpan) * 100}%`,
+                        width: `${Math.max(
+                          0.3,
+                          ((row.ciHighMin - row.ciLowMin) / domainSpan) * 100
+                        )}%`,
+                      }}
+                    />
+                  ) : null}
+                </div>
+              </div>
 
-            {rows.map((row) => {
-              const y = yScale(row.branch) || 0;
-              const barHeight = yScale.bandwidth();
-              const barWidth = xScale(row.headwayMin);
-              const deltaVsBest = best !== null ? row.headwayMin - best : 0;
-              return (
-                <g key={row.branch}>
-                  <rect
-                    x={0}
-                    y={y}
-                    width={Math.max(1, barWidth)}
-                    height={barHeight}
-                    rx={3}
-                    fill={getLineColor(row.branch)}
-                    fillOpacity={0.42}
-                  >
-                    <title>
-                      {`${row.branch}: ${row.headwayMin.toFixed(2)} min, n=${row.sampleCount.toLocaleString()}, Δ vs best ${deltaVsBest.toFixed(2)} min`}
-                    </title>
-                  </rect>
-                  <text
-                    x={-10}
-                    y={y + barHeight / 2}
-                    className="axis-tick-label axis-tick-label-y"
-                    textAnchor="end"
-                    dominantBaseline="middle"
-                  >
-                    {row.branch}
-                  </text>
-                  <text
-                    x={Math.min(innerWidth - 4, barWidth + 6)}
-                    y={y + barHeight / 2 - 6}
-                    className="axis-tick-label"
-                    textAnchor="start"
-                    dominantBaseline="middle"
-                  >
-                    {row.headwayMin.toFixed(1)} min
-                  </text>
-                  <text
-                    x={Math.min(innerWidth - 4, barWidth + 6)}
-                    y={y + barHeight / 2 + 8}
-                    className="axis-tick-label"
-                    textAnchor="start"
-                    dominantBaseline="middle"
-                  >
-                    n={row.sampleCount.toLocaleString()}
-                  </text>
-                </g>
-              );
-            })}
+              <div className="green-branch-right">
+                <strong>{row.headwayMin.toFixed(1)} min</strong>
+              </div>
+              <div className="green-branch-delta">
+                <strong>{`+${overMin.toFixed(1)} min`}</strong>
+                <span>{`${Math.round(overPct)}% over scheduled`}</span>
+              </div>
+            </article>
+          );
+        })}
+      </div>
 
-            <text x={innerWidth / 2} y={innerHeight + 36} className="axis-tick-label" textAnchor="middle">
-              Sample-weighted observed headway (min)
-            </text>
-          </g>
-        </svg>
+      <div className="green-branch-legend-row">
+        <span>
+          <i className="obs" /> Observed headway
+        </span>
+        <span>
+          <i className="sched" /> Scheduled ({targetMin.toFixed(1)} min)
+        </span>
+      </div>
+
+      <div className="green-branch-summary">
+        <span>
+          Scheduled headway: <strong>{targetMin.toFixed(1)} min</strong>
+        </span>
+        <span>
+          System median: <strong>{medianHeadway?.toFixed(1) || "NA"} min</strong>
+        </span>
+        <span>
+          System avg: <strong>{systemAverageHeadway.toFixed(1)} min</strong>
+        </span>
+        <span>
+          Range:{" "}
+          <strong>
+            {rangeSpan !== null ? `${rangeSpan.toFixed(1)} min (${minHeadway?.toFixed(1)} - ${maxHeadway?.toFixed(1)})` : "NA"}
+          </strong>
+        </span>
+      </div>
+
+      <div className="green-branch-insight">
+        <strong>Key insight:</strong> {keyInsight}
       </div>
 
       <p className="card-footnote">
-        Branches are sorted best-to-worst (lowest to highest headway). Values and sample sizes are labeled directly.
+        Branches are sorted best-to-worst (lowest to highest headway). Bars are scaled to the observed branch range to make differences easier to compare. CI markers render when confidence bounds are available.
       </p>
     </section>
   );
 }
 
 export default GreenBranchComparisonChart;
-

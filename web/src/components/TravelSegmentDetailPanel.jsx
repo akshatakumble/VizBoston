@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 function toFinite(value) {
   const numeric = Number(value);
@@ -79,8 +79,6 @@ function formatIndex(value) {
 }
 
 function TravelSegmentDetailPanel({ segment = null, onClear }) {
-  const [expandedTrend, setExpandedTrend] = useState(false);
-
   const actualMin = toFinite(segment?.medianTravelTimeSec) !== null ? segment.medianTravelTimeSec / 60 : null;
   const benchmarkMin = toFinite(segment?.benchmarkMedianSec) !== null ? segment.benchmarkMedianSec / 60 : null;
   const bufferMin = toFinite(segment?.bufferTimeSec) !== null ? segment.bufferTimeSec / 60 : null;
@@ -117,6 +115,13 @@ function TravelSegmentDetailPanel({ segment = null, onClear }) {
   const worstPeriod =
     timeProfile.find((item) => item.period === segment?.worstPeriod) ||
     (timeProfile.length > 0 ? timeProfile[0] : null);
+  const baselinePeriods = timeProfile.filter((item) => worstPeriod && item.period !== worstPeriod.period);
+  const baselineAverage =
+    baselinePeriods.length > 0
+      ? baselinePeriods.reduce((sum, item) => sum + item.value, 0) / baselinePeriods.length
+      : null;
+  const worstVsBaselineRatio =
+    worstPeriod && baselineAverage && baselineAverage > 0 ? worstPeriod.value / baselineAverage : null;
 
   const expectedAddedFromTti =
     benchmarkMin !== null && tti !== null ? Math.max(0, benchmarkMin * (tti - 1)) : null;
@@ -131,10 +136,16 @@ function TravelSegmentDetailPanel({ segment = null, onClear }) {
           ? "Moderately different from TTI estimate"
           : "Significantly different from TTI estimate";
 
-  const trendWidth = expandedTrend ? 640 : 520;
-  const trendHeight = expandedTrend ? 220 : 176;
+  const trendWidth = 940;
+  const trendHeight = 136;
   const trendMin = Math.max(0.8, Math.min(0.95, ...(sortedMonths.map((point) => point.value) || [0.95])));
   const trendMax = Math.max(2.2, ...(sortedMonths.map((point) => point.value) || [2.2]));
+  const trendPctChange =
+    trendStart && trendEnd && trendStart.value > 0 ? ((trendEnd.value - trendStart.value) / trendStart.value) * 100 : null;
+  const confidenceLabel =
+    sortedMonths.length >= 8 ? "High confidence" : sortedMonths.length >= 4 ? "Medium confidence" : "Low confidence";
+  const confidenceClass =
+    sortedMonths.length >= 8 ? "high" : sortedMonths.length >= 4 ? "medium" : "low";
 
   if (!segment) {
     return (
@@ -160,44 +171,36 @@ function TravelSegmentDetailPanel({ segment = null, onClear }) {
         {segment.segmentName} ({segment.line})
       </p>
 
-      <section className="segment-priority-strip" aria-label="Critical insights">
-        <article className={`segment-priority-card ${classifyIndex(worstPeriod?.value)}`}>
-          <h3>Worst Time Period</h3>
-          <strong>
-            {worstPeriod ? `${worstPeriod.period}: ${worstPeriod.value.toFixed(2)}x` : "No period data"}
-          </strong>
-          <p>
-            {worstPeriod
-              ? `This period runs at ${(worstPeriod.value * 100).toFixed(0)}% of benchmark travel time (higher is worse).`
-              : ""}
-          </p>
-        </article>
-
-        <article className={`segment-priority-card ${trendDirectionClass}`}>
-          <h3>12-Month Direction</h3>
-          <strong>
-            {trendDelta === null
-              ? "No trend data"
-              : `${trendDelta > 0 ? "+" : ""}${trendDelta.toFixed(2)}x (${trendDirectionClass})`}
-          </strong>
-          <p>
-            {trendStart && trendEnd
-              ? `${monthShortLabel(trendStart.month)} ${trendStart.value.toFixed(2)}x → ${monthShortLabel(trendEnd.month)} ${trendEnd.value.toFixed(2)}x`
-              : ""}
-          </p>
-        </article>
+      <section className={`segment-critical-callout ${classifyIndex(worstPeriod?.value)}`} aria-label="Primary issue">
+        <div className="segment-critical-head">
+          <h3>{worstPeriod ? `${worstPeriod.period} service is critically delayed` : "Critical period unavailable"}</h3>
+          <span className={`segment-confidence-pill ${confidenceClass}`}>
+            {confidenceLabel}: {sortedMonths.length} month{sortedMonths.length === 1 ? "" : "s"} observed
+          </span>
+        </div>
+        <p className="segment-critical-value">
+          <strong>{worstPeriod ? `${worstPeriod.value.toFixed(2)}x` : "No data"}</strong>{" "}
+          slower than benchmark
+        </p>
+        <p>
+          {worstVsBaselineRatio !== null
+            ? `${worstPeriod.period} is about ${worstVsBaselineRatio.toFixed(1)}x worse than other periods (${Math.round(
+                worstVsBaselineRatio
+              )}x at headline level).`
+            : "Insufficient period coverage to compare against other periods."}
+        </p>
       </section>
 
       <section className="segment-definition-row" aria-label="Metric definitions">
         <p>
-          <strong>Travel Time Index (TTI)</strong>: <code>Actual / Benchmark</code>. Example: <code>1.50x</code> means trips take 50% longer than benchmark.
+          <strong>Travel Time Index (TTI)</strong>: <code>Actual / Benchmark</code>. Example: <code>1.41x</code> means 41% slower than benchmark.
         </p>
         <p>
-          <strong>Buffer Time</strong>: extra minutes riders should budget above benchmark to absorb variability.
+          <strong>Buffer Time</strong>: extra minutes riders should budget above benchmark to absorb variability. 
         </p>
       </section>
 
-      <section className="segment-metric-grid segment-metric-grid-redesign" aria-label="Core metrics">
+      <section className="segment-metric-grid segment-metric-grid-minimal" aria-label="Core metrics">
         <article>
           <h3>Actual Median</h3>
           <strong className="metric-primary">{formatMinutes(actualMin)}</strong>
@@ -207,15 +210,20 @@ function TravelSegmentDetailPanel({ segment = null, onClear }) {
           <strong>{formatMinutes(benchmarkMin)}</strong>
         </article>
         <article>
-          <h3>TTI</h3>
+          <h3>
+            TTI <span className="metric-info" title="Travel Time Index: Actual divided by benchmark travel time.">?</span>
+          </h3>
           <strong className={`metric-emphasis ${classifyIndex(tti)}`}>{formatIndex(tti)}</strong>
+          <p className="metric-footnote">{tti !== null ? `${Math.max(0, (tti - 1) * 100).toFixed(0)}% slower overall` : "No data"}</p>
         </article>
         <article>
           <h3>Added vs Benchmark</h3>
           <strong>{addedMinutes !== null ? `${addedMinutes.toFixed(1)} min` : "No data"}</strong>
         </article>
         <article>
-          <h3>Buffer Time</h3>
+          <h3>
+            Buffer Time <span className="metric-info" title="Extra travel-time cushion above benchmark to be on-time reliably.">?</span>
+          </h3>
           <strong>{formatMinutes(bufferMin)}</strong>
           <p className="metric-footnote">{bufferConsistencyLabel}</p>
         </article>
@@ -224,9 +232,9 @@ function TravelSegmentDetailPanel({ segment = null, onClear }) {
       <section className="segment-trend-card" aria-label="Monthly trend">
         <div className="segment-trend-header">
           <h3>Monthly TTI Trend</h3>
-          <button type="button" className="detail-clear-btn" onClick={() => setExpandedTrend((value) => !value)}>
-            {expandedTrend ? "Compact" : "Expand"}
-          </button>
+          <span className={`segment-confidence-pill ${confidenceClass}`}>
+            {confidenceLabel}
+          </span>
         </div>
 
         {sortedMonths.length > 0 ? (
@@ -252,17 +260,21 @@ function TravelSegmentDetailPanel({ segment = null, onClear }) {
                 );
               })}
               {trendStart ? (
-                <text x="16" y={trendHeight - 4} className="segment-trend-axis-label">{monthShortLabel(trendStart.month)}</text>
+                <text x="16" y={trendHeight - 4} className="segment-trend-axis-label">
+                  {monthShortLabel(trendStart.month)}: {trendStart.value.toFixed(2)}x
+                </text>
               ) : null}
               {trendEnd ? (
-                <text x={trendWidth - 16} y={trendHeight - 4} textAnchor="end" className="segment-trend-axis-label">{monthShortLabel(trendEnd.month)}</text>
+                <text x={trendWidth - 16} y={trendHeight - 4} textAnchor="end" className="segment-trend-axis-label">
+                  {monthShortLabel(trendEnd.month)}: {trendEnd.value.toFixed(2)}x
+                </text>
               ) : null}
               <text x={trendWidth - 16} y="14" textAnchor="end" className="segment-trend-axis-label">Benchmark 1.00x</text>
             </svg>
             <p className={`segment-trend-direction trend-${trendDirectionClass}`}>
               {trendDelta === null
                 ? "Trend unavailable"
-                : `Net change: ${trendDelta > 0 ? "+" : ""}${trendDelta.toFixed(2)}x over ${sortedMonths.length} months (${trendDirectionClass}).`}
+                : `Net change: ${trendDelta > 0 ? "+" : ""}${trendDelta.toFixed(2)}x (${trendPctChange !== null ? `${trendPctChange > 0 ? "+" : ""}${trendPctChange.toFixed(0)}%` : "NA"}) over ${sortedMonths.length} months (${trendDirectionClass}).`}
             </p>
           </>
         ) : (
@@ -271,7 +283,7 @@ function TravelSegmentDetailPanel({ segment = null, onClear }) {
       </section>
 
       <section className="segment-period-list" aria-label="Time of day performance">
-        <h3>Time-of-Day Breakdown (sorted by worst)</h3>
+        <h3>Performance by time of day</h3>
         <ul>
           {timeProfile.map((item) => {
             const severity = classifyIndex(item.value);

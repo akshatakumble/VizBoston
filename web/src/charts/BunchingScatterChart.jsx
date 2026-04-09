@@ -1,31 +1,54 @@
-import { interpolateRdYlGn, max, scaleLinear } from "d3";
+import { max, scaleLinear } from "d3";
+import { useMemo, useState } from "react";
+import { getLineColor } from "../design/transit";
+import Tooltip from "./components/Tooltip";
 
 function BunchingScatterChart({
   title = "Train Bunching Indicator",
   subtitle = "",
   data = [],
-  width = 760,
-  height = 330,
+  cardClassName = "",
+  width = 1400,
+  height = 300,
 }) {
-  const margin = { top: 24, right: 20, bottom: 48, left: 70 };
+  const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, rows: [], title: "" });
+  const margin = { top: 16, right: 28, bottom: 34, left: 64 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
+  const topMarginalHeight = 0;
+  const rightMarginalWidth = 0;
 
-  const points = data
-    .map((row) => ({
-      ...row,
-      x: Number(row.x),
-      y: Number(row.y),
-      regularity: Number(row.regularity),
-      bunched: Boolean(row.bunched),
-      sampleCount: Math.max(1, Number(row.sampleCount) || 1),
-      bunchingRatePct: Number(row.bunchingRatePct),
-    }))
-    .filter((row) => Number.isFinite(row.x) && Number.isFinite(row.y));
+  const { points, adjustedCount } = useMemo(() => {
+    const normalized = data
+      .map((row) => {
+        const x = Number(row.x);
+        const y = Number(row.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          return null;
+        }
+        const clampedY = Math.max(x, y);
+        return {
+          ...row,
+          x,
+          y: clampedY,
+          rawY: y,
+          regularity: Number(row.regularity),
+          bunched: Boolean(row.bunched),
+          sampleCount: Math.max(1, Number(row.sampleCount) || 1),
+          bunchingRatePct: Number(row.bunchingRatePct),
+          varianceGap: clampedY - x,
+          station: String(row.station || "Unknown"),
+          line: String(row.line || "Unknown"),
+        };
+      })
+      .filter(Boolean);
+    const adjusted = normalized.filter((row) => row.rawY < row.x).length;
+    return { points: normalized, adjustedCount: adjusted };
+  }, [data]);
 
   if (points.length === 0) {
     return (
-      <section className="chart-card">
+      <section className={`chart-card ${cardClassName}`.trim()}>
         <h2>{title}</h2>
         <p>No bunching scatter data available.</p>
       </section>
@@ -33,25 +56,47 @@ function BunchingScatterChart({
   }
 
   const axisMax = max(points, (point) => Math.max(point.x, point.y)) ?? 1;
-  const maxSampleCount = max(points, (point) => point.sampleCount) ?? 1;
-  const xScale = scaleLinear().domain([0, axisMax]).range([0, innerWidth]).nice();
-  const yScale = scaleLinear().domain([0, axisMax]).range([innerHeight, 0]).nice();
+  const axisDomainMax = Math.max(1, axisMax * 1.06);
+  const xScale = scaleLinear().domain([0, axisDomainMax]).range([0, innerWidth - rightMarginalWidth]).nice();
+  const yScale = scaleLinear().domain([0, axisDomainMax]).range([innerHeight - topMarginalHeight, 0]).nice();
   const ticks = xScale.ticks(5);
+  const lines = Array.from(new Set(points.map((point) => point.line))).sort((left, right) => left.localeCompare(right));
+  const topOutliers = points
+    .slice()
+    .sort((left, right) => right.varianceGap - left.varianceGap || right.y - left.y)
+    .slice(0, 4);
 
   return (
-    <section className="chart-card">
+    <section className={`chart-card ${cardClassName}`.trim()}>
       <div className="card-header">
         <h2>{title}</h2>
       </div>
       {subtitle ? <p className="card-subtitle">{subtitle}</p> : null}
+      <p className="card-subtitle">
+        Points above the diagonal have higher headway variance; farther distance above the line indicates stronger bunching severity.
+      </p>
 
-      <div className="chart-frame">
+      <div className="bunching-line-legend" aria-label="Transit line legend">
+        {lines.map((line) => (
+          <span key={line}>
+            <i style={{ backgroundColor: getLineColor(line) }} />
+            {line}
+          </span>
+        ))}
+      </div>
+
+      <div className="chart-frame bunching-frame-compact">
         <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
           <g transform={`translate(${margin.left},${margin.top})`}>
             {ticks.map((tick) => (
               <g key={`x-${tick}`} transform={`translate(${xScale(tick)},0)`}>
-                <line y1={0} y2={innerHeight} className="axis-grid-line" />
-                <text y={innerHeight + 20} className="axis-tick-label axis-tick-label-x" textAnchor="middle">
+                <line y1={0} y2={innerHeight - topMarginalHeight} className="axis-grid-line" />
+                <text
+                  x={tick === 0 ? 8 : 0}
+                  y={innerHeight + 14}
+                  className="axis-tick-label axis-tick-label-x"
+                  textAnchor={tick === 0 ? "start" : "middle"}
+                >
                   {tick.toFixed(1)} min
                 </text>
               </g>
@@ -59,21 +104,28 @@ function BunchingScatterChart({
 
             {ticks.map((tick) => (
               <g key={`y-${tick}`} transform={`translate(0,${yScale(tick)})`}>
-                <line x1={0} x2={innerWidth} className="axis-grid-line" />
+                <line x1={0} x2={innerWidth - rightMarginalWidth} className="axis-grid-line" />
                 <text x={-8} y={4} className="axis-tick-label axis-tick-label-y" textAnchor="end">
                   {tick.toFixed(1)} min
                 </text>
               </g>
             ))}
 
-            <line x1={0} y1={innerHeight} x2={innerWidth} y2={0} className="bunching-diagonal" />
-            <text x={innerWidth - 4} y={14} className="goal-line-label" textAnchor="end">
-              Perfectly even spacing
+            <line
+              x1={0}
+              y1={yScale(0)}
+              x2={xScale(axisDomainMax)}
+              y2={yScale(axisDomainMax)}
+              className="bunching-diagonal"
+            />
+            <text x={innerWidth - rightMarginalWidth - 8} y={14} className="goal-line-label bunching-diagonal-label" textAnchor="end">
+              No variance (P90 = Mean)
             </text>
+
             <text x={0} y={-8} className="axis-tick-label" textAnchor="start">
               P90 headway (min)
             </text>
-            <text x={innerWidth / 2} y={innerHeight + 38} className="axis-tick-label" textAnchor="middle">
+            <text x={(innerWidth - rightMarginalWidth) / 2} y={innerHeight + 16} className="axis-tick-label" textAnchor="middle">
               Average observed headway (min)
             </text>
 
@@ -82,25 +134,44 @@ function BunchingScatterChart({
                 key={index}
                 cx={xScale(point.x)}
                 cy={yScale(point.y)}
-                r={2 + 3 * Math.sqrt(point.sampleCount / Math.max(1, maxSampleCount))}
-                fill={interpolateRdYlGn(Math.max(0, Math.min(1, point.regularity)))}
-                opacity={0.72}
+                r={5}
+                fill={getLineColor(point.line)}
+                opacity={0.7}
                 stroke={point.bunched ? "var(--ink)" : "transparent"}
                 strokeWidth={point.bunched ? 0.8 : 0}
-              >
-                <title>
-                  {`${point.line}: avg ${point.x.toFixed(1)} min, p90 ${point.y.toFixed(1)} min, regularity ${(
-                    point.regularity * 100
-                  ).toFixed(0)}%, bunching ${Number.isFinite(point.bunchingRatePct) ? point.bunchingRatePct.toFixed(1) : "NA"}%, n=${point.sampleCount}${point.bunched ? " (bunched)" : ""}`}
-                </title>
-              </circle>
+                onMouseEnter={(event) => {
+                  const bounds = event.currentTarget.ownerSVGElement.getBoundingClientRect();
+                  setTooltip({
+                    visible: true,
+                    x: event.clientX - bounds.left + 10,
+                    y: event.clientY - bounds.top - 10,
+                    title: point.station,
+                    rows: [
+                      { label: "Line", value: point.line },
+                      { label: "Avg headway", value: `${point.x.toFixed(1)} min` },
+                      { label: "P90 headway", value: `${point.y.toFixed(1)} min` },
+                      { label: "Variance gap", value: `+${point.varianceGap.toFixed(1)} min` },
+                      { label: "Samples", value: point.sampleCount.toLocaleString() },
+                    ],
+                  });
+                }}
+                onMouseLeave={() => setTooltip((prev) => ({ ...prev, visible: false }))}
+              />
             ))}
+
           </g>
         </svg>
+        <Tooltip visible={tooltip.visible} x={tooltip.x} y={tooltip.y} title={tooltip.title} rows={tooltip.rows} />
+      </div>
+
+      <div className="bunching-outlier-list">
+        <strong>High-variance stations to inspect:</strong>{" "}
+        {topOutliers.map((point) => `${point.station} (${point.line}, +${point.varianceGap.toFixed(1)} min)`).join("; ")}
       </div>
 
       <p className="card-footnote">
-        Points are aggregated by station under current filters; larger points indicate more observations.
+        Points are aggregated by station under current filters. All points are shown on or above the diagonal (P90 ≥ mean).
+        {adjustedCount > 0 ? ` ${adjustedCount} point(s) were corrected to satisfy this integrity constraint.` : ""}
       </p>
     </section>
   );

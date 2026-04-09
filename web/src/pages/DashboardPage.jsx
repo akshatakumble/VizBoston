@@ -8,11 +8,11 @@ import SystemScorecards from "../charts/SystemScorecards";
 import OtpStationHeatmap from "../charts/OtpStationHeatmap";
 import OnTimeWindowBreakdown from "../charts/OnTimeWindowBreakdown";
 import StationOtpRanking from "../charts/StationOtpRanking";
-import WaitTimeStationHeatmap from "../charts/WaitTimeStationHeatmap";
 import HeadwayBoxPlot from "../charts/HeadwayBoxPlot";
 import BunchingScatterChart from "../charts/BunchingScatterChart";
 import GreenBranchComparisonChart from "../charts/GreenBranchComparisonChart";
 import AnnotatedTimelineChart from "../charts/AnnotatedTimelineChart";
+import ExcessWaitTrendChart from "../charts/ExcessWaitTrendChart";
 import LoadingState from "../charts/components/LoadingState";
 import TimeFilter from "../filters/TimeFilter";
 import HighlightsPanel from "../components/HighlightsPanel";
@@ -125,8 +125,6 @@ function DashboardPage() {
   const [reliabilityDayType, setReliabilityDayType] = useState("All");
   const [otpHeatmapRowMode, setOtpHeatmapRowMode] = useState("worst20");
   const [reliabilityHeatmapMetric, setReliabilityHeatmapMetric] = useState("otp");
-  const [waitHeatmapMetric, setWaitHeatmapMetric] = useState("headwayMin");
-  const [waitHeatmapRowMode, setWaitHeatmapRowMode] = useState("worst20");
   const [selectedHeatmapCell, setSelectedHeatmapCell] = useState(null);
   const [selectedTravelSegmentId, setSelectedTravelSegmentId] = useState(null);
   const [commuterOriginKey, setCommuterOriginKey] = useState("");
@@ -153,7 +151,6 @@ function DashboardPage() {
     reliabilityWorstStations,
     reliabilityRankingMinEvents,
     reliabilitySelectedCell,
-    waitTimesHeadwayHeatmap,
     waitTimesDistribution,
     waitTimesBunchingScatter,
     waitTimesGreenBranchComparison,
@@ -395,21 +392,17 @@ function DashboardPage() {
         />
 
         {error ? <DataErrorState message={error} onRetry={retry} /> : null}
-        {!error && loading ? <LoadingState title="Headway Heatmap" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Headway Distribution" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Train Bunching Indicator" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Green Line Branch Comparison" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Excess Wait Time Trend" rows={6} /> : null}
 
         {!error && !loading ? (
-          <WaitTimeStationHeatmap
-            title="Wait-Time Heatmap (Station × Time Period)"
-            subtitle={`Metric view for ${lineLabel}. Source: headway_station_time_month dataset.`}
-            data={waitTimesHeadwayHeatmap}
-            metricId={waitHeatmapMetric}
-            onMetricChange={setWaitHeatmapMetric}
-            rowMode={waitHeatmapRowMode}
-            onRowModeChange={setWaitHeatmapRowMode}
+          <BunchingScatterChart
+            title="Train Bunching Indicator"
+            subtitle="Sample-weighted station averages (core service periods); sparse and extreme outliers are excluded to preserve comparability."
+            data={waitTimesBunchingScatter}
+            cardClassName="wait-times-full-width-card"
           />
         ) : null}
 
@@ -418,14 +411,7 @@ function DashboardPage() {
             title="Headway Distribution (Robust)"
             subtitle={`IQR with P10-P90 whiskers for ${timePeriod === "All" ? "Peak and Off-Peak periods" : timePeriod}`}
             data={waitTimesDistribution}
-          />
-        ) : null}
-
-        {!error && !loading ? (
-          <BunchingScatterChart
-            title="Train Bunching Indicator"
-            subtitle="Sample-weighted station averages (core service periods); sparse and extreme outliers are excluded to preserve comparability."
-            data={waitTimesBunchingScatter}
+            cardClassName="wait-times-full-width-card"
           />
         ) : null}
 
@@ -438,15 +424,27 @@ function DashboardPage() {
         ) : null}
 
         {!error && !loading ? (
-          <LineChart
+          <ExcessWaitTrendChart
             title="Excess Wait Time Trend"
-            subtitle="Sample-weighted monthly excess wait by line (core service periods, sparse buckets excluded)"
+            subtitle="Average additional wait beyond scheduled headway (sample-weighted monthly values; lower is better)."
             data={waitTimesExcessTrend}
-            xKey="month"
-            yKey="value"
-            seriesKey="line"
-            yLabel="Excess Wait (min)"
-            metricFormatter={(value) => `${value.toFixed(1)} min`}
+            events={[
+              {
+                month: `${year}-03-01`,
+                label: "Spring schedule update",
+                description: "Seasonal timetable update across rapid-transit services.",
+              },
+              {
+                month: `${year}-06-01`,
+                label: "Slow zone removals",
+                description: "Track-speed restriction removals accelerated on core corridors.",
+              },
+              {
+                month: `${year}-09-01`,
+                label: "Fall schedule update",
+                description: "Service patterns adjusted for fall ridership and operations.",
+              },
+            ]}
           />
         ) : null}
       </div>
