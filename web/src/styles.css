@@ -233,6 +233,14 @@ main {
   grid-column: 1 / -1;
 }
 
+.reliability-heatmap-card .otp-heatmap-scroll {
+  margin-bottom: 0.55rem;
+}
+
+.reliability-heatmap-card .card-footnote {
+  margin-top: 0.2rem;
+}
+
 .travel-map-card,
 .travel-summary-card {
   grid-column: 1 / -1;
@@ -415,6 +423,60 @@ main {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.otp-calendar-kpis {
+  margin: 0.2rem 0 0.65rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.otp-calendar-kpi {
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  padding: 0.5rem 0.6rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.otp-calendar-kpi-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.otp-calendar-kpi-value {
+  color: var(--ink);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.otp-calendar-kpi-value-critical {
+  color: var(--critical);
+}
+
+.otp-calendar-kpi-value-best {
+  color: var(--accent-strong);
+}
+
+.otp-calendar-frame {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.3rem 0.35rem 0.2rem;
+}
+
+.otp-calendar-frame svg {
+  width: auto;
+  max-width: none;
+  min-width: 100%;
 }
 
 .axis-line {
@@ -1126,7 +1188,7 @@ main {
 }
 
 .composition-early {
-  background: color-mix(in srgb, #38bdf8 88%, transparent);
+  background: color-mix(in srgb, #f59e0b 92%, transparent);
 }
 
 .composition-on-time {
@@ -1134,7 +1196,7 @@ main {
 }
 
 .composition-late {
-  background: color-mix(in srgb, #f97316 90%, transparent);
+  background: color-mix(in srgb, #ef4444 92%, transparent);
 }
 
 .composition-table {
@@ -1165,72 +1227,243 @@ main {
   margin-right: 0.45rem;
 }
 
-.station-ranking-wrap {
-  overflow: auto;
+.reliability-composition-card {
+  grid-column: 1 / -1;
 }
 
-.station-ranking-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 720px;
+.otw-window-callout {
+  margin: 0.15rem 0 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
 }
 
-.station-ranking-table th,
-.station-ranking-table td {
+.otw-window-callout strong {
+  color: var(--ink);
+}
+
+.otw-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 1rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.otw-legend span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.otw-grid {
+  border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  border-radius: 10px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  margin-bottom: 0.55rem;
+}
+
+.otw-grid-head,
+.otw-grid-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.95fr) minmax(260px, 2.2fr) minmax(90px, 0.7fr) minmax(120px, 0.9fr);
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.5rem 0.65rem;
+}
+
+.otw-grid-head {
   border-bottom: 1px solid var(--line);
-  padding: 0.45rem 0.35rem;
-  text-align: left;
-  vertical-align: middle;
+  background: color-mix(in srgb, var(--surface-muted) 88%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-.station-ranking-table thead th {
+.otw-grid-row {
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+}
+
+.otw-grid-row:last-child {
+  border-bottom: 0;
+}
+
+.otw-grid-row.is-system {
+  background: color-mix(in srgb, var(--chip-bg) 38%, transparent);
+  font-weight: 700;
+}
+
+.otw-line-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+}
+
+.otw-line-swatch {
+  width: 4px;
+  height: 1rem;
+  border-radius: 999px;
+}
+
+.otw-bar-wrap {
+  min-width: 0;
+}
+
+.otw-row-metrics {
+  margin-top: 0.26rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.otw-early-text {
+  color: color-mix(in srgb, #f59e0b 88%, var(--ink));
+}
+
+.otw-ontime-text {
+  color: color-mix(in srgb, #22c55e 85%, var(--ink));
+}
+
+.otw-late-text {
+  color: color-mix(in srgb, #ef4444 88%, var(--ink));
+}
+
+.otw-offschedule {
+  font-weight: 800;
+  color: color-mix(in srgb, #ef4444 82%, var(--ink));
+}
+
+.otw-sample {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.station-lollipop-wrap {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-width: 700px;
+  border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-bottom: 0.55rem;
+}
+
+.reliability-composition-card .card-footnote,
+.reliability-ranking-card .card-footnote {
+  margin-top: 0.22rem;
+  margin-bottom: 0.45rem;
+}
+
+.station-lollipop-plot {
+  display: block;
+  width: auto;
+  max-width: none;
+}
+
+.station-lollipop-header {
+  fill: var(--ink);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.station-lollipop-grid {
+  stroke: color-mix(in srgb, var(--line) 75%, transparent);
+  stroke-width: 1;
+}
+
+.station-lollipop-target {
+  stroke: #00843d;
+  stroke-width: 1.35;
+  stroke-dasharray: 4 3;
+}
+
+.station-lollipop-target-label {
+  fill: #00843d;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.station-lollipop-row {
+  cursor: default;
+}
+
+.station-lollipop-row[role="button"] {
+  cursor: pointer;
+}
+
+.station-lollipop-row-bg {
+  fill: transparent;
+}
+
+.station-lollipop-row-highlight {
+  fill: color-mix(in srgb, var(--chip-bg) 38%, transparent);
+}
+
+.station-lollipop-label {
+  fill: var(--ink);
+  font-size: 0.71rem;
+  font-weight: 700;
+}
+
+.station-lollipop-stem {
+  stroke-width: 1.4;
+}
+
+.station-lollipop-dot {
+  stroke: color-mix(in srgb, var(--surface) 95%, transparent);
+  stroke-width: 1.3;
+}
+
+.station-lollipop-value {
+  fill: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.station-lollipop-tooltip {
+  position: fixed;
+  pointer-events: none;
+  width: 232px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: var(--shadow);
+  padding: 0.5rem 0.6rem;
+  z-index: 30;
+}
+
+.station-lollipop-tooltip h4 {
+  margin: 0 0 0.35rem;
+  color: var(--ink);
+  font-size: 0.78rem;
+}
+
+.station-lollipop-tooltip ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.24rem;
+}
+
+.station-lollipop-tooltip li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
   color: var(--muted);
   font-size: 0.72rem;
 }
 
-.station-ranking-line {
-  display: inline-block;
-  border-left: 4px solid var(--line-color);
-  padding-left: 0.4rem;
-  font-weight: 700;
+.station-lollipop-tooltip strong {
   color: var(--ink);
-}
-
-.station-ranking-otp-cell {
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.station-ranking-otp-value {
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.station-ranking-track {
-  position: relative;
-  height: 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface-muted) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-}
-
-.station-ranking-target {
-  position: absolute;
-  top: -2px;
-  bottom: -2px;
-  width: 1px;
-  background: color-mix(in srgb, var(--ink) 82%, transparent);
-}
-
-.station-ranking-dot {
-  position: absolute;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
 }
 
 .boxplot-whisker,
@@ -1920,6 +2153,10 @@ p {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .otp-calendar-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .segment-delay-table {
     min-width: 44rem;
   }
@@ -1930,6 +2167,11 @@ p {
 
   .commuter-metrics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .otw-grid-head,
+  .otw-grid-row {
+    grid-template-columns: minmax(100px, 0.9fr) minmax(220px, 2fr) minmax(84px, 0.7fr) minmax(110px, 0.85fr);
   }
 }
 
@@ -1971,6 +2213,19 @@ p {
     width: 100%;
   }
 
+  .otp-calendar-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .otw-grid {
+    overflow-x: auto;
+  }
+
+  .otw-grid-head,
+  .otw-grid-row {
+    min-width: 640px;
+  }
+
   .segment-profile-grid {
     grid-template-columns: 1fr;
   }
@@ -1987,6 +2242,7 @@ p {
   .timeline-notes {
     grid-template-columns: 1fr;
   }
+
 }
 
 @media (max-width: 640px) {

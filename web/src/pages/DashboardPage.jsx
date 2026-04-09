@@ -5,7 +5,6 @@ import BarChart from "../charts/BarChart";
 import AreaTrendChart from "../charts/AreaTrendChart";
 import RadarComparisonChart from "../charts/RadarComparisonChart";
 import SystemScorecards from "../charts/SystemScorecards";
-import OtpCalendarHeatmap from "../charts/OtpCalendarHeatmap";
 import OtpStationHeatmap from "../charts/OtpStationHeatmap";
 import OnTimeWindowBreakdown from "../charts/OnTimeWindowBreakdown";
 import StationOtpRanking from "../charts/StationOtpRanking";
@@ -149,8 +148,8 @@ function DashboardPage() {
     overviewHighlights,
     overviewGoalPct,
     reliabilityStationHourHeatmap,
-    reliabilityCalendarHeatmap,
     reliabilityOnTimeWindowBreakdown,
+    reliabilityOnTimeWindowByLine,
     reliabilityWorstStations,
     reliabilityRankingMinEvents,
     reliabilitySelectedCell,
@@ -319,7 +318,6 @@ function DashboardPage() {
 
         {error ? <DataErrorState message={error} onRetry={retry} /> : null}
         {!error && loading ? <LoadingState title="OTP Heatmap" rows={6} /> : null}
-        {!error && loading ? <LoadingState title="OTP Calendar Heatmap" rows={6} /> : null}
         {!error && loading ? <LoadingState title="On-Time Window Composition" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Worst Stations Ranking" rows={6} /> : null}
 
@@ -353,25 +351,24 @@ function DashboardPage() {
                 : `Early / on-time / late shares for ${lineLabel}`
             }
             breakdown={reliabilityOnTimeWindowBreakdown}
-          />
-        ) : null}
-
-        {!error && !loading ? (
-          <OtpCalendarHeatmap
-            title="OTP Calendar Heatmap"
-            subtitle={`Day-of-year reliability for ${lineLabel}`}
-            data={reliabilityCalendarHeatmap}
+            lineBreakdown={reliabilityOnTimeWindowByLine}
+            windowLabel="On-time window: -60s to +300s from schedule"
           />
         ) : null}
 
         {!error && !loading ? (
           <StationOtpRanking
             title="Worst Stations Ranking (Sample-Size Aware)"
-            subtitle="Lowest OTP stations under current filters with raw late-rate context"
+            subtitle="Lollipop ranking of lowest OTP stations under current filters; dot size encodes sample count."
             cardClassName="reliability-ranking-card"
             data={reliabilityWorstStations}
             minEvents={reliabilityRankingMinEvents}
             otpTarget={overviewGoalPct}
+            onStationSelect={(stationName) => {
+              if (stationOptions.includes(stationName)) {
+                setSelectedStation(stationName);
+              }
+            }}
           />
         ) : null}
 

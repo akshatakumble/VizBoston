@@ -915,7 +915,6 @@ export function useDashboardData({
       overviewHighlights: [],
       overviewGoalPct: OTP_TARGET_PCT,
       reliabilityStationHourHeatmap: [],
-      reliabilityCalendarHeatmap: [],
       reliabilityOnTimeWindowBreakdown: null,
       reliabilityWorstStations: [],
       reliabilityRankingMinEvents: RELIABILITY_RANKING_MIN_EVENTS,
@@ -1359,36 +1358,6 @@ export function useDashboardData({
           String(cell.hour) === String(selectedReliabilityCell.column)
       );
 
-    const calendarByDate = new Map();
-    for (const row of otpDailyRecords) {
-      const lineName = normalizeLineId(row.line_id);
-      const serviceDate = normalizeText(row.service_date, "");
-      if (!lineName || !serviceDate) {
-        continue;
-      }
-      if (!lineMatches(lineName) || !dateInRange(serviceDate) || !reliabilityDayTypeMatches(weekdayOrWeekend(serviceDate))) {
-        continue;
-      }
-      const totalEvents = toFiniteNumber(row.total_events) ?? 0;
-      const onTimeEvents = toFiniteNumber(row.on_time_events) ?? 0;
-      const bucket = calendarByDate.get(serviceDate) || {
-        serviceDate,
-        totalEvents: 0,
-        onTimeEvents: 0,
-      };
-      bucket.totalEvents += totalEvents;
-      bucket.onTimeEvents += onTimeEvents;
-      calendarByDate.set(serviceDate, bucket);
-    }
-
-    const reliabilityCalendarHeatmap = Array.from(calendarByDate.values())
-      .map((bucket) => ({
-        date: bucket.serviceDate,
-        value: bucket.totalEvents > 0 ? (bucket.onTimeEvents / bucket.totalEvents) * 100 : 0,
-        totalEvents: bucket.totalEvents,
-      }))
-      .sort((left, right) => left.date.localeCompare(right.date));
-
     const reliabilityOnTimeWindowCounts = selectedHeatCell
       ? {
           earlyEvents: toFiniteNumber(selectedHeatCell.earlyEvents) ?? 0,
@@ -1419,6 +1388,58 @@ export function useDashboardData({
             latePct: (reliabilityOnTimeWindowCounts.lateEvents / reliabilityOnTimeTotal) * 100,
           }
         : null;
+
+    const reliabilityLineWindowBuckets = new Map();
+    for (const row of reliabilityStationHourHeatmap) {
+      const lineName = normalizeLineId(row.line);
+      if (!lineName) {
+        continue;
+      }
+      const bucket = reliabilityLineWindowBuckets.get(lineName) || {
+        line: lineName,
+        earlyEvents: 0,
+        onTimeEvents: 0,
+        lateEvents: 0,
+      };
+      bucket.earlyEvents += toFiniteNumber(row.earlyEvents) ?? 0;
+      bucket.onTimeEvents += toFiniteNumber(row.onTimeEvents) ?? 0;
+      bucket.lateEvents += toFiniteNumber(row.lateEvents) ?? 0;
+      reliabilityLineWindowBuckets.set(lineName, bucket);
+    }
+
+    const reliabilityOnTimeWindowByLine = Array.from(reliabilityLineWindowBuckets.values())
+      .map((bucket) => {
+        const totalEvents =
+          (toFiniteNumber(bucket.earlyEvents) ?? 0) +
+          (toFiniteNumber(bucket.onTimeEvents) ?? 0) +
+          (toFiniteNumber(bucket.lateEvents) ?? 0);
+        return {
+          line: bucket.line,
+          totalEvents,
+          earlyEvents: bucket.earlyEvents,
+          onTimeEvents: bucket.onTimeEvents,
+          lateEvents: bucket.lateEvents,
+          earlyPct: totalEvents > 0 ? (bucket.earlyEvents / totalEvents) * 100 : 0,
+          onTimePct: totalEvents > 0 ? (bucket.onTimeEvents / totalEvents) * 100 : 0,
+          latePct: totalEvents > 0 ? (bucket.lateEvents / totalEvents) * 100 : 0,
+          offSchedulePct: totalEvents > 0 ? ((bucket.earlyEvents + bucket.lateEvents) / totalEvents) * 100 : 0,
+        };
+      })
+      .filter((row) => row.totalEvents > 0)
+      .sort((left, right) => {
+        if (right.offSchedulePct !== left.offSchedulePct) {
+          return right.offSchedulePct - left.offSchedulePct;
+        }
+        if (right.totalEvents !== left.totalEvents) {
+          return right.totalEvents - left.totalEvents;
+        }
+        const leftRank = lineOrderMap.get(left.line) ?? 99;
+        const rightRank = lineOrderMap.get(right.line) ?? 99;
+        if (leftRank !== rightRank) {
+          return leftRank - rightRank;
+        }
+        return left.line.localeCompare(right.line);
+      });
 
     const stationRankingBuckets = new Map();
     for (const row of reliabilityStationHourHeatmap) {
@@ -1461,7 +1482,7 @@ export function useDashboardData({
         }
         return left.stationSortOrder - right.stationSortOrder;
       })
-      .slice(0, 12);
+      .slice(0, 15);
 
     const normalizedHeadwayRows = headwayRecords
       .map((row) => {
@@ -3478,8 +3499,8 @@ export function useDashboardData({
       overviewHighlights,
       overviewGoalPct: OTP_TARGET_PCT,
       reliabilityStationHourHeatmap,
-      reliabilityCalendarHeatmap,
       reliabilityOnTimeWindowBreakdown,
+      reliabilityOnTimeWindowByLine,
       reliabilityWorstStations,
       reliabilityRankingMinEvents: RELIABILITY_RANKING_MIN_EVENTS,
       reliabilitySelectedCell: selectedHeatCell
