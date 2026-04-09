@@ -63,6 +63,7 @@ function formatPercent(value) {
 function OtpStationHeatmap({
   title = "Reliability Heatmap (Station × Time Period)",
   subtitle = "",
+  cardClassName = "",
   data = [],
   selectedCell = null,
   onCellClick,
@@ -123,7 +124,7 @@ function OtpStationHeatmap({
 
   if (valueRows.length === 0) {
     return (
-      <section className="chart-card">
+      <section className={`chart-card ${cardClassName}`.trim()}>
         <h2>{title}</h2>
         <p>No heatmap values available for {activeMetric.label}.</p>
       </section>
@@ -230,7 +231,7 @@ function OtpStationHeatmap({
   const selectedColumn = String(selectedCell?.column || "");
 
   return (
-    <section className="chart-card">
+    <section className={`chart-card ${cardClassName}`.trim()}>
       <div className="card-header">
         <h2>{title}</h2>
       </div>

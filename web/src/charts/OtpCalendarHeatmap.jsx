@@ -23,6 +23,7 @@ function formatShortDate(date) {
 function OtpCalendarHeatmap({
   title = "OTP Calendar Heatmap",
   subtitle = "",
+  cardClassName = "",
   data = [],
   width = 760,
   height = 300,
@@ -40,7 +41,7 @@ function OtpCalendarHeatmap({
 
   if (normalized.length === 0) {
     return (
-      <section className="chart-card">
+      <section className={`chart-card ${cardClassName}`.trim()}>
         <h2>{title}</h2>
         <p>No calendar values available.</p>
       </section>
@@ -120,7 +121,7 @@ function OtpCalendarHeatmap({
   const legendWidth = 120;
 
   return (
-    <section className="chart-card">
+    <section className={`chart-card ${cardClassName}`.trim()}>
       <div className="card-header">
         <h2>{title}</h2>
       </div>

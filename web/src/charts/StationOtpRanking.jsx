@@ -23,13 +23,14 @@ function clamp(value, min, max) {
 function StationOtpRanking({
   title = "Lowest OTP Stations",
   subtitle = "",
+  cardClassName = "",
   data = [],
   minEvents = 200,
   otpTarget = 85,
 }) {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <section className="chart-card">
+      <section className={`chart-card ${cardClassName}`.trim()}>
         <h2>{title}</h2>
         <p>No stations meet the current ranking threshold under these filters.</p>
       </section>
@@ -39,7 +40,7 @@ function StationOtpRanking({
   const targetLeft = `${clamp(Number(otpTarget) || 0, 0, 100)}%`;
 
   return (
-    <section className="chart-card">
+    <section className={`chart-card ${cardClassName}`.trim()}>
       <div className="card-header">
         <h2>{title}</h2>
       </div>

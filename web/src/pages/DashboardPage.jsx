@@ -14,13 +14,10 @@ import HeadwayBoxPlot from "../charts/HeadwayBoxPlot";
 import BunchingScatterChart from "../charts/BunchingScatterChart";
 import GreenBranchComparisonChart from "../charts/GreenBranchComparisonChart";
 import AnnotatedTimelineChart from "../charts/AnnotatedTimelineChart";
-import Legend from "../charts/components/Legend";
 import LoadingState from "../charts/components/LoadingState";
 import TimeFilter from "../filters/TimeFilter";
 import HighlightsPanel from "../components/HighlightsPanel";
 import TravelSegmentDetailPanel from "../components/TravelSegmentDetailPanel";
-import SlowZoneTable, { sortSlowZoneRows } from "../components/SlowZoneTable";
-import { getLineLegendItems } from "../design/transit";
 import { useDashboard } from "../context/DashboardContext";
 import useDashboardData from "../data/useDashboardData";
 
@@ -133,8 +130,6 @@ function DashboardPage() {
   const [waitHeatmapRowMode, setWaitHeatmapRowMode] = useState("worst20");
   const [selectedHeatmapCell, setSelectedHeatmapCell] = useState(null);
   const [selectedTravelSegmentId, setSelectedTravelSegmentId] = useState(null);
-  const [slowZoneSortBy, setSlowZoneSortBy] = useState("travelTimeIndex");
-  const [slowZoneSortDirection, setSlowZoneSortDirection] = useState("desc");
   const [commuterOriginKey, setCommuterOriginKey] = useState("");
   const [commuterPairKey, setCommuterPairKey] = useState("");
   const [commuterDepartureHour, setCommuterDepartureHour] = useState(8);
@@ -147,6 +142,9 @@ function DashboardPage() {
     retry,
     overviewScorecards,
     overviewSystemTrend,
+    overviewSystemDailyTrend,
+    overviewSystemLineTrends,
+    overviewTrendAnnotations,
     overviewRadar,
     overviewHighlights,
     overviewGoalPct,
@@ -164,7 +162,6 @@ function DashboardPage() {
     travelMapSegments,
     travelLinePaths,
     travelStationPoints,
-    travelSlowZoneTable,
     travelSegmentIds,
     travelTimeTrendData,
     commuterOriginOptions,
@@ -283,11 +280,6 @@ function DashboardPage() {
   const lineLabel = selectedLine === "All" ? "all lines" : `${selectedLine} line`;
   const selectedTravelSegment =
     travelMapSegments.find((segment) => segment.segmentId === selectedTravelSegmentId) || null;
-  const sortedSlowZoneRows = sortSlowZoneRows(
-    travelSlowZoneTable,
-    slowZoneSortBy,
-    slowZoneSortDirection
-  );
   const travelTrendSeries = travelTimeTrendData.map((row) => ({
     month: row.month,
     line: row.line,
@@ -300,7 +292,7 @@ function DashboardPage() {
       ? travelSegmentsWithIndex.reduce((accumulator, segment) => accumulator + segment.travelTimeIndex, 0) /
         travelSegmentsWithIndex.length
       : null;
-  const topTravelBottlenecks = sortedSlowZoneRows.slice(0, 5);
+  const topTravelBottlenecks = travelSegmentsWithIndex.slice(0, 5);
 
   if (activeSection === "reliability") {
     return (
@@ -335,6 +327,7 @@ function DashboardPage() {
           <OtpStationHeatmap
             title="Reliability Heatmap (Station × Time Period)"
             subtitle={`Station-by-time reliability view for ${lineLabel}. Pick a metric and click a cell for delay drilldown.`}
+            cardClassName="reliability-heatmap-card"
             data={reliabilityStationHourHeatmap}
             selectedCell={selectedHeatmapCell}
             metricId={reliabilityHeatmapMetric}
@@ -352,14 +345,6 @@ function DashboardPage() {
         ) : null}
 
         {!error && !loading ? (
-          <OtpCalendarHeatmap
-            title="OTP Calendar Heatmap"
-            subtitle={`Day-of-year reliability for ${lineLabel}`}
-            data={reliabilityCalendarHeatmap}
-          />
-        ) : null}
-
-        {!error && !loading ? (
           <OnTimeWindowBreakdown
             title="On-Time Window Composition"
             subtitle={
@@ -372,16 +357,24 @@ function DashboardPage() {
         ) : null}
 
         {!error && !loading ? (
+          <OtpCalendarHeatmap
+            title="OTP Calendar Heatmap"
+            subtitle={`Day-of-year reliability for ${lineLabel}`}
+            data={reliabilityCalendarHeatmap}
+          />
+        ) : null}
+
+        {!error && !loading ? (
           <StationOtpRanking
             title="Worst Stations Ranking (Sample-Size Aware)"
             subtitle="Lowest OTP stations under current filters with raw late-rate context"
+            cardClassName="reliability-ranking-card"
             data={reliabilityWorstStations}
             minEvents={reliabilityRankingMinEvents}
             otpTarget={overviewGoalPct}
           />
         ) : null}
 
-        <Legend title="Line Colors" />
       </div>
     );
   }
@@ -486,7 +479,6 @@ function DashboardPage() {
         {!error && loading ? <LoadingState title="Segment Delay Ladder" rows={8} /> : null}
         {!error && loading ? <LoadingState title="Monthly Travel Time Trend" rows={6} /> : null}
         {!error && loading ? <LoadingState title="Segment Detail Panel" rows={6} /> : null}
-        {!error && loading ? <LoadingState title="Slow Zone Table" rows={6} /> : null}
 
         {!error && !loading ? (
           <section className="chart-card travel-summary-card">
@@ -512,7 +504,7 @@ function DashboardPage() {
               <article>
                 <h3>Flagged Slow-Zone Candidates</h3>
                 <strong>
-                  {travelSlowZoneTable.filter((row) => row.slowZoneCandidate).length.toLocaleString()}
+                  {travelMapSegments.filter((row) => row.slowZoneCandidate).length.toLocaleString()}
                 </strong>
               </article>
             </div>
@@ -555,7 +547,7 @@ function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedSlowZoneRows.slice(0, 20).map((row) => {
+                  {travelSegmentsWithIndex.slice(0, 20).map((row) => {
                     const selected = row.segmentId === selectedTravelSegmentId;
                     const tti = Number.isFinite(row.travelTimeIndex) ? row.travelTimeIndex : null;
                     const cappedTti = tti !== null ? Math.min(2.5, tti) : 0;
@@ -611,24 +603,6 @@ function DashboardPage() {
           <TravelSegmentDetailPanel
             segment={selectedTravelSegment}
             onClear={() => setSelectedTravelSegmentId(null)}
-          />
-        ) : null}
-
-        {!error && !loading ? (
-          <SlowZoneTable
-            rows={sortedSlowZoneRows}
-            sortBy={slowZoneSortBy}
-            sortDirection={slowZoneSortDirection}
-            selectedSegmentId={selectedTravelSegmentId}
-            onSegmentSelect={setSelectedTravelSegmentId}
-            onSortChange={(column) => {
-              if (column === slowZoneSortBy) {
-                setSlowZoneSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-              } else {
-                setSlowZoneSortBy(column);
-                setSlowZoneSortDirection("desc");
-              }
-            }}
           />
         ) : null}
 
@@ -734,6 +708,9 @@ function DashboardPage() {
             <div className="card-header">
               <h2>Trip Reliability Snapshot</h2>
             </div>
+            <p className="card-subtitle">
+              Computed from observed trip-time samples for this OD pair (departure hour +/- 1 where available).
+            </p>
             {commuterSummaryMetrics ? (
               <>
                 <div className="commuter-metrics-grid">
@@ -770,14 +747,9 @@ function DashboardPage() {
                 <p className="commuter-sample-size">
                   Based on {commuterSummaryMetrics.sampleCount} trips in this time window.
                 </p>
-                {commuterSummaryMetrics.isEstimatedFallback ? (
-                  <p className="commuter-sample-size">
-                    This line currently uses estimated segment travel times derived from observed headway patterns.
-                  </p>
-                ) : null}
               </>
             ) : (
-              <p>Select a valid origin and destination to view commute reliability insights.</p>
+              <p>Select a valid origin and destination with observed data to view commute reliability insights.</p>
             )}
           </section>
         ) : null}
@@ -991,27 +963,12 @@ function DashboardPage() {
 
       {error ? <DataErrorState message={error} onRetry={retry} /> : null}
       {!error && loading ? <LoadingState title="System Scorecards" rows={6} /> : null}
-      {!error && loading ? <LoadingState title="Daily Reliability Trend" rows={6} /> : null}
       {!error && loading ? <LoadingState title="Line Comparison Matrix" rows={6} /> : null}
+      {!error && loading ? <LoadingState title="System Reliability Trend" rows={6} /> : null}
       {!error && loading ? <LoadingState title="Recent Highlights" rows={4} /> : null}
 
       {!error && !loading ? (
         <SystemScorecards title="System Scorecard" cards={overviewScorecards} />
-      ) : null}
-
-      {!error && !loading ? (
-        <AreaTrendChart
-          title="Daily Reliability Trend"
-          subtitle={`System-wide OTP with ${overviewGoalPct.toFixed(0)}% goal line over the last 12 months`}
-          data={overviewSystemTrend}
-          xKey="date"
-          yKey="value"
-          goalKey="goal"
-          xTickFormatter={(tick) =>
-            tick instanceof Date ? tick.toLocaleDateString(undefined, { month: "short" }) : String(tick)
-          }
-          metricFormatter={(value) => `${value.toFixed(1)}%`}
-        />
       ) : null}
 
       {!error && !loading ? (
@@ -1023,9 +980,28 @@ function DashboardPage() {
         />
       ) : null}
 
-      {!error && !loading ? <HighlightsPanel highlights={overviewHighlights} /> : null}
+      {!error && !loading ? (
+        <AreaTrendChart
+          title="System Reliability Trend"
+          subtitle={`Monthly OTP trend with daily observations in the background (${overviewGoalPct.toFixed(0)}% target shown).`}
+          cardClassName="system-trend-card"
+          data={overviewSystemTrend}
+          dailyData={overviewSystemDailyTrend}
+          lineSeries={overviewSystemLineTrends}
+          annotations={overviewTrendAnnotations}
+          xKey="date"
+          yKey="value"
+          goalKey="goal"
+          yDomain={[0, 100]}
+          height={250}
+          xTickFormatter={(tick) =>
+            tick instanceof Date ? tick.toLocaleDateString(undefined, { month: "short" }) : String(tick)
+          }
+          metricFormatter={(value) => `${value.toFixed(1)}%`}
+        />
+      ) : null}
 
-      <Legend title="Line Legend" items={getLineLegendItems()} />
+      {!error && !loading ? <HighlightsPanel highlights={overviewHighlights} /> : null}
 
       <BostonMap
         selectedLine={selectedLine}
