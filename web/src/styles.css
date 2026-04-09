@@ -330,11 +330,13 @@ main {
 }
 
 .reliability-heatmap-card .otp-heatmap-scroll {
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.35rem;
 }
 
 .reliability-heatmap-card .card-footnote {
-  margin-top: 0.2rem;
+  margin-top: 0.06rem;
+  margin-bottom: 0.22rem;
+  font-size: 0.74rem;
 }
 
 .travel-map-card,
@@ -439,25 +441,25 @@ main {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.55rem;
-  margin: -0.2rem 0 0.55rem;
+  gap: 0.42rem;
+  margin: -0.24rem 0 0.32rem;
 }
 
 .otp-heatmap-control-group {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.36rem;
 }
 
 .otp-heatmap-controls-label {
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--muted);
 }
 
 .otp-heatmap-direction {
   margin-left: auto;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--muted);
 }
@@ -467,6 +469,7 @@ main {
   border: 1px solid color-mix(in srgb, var(--line) 92%, transparent);
   border-radius: 10px;
   background: var(--surface);
+  max-height: min(64vh, 560px);
 }
 
 .otp-target-tick {

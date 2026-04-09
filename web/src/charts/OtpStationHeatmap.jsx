@@ -387,17 +387,17 @@ function OtpStationHeatmap({
   };
 
   const displayRows = [systemRow, ...activeRows];
-  const rowHeight = displayRows.length > 40 ? 11 : displayRows.length > 24 ? 13.5 : 16;
-  const heatWidth = Math.max(500, periodOrder.length * 68);
+  const rowHeight = displayRows.length > 40 ? 9.5 : displayRows.length > 24 ? 11.5 : 13;
+  const heatWidth = Math.max(420, periodOrder.length * 56);
   const heatHeight = Math.max(120, displayRows.length * rowHeight);
 
   // Tufte: prioritize legible labels over clipping important identifiers.
   const maxStationNameLength = displayRows.reduce((maxLength, row) => Math.max(maxLength, row.station.length), 0);
-  const leftMargin = Math.max(230, Math.min(420, Math.round(maxStationNameLength * 7.1) + 26));
+  const leftMargin = Math.max(190, Math.min(320, Math.round(maxStationNameLength * 6.4) + 20));
   // Extra bottom room keeps legend labels from clipping at the SVG boundary.
-  const margin = { top: 44, right: 148, bottom: 114, left: leftMargin };
+  const margin = { top: 34, right: 132, bottom: 80, left: leftMargin };
 
-  const summaryBandHeight = 18;
+  const summaryBandHeight = 14;
   const svgWidth = margin.left + heatWidth + margin.right;
   const svgHeight = margin.top + heatHeight + margin.bottom;
 
@@ -583,7 +583,7 @@ function OtpStationHeatmap({
               <text
                 key={`column-${period}`}
                 x={(xScale(period) || 0) + xScale.bandwidth() / 2}
-                y={heatHeight + 16}
+                y={heatHeight + 14}
                 className="axis-tick-label axis-tick-label-x"
                 textAnchor="middle"
               >
@@ -631,7 +631,7 @@ function OtpStationHeatmap({
               );
             })}
 
-            <text x={-10} y={heatHeight + 38} className="axis-tick-label axis-tick-label-y" textAnchor="end">
+            <text x={-10} y={heatHeight + 30} className="axis-tick-label axis-tick-label-y" textAnchor="end">
               Row Avg by Period
             </text>
             {periodAverages.map((period) => {
@@ -640,21 +640,21 @@ function OtpStationHeatmap({
                 <g key={`period-summary-${period.period}`}>
                   <rect
                     x={x}
-                    y={heatHeight + 24}
+                    y={heatHeight + 18}
                     width={xScale.bandwidth()}
                     height={summaryBandHeight}
                     rx={2}
                     fill={colorForValue(period.value)}
                     className="calendar-cell"
                   />
-                  <text x={x + xScale.bandwidth() / 2} y={heatHeight + 56} className="axis-tick-label" textAnchor="middle">
+                  <text x={x + xScale.bandwidth() / 2} y={heatHeight + 45} className="axis-tick-label" textAnchor="middle">
                     {formatPercent(period.value)}
                   </text>
                 </g>
               );
             })}
 
-            <g transform={`translate(0,${heatHeight + 72})`}>
+            <g transform={`translate(0,${heatHeight + 56})`}>
               <rect x={0} y={0} width={140} height={8} rx={3} fill="url(#otp-legend-gradient)" className="calendar-cell" />
               {Number.isFinite(activeMetric.targetPct) ? (
                 <line
