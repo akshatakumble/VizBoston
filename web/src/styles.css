@@ -2465,24 +2465,146 @@ main {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
-.segment-delay-tti-cell {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 6.4rem;
+/* SDL — Segment Delay Ladder (grouped table) */
+
+.sdl-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
 }
 
-.segment-delay-tti-track {
+.sdl-legend-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.7rem;
+}
+
+.sdl-legend-label {
+  font-weight: 700;
+}
+
+.sdl-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sdl-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sdl-table {
   width: 100%;
-  height: 0.32rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--line) 92%, transparent);
-  overflow: hidden;
+  border-collapse: collapse;
 }
 
-.segment-delay-tti-fill {
-  height: 100%;
+.sdl-table th,
+.sdl-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.55rem;
+  text-align: left;
+  font-size: 0.78rem;
+  vertical-align: middle;
+}
+
+.sdl-table th {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sdl-table tbody tr:hover:not(.sdl-group-header) {
+  background: color-mix(in srgb, var(--surface-muted) 92%, transparent);
+}
+
+.sdl-group-header td {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.sdl-group-critical td {
+  border-left: 3px solid #D73027;
+  background: color-mix(in srgb, #D73027 8%, var(--surface));
+  color: color-mix(in srgb, #D73027 72%, var(--ink));
+}
+
+.sdl-group-warning td {
+  border-left: 3px solid #E8871E;
+  background: color-mix(in srgb, #E8871E 8%, var(--surface));
+  color: color-mix(in srgb, #E8871E 72%, var(--ink));
+}
+
+.sdl-group-monitor td {
+  border-left: 3px solid #9CA3AF;
+  background: color-mix(in srgb, #9CA3AF 8%, var(--surface));
+  color: color-mix(in srgb, #9CA3AF 72%, var(--ink));
+}
+
+.sdl-tti-value {
+  white-space: nowrap;
+}
+
+.tti-pct-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  padding: 0.08rem 0.35rem;
   border-radius: 999px;
-  background: color-mix(in srgb, #D73027 72%, #FDAE61);
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+  color: var(--muted);
+  margin-left: 0.2rem;
+  vertical-align: middle;
+}
+
+.sdl-priority-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.sdl-priority-urgent {
+  background: color-mix(in srgb, #D73027 16%, transparent);
+  color: #b91c1c;
+}
+
+.sdl-priority-watch {
+  background: color-mix(in srgb, #E8871E 16%, transparent);
+  color: #92400e;
+}
+
+.sdl-priority-ok {
+  background: color-mix(in srgb, #9CA3AF 16%, transparent);
+  color: var(--muted);
+}
+
+.sdl-footer {
+  font-size: 0.7rem;
+  color: var(--muted);
+  padding: 0.6rem 0.55rem;
+  border-top: 1px solid var(--line);
+}
+
+.sdl-footer p {
+  margin: 0.15rem 0;
 }
 
 .segment-metric-grid {

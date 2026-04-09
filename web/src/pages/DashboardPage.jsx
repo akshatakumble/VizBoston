@@ -59,6 +59,47 @@ function SilverCoverageNotice({ selectedLine }) {
   );
 }
 
+function classifySeverity(tti) {
+  if (!Number.isFinite(tti)) return "monitor";
+  if (tti > 1.3) return "critical";
+  if (tti > 1.1) return "warning";
+  return "monitor";
+}
+
+function derivePriority(severity, trend) {
+  if (severity === "critical" && trend !== "improving") return "urgent";
+  if (severity === "critical" && trend === "improving") return "watch";
+  if (severity === "warning") return "watch";
+  if (severity === "monitor" && trend === "degrading") return "watch";
+  return "ok";
+}
+
+function trendLabel(direction) {
+  if (direction === "degrading") return "\u2197 degrading";
+  if (direction === "improving") return "\u2198 improving";
+  return "\u2192 stable";
+}
+
+const SEVERITY_GROUP_META = [
+  { key: "critical", label: "Critical \u2014 30%+ slower than benchmark", color: "#D73027" },
+  { key: "warning", label: "Warning \u2014 10\u201329% slower than benchmark", color: "#E8871E" },
+  { key: "monitor", label: "Monitor \u2014 within 10% of benchmark", color: "#9CA3AF" },
+];
+
+function groupBySeverity(rows) {
+  const buckets = { critical: [], warning: [], monitor: [] };
+  for (const row of rows) {
+    buckets[row.severity].push(row);
+  }
+  return SEVERITY_GROUP_META
+    .map((meta) => ({
+      ...meta,
+      segments: buckets[meta.key],
+      heading: `${meta.label} (${buckets[meta.key].length} segment${buckets[meta.key].length === 1 ? "" : "s"})`,
+    }))
+    .filter((group) => group.segments.length > 0);
+}
+
 function DashboardFilters({
   timePeriod,
   selectedStation,
@@ -289,6 +330,11 @@ function DashboardPage() {
         travelSegmentsWithIndex.length
       : null;
   const topTravelBottlenecks = travelSegmentsWithIndex.slice(0, 5);
+  const ladderRows = travelSegmentsWithIndex.slice(0, 20).map((row) => {
+    const severity = classifySeverity(row.travelTimeIndex);
+    return { ...row, severity, priority: derivePriority(severity, row.trendDirection) };
+  });
+  const severityGroups = groupBySeverity(ladderRows);
 
   if (activeSection === "reliability") {
     return (
@@ -528,53 +574,80 @@ function DashboardPage() {
               <h2>Segment Delay Ladder</h2>
             </div>
             <p className="card-subtitle">
-              Dense ranking of slowest segments under current filters. Click any segment to inspect detailed period and month behavior.
+              Ranked by delay severity. Priority combines TTI level with trend direction.
             </p>
+            <div className="sdl-legend">
+              <div className="sdl-legend-group">
+                <span className="sdl-legend-label">Severity:</span>
+                <span className="sdl-legend-item"><span className="sdl-legend-dot" style={{ background: "#D73027" }} /> Critical (&gt;1.30x)</span>
+                <span className="sdl-legend-item"><span className="sdl-legend-dot" style={{ background: "#E8871E" }} /> Warning (1.10–1.29x)</span>
+                <span className="sdl-legend-item"><span className="sdl-legend-dot" style={{ background: "#9CA3AF" }} /> Monitor (&lt;1.10x)</span>
+              </div>
+              <div className="sdl-legend-group">
+                <span className="sdl-legend-label">Trend:</span>
+                <span className="sdl-legend-item trend-degrading">{"\u2197"} Degrading</span>
+                <span className="sdl-legend-item trend-stable">{"\u2192"} Stable</span>
+                <span className="sdl-legend-item trend-improving">{"\u2198"} Improving</span>
+              </div>
+            </div>
             <div className="segment-delay-table-wrap">
-              <table className="segment-delay-table">
+              <table className="sdl-table">
                 <thead>
                   <tr>
                     <th scope="col">Segment</th>
-                    <th scope="col">TTI</th>
-                    <th scope="col">Buffer</th>
-                    <th scope="col">Worst Period</th>
+                    <th scope="col" title="Travel Time Index: ratio of actual to benchmark travel time">TTI</th>
+                    <th scope="col">Worst period</th>
                     <th scope="col">Trend</th>
+                    <th scope="col">Priority</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {travelSegmentsWithIndex.slice(0, 20).map((row) => {
-                    const selected = row.segmentId === selectedTravelSegmentId;
-                    const tti = Number.isFinite(row.travelTimeIndex) ? row.travelTimeIndex : null;
-                    const cappedTti = tti !== null ? Math.min(2.5, tti) : 0;
-                    const ttiPct = Math.max(0, Math.min(100, (cappedTti / 2.5) * 100));
-                    return (
-                      <tr key={row.segmentId} className={selected ? "segment-delay-row-selected" : ""}>
-                        <td>
-                          <button
-                            type="button"
-                            className="slow-zone-segment-btn"
-                            onClick={() => setSelectedTravelSegmentId(row.segmentId)}
-                          >
-                            {row.segmentName}
-                          </button>
-                        </td>
-                        <td>
-                          <div className="segment-delay-tti-cell">
-                            <span>{tti !== null ? `${tti.toFixed(2)}x` : "NA"}</span>
-                            <div className="segment-delay-tti-track" aria-hidden="true">
-                              <div className="segment-delay-tti-fill" style={{ width: `${ttiPct}%` }} />
-                            </div>
-                          </div>
-                        </td>
-                        <td>{Number.isFinite(row.bufferMin) ? `${row.bufferMin.toFixed(1)} min` : "NA"}</td>
-                        <td>{row.worstPeriod || "NA"}</td>
-                        <td className={`trend-${row.trendDirection || "stable"}`}>{row.trendDirection || "stable"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                {severityGroups.map((group) => (
+                  <tbody key={group.key} role="rowgroup" aria-label={group.heading}>
+                    <tr className={`sdl-group-header sdl-group-${group.key}`}>
+                      <td colSpan="5">{group.heading}</td>
+                    </tr>
+                    {group.segments.map((row) => {
+                      const selected = row.segmentId === selectedTravelSegmentId;
+                      const tti = Number.isFinite(row.travelTimeIndex) ? row.travelTimeIndex : null;
+                      const pctSlower = tti !== null ? Math.max(0, Math.round((tti - 1) * 100)) : null;
+                      return (
+                        <tr key={row.segmentId} className={selected ? "segment-delay-row-selected" : ""}>
+                          <td>
+                            <button
+                              type="button"
+                              className="slow-zone-segment-btn"
+                              onClick={() => setSelectedTravelSegmentId(row.segmentId)}
+                            >
+                              {row.segmentName}
+                            </button>
+                          </td>
+                          <td>
+                            {tti !== null ? (
+                              <span className="sdl-tti-value">
+                                {tti.toFixed(2)}x{" "}
+                                <span className="tti-pct-badge">+{pctSlower}%</span>
+                              </span>
+                            ) : "NA"}
+                          </td>
+                          <td>{row.worstPeriod || "NA"}</td>
+                          <td className={`trend-${row.trendDirection || "stable"}`}>
+                            {trendLabel(row.trendDirection || "stable")}
+                          </td>
+                          <td>
+                            <span className={`sdl-priority-pill sdl-priority-${row.priority}`}>
+                              {row.priority === "urgent" ? "Urgent" : row.priority === "watch" ? "Watch" : "OK"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                ))}
               </table>
             </div>
+            <footer className="sdl-footer">
+              <p>TTI = Travel Time Index (actual &divide; scheduled). Priority: Urgent = critical + degrading, Watch = warning or degrading, OK = stable/improving + low TTI.</p>
+            </footer>
           </section>
         ) : null}
 
