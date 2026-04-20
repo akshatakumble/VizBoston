@@ -5,6 +5,11 @@ MBTA reliability dashboard monorepo with:
 - A Vite + React frontend (`web/`)
 - Local data workspaces (`data/raw`, `data/processed`, `data/samples`)
 
+## Contributors
+
+- [Vidya1811](https://github.com/Vidya1811) — original author
+- [akshatakumble](https://github.com/akshatakumble) — contributor
+
 ## Prerequisites
 
 - Python 3.10+
